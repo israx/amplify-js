@@ -1,4 +1,8 @@
+const BundleAnalyzerPlugin =
+	require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
 module.exports = {
+	plugins: [new BundleAnalyzerPlugin()],
 	entry: {
 		'aws-amplify-core.min': './lib-esm/index.js',
 	},
