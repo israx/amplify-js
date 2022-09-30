@@ -17,7 +17,6 @@ import {
 	SignUpParams,
 	GRAPHQL_AUTH_MODE,
 } from './types/Auth';
-
 import {
 	CognitoUser,
 	CookieStorage,
