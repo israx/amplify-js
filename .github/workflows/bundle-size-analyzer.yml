@@ -17,7 +17,7 @@ jobs:
         uses: andresz1/size-limit-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          build_script: yarn setup-dev
+          build_script: setup-dev
           skip_step: install
           clean_script: cleanup
           directory: packages/auth
