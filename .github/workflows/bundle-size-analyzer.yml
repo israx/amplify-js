@@ -9,11 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CI_JOB_NUMBER: 1
-    stragegy:
-      matrix:
-        package:
-          - auth
-          - storage
 
     steps:
       - name: Checkout Amplify JS
@@ -22,10 +17,6 @@ jobs:
       - name: Setup dev
         run: yarn setup-dev
 
-      - name: Check bundle size
-        run: yarn size
-        with:
-          path: ./packages/${{matrix.package}}
       - name: Run size-limit
         uses: andresz1/size-limit-action@v1
         with:
