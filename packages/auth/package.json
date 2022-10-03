@@ -26,6 +26,7 @@
     "build:cjs:watch": "node ./build es5 --watch",
     "build:esm:watch": "node ./build es6 --watch",
     "build": "npm run clean && npm run build:esm && npm run build:cjs",
+    "postbuild":"yarn run size-limit",
     "clean": "rimraf lib-esm lib dist",
     "format": "echo \"Not implemented\"",
     "lint": "tslint '{__tests__,src}/**/*.ts'",
@@ -33,6 +34,7 @@
   },
    "size-limit": [
        {
+        "name": "auth",
         "limit": "41.65 kB",
         "path": "dist/aws-amplify-auth.min.js"
        }
