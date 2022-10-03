@@ -28,7 +28,6 @@ import { Storage } from '@aws-amplify/storage';
 /**
  * @deprecated use named import
  */
-
 export default Auth;
 
 export {
