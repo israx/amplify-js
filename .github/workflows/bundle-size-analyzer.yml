@@ -11,5 +11,10 @@ jobs:
       - name: Checkout Amplify JS
         uses: actions/checkout@v3
 
-      - name: Setup dev
-        run: yarn setup-dev
+      - name: Run size-limit
+        uses: andresz1/size-limit-action@v1
+        with:
+          build_script: yarn setup-dev
+          skip_step: install
+          clean_script: cleanup
+          directory: packages/auth
