@@ -23,11 +23,13 @@ import {
 	appendToCognitoUserAgent,
 } from 'amazon-cognito-identity-js';
 import { AuthErrorStrings } from './common/AuthErrorStrings';
+import { Storage } from '@aws-amplify/storage';
 
 /**
  * @deprecated use named import
  */
 export default Auth;
+
 export {
 	Auth,
 	CognitoUser,
@@ -37,4 +39,5 @@ export {
 	appendToCognitoUserAgent,
 	AuthErrorStrings,
 	GRAPHQL_AUTH_MODE,
+	Storage,
 };
