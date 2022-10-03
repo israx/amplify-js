@@ -23,6 +23,7 @@ import {
 	appendToCognitoUserAgent,
 } from 'amazon-cognito-identity-js';
 import { AuthErrorStrings } from './common/AuthErrorStrings';
+
 import { Storage } from '@aws-amplify/storage';
 
 /**
