@@ -21,3 +21,4 @@ jobs:
           skip_step: install
           clean_script: cleanup
           directory: packages/auth
+          package_manager: yarn
