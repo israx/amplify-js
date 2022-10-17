@@ -22,7 +22,7 @@
 		"clean": "rimraf lib-esm lib dist",
 		"format": "echo \"Not implemented\"",
 		"lint": "tslint '{__tests__,src}/**/*.ts'",
-		"ts-coverage":  "typescript-coverage-report -p ./tsconfig.build.json -t 0"
+		"ts-coverage":  "typescript-coverage-report -p ./tsconfig.build.json -t 0 -o ../ts-coverage/datastore-storage-adapter"
 	},
 	"repository": {
 		"type": "git",
