@@ -1,0 +1,1038 @@
+{
+  "fileCounts": {},
+  "anys": [
+    {
+      "file": "lib/types/Provider.d.ts",
+      "line": 7,
+      "character": 43,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Providers/AWSLexProvider.d.ts",
+      "line": 5,
+      "character": 44,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Providers/AWSLexProvider.d.ts",
+      "line": 5,
+      "character": 54,
+      "text": "confirmation",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Providers/AWSLexV2Provider.d.ts",
+      "line": 7,
+      "character": 44,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Providers/AWSLexV2Provider.d.ts",
+      "line": 7,
+      "character": 54,
+      "text": "confirmation",
+      "kind": 1
+    },
+    {
+      "file": "lib/Interactions.d.ts",
+      "line": 2,
+      "character": 12,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "lib/Interactions.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "_pluggables",
+      "kind": 1
+    },
+    {
+      "file": "lib/Interactions.d.ts",
+      "line": 21,
+      "character": 43,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "lib/Interactions.d.ts",
+      "line": 21,
+      "character": 53,
+      "text": "confirmation",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/InteractionsProvider.d.ts",
+      "line": 9,
+      "character": 52,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSLexProvider.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "lexRuntimeServiceClient",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSLexProvider.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "_botsCompleteCallback",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSLexProvider.d.ts",
+      "line": 21,
+      "character": 43,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSLexProvider.d.ts",
+      "line": 21,
+      "character": 53,
+      "text": "confirmation",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSLexV2Provider.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "_lexRuntimeServiceV2Client",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSLexV2Provider.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "_botsCompleteCallback",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSLexV2Provider.d.ts",
+      "line": 40,
+      "character": 12,
+      "text": "_reportBotStatus",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSLexV2Provider.d.ts",
+      "line": 46,
+      "character": 12,
+      "text": "_formatUtteranceCommandOutput",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSLexV2Provider.d.ts",
+      "line": 51,
+      "character": 12,
+      "text": "_handleRecognizeTextCommand",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSLexV2Provider.d.ts",
+      "line": 56,
+      "character": 12,
+      "text": "_handleRecognizeUtteranceCommand",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Provider.d.ts",
+      "line": 7,
+      "character": 43,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Providers/AWSLexProvider.d.ts",
+      "line": 5,
+      "character": 44,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Providers/AWSLexProvider.d.ts",
+      "line": 5,
+      "character": 54,
+      "text": "confirmation",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Providers/AWSLexV2Provider.d.ts",
+      "line": 7,
+      "character": 44,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Providers/AWSLexV2Provider.d.ts",
+      "line": 7,
+      "character": 54,
+      "text": "confirmation",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Interactions.d.ts",
+      "line": 2,
+      "character": 12,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Interactions.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "_pluggables",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Interactions.d.ts",
+      "line": 21,
+      "character": 43,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Interactions.d.ts",
+      "line": 21,
+      "character": 53,
+      "text": "confirmation",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/InteractionsProvider.d.ts",
+      "line": 9,
+      "character": 52,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSLexProvider.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "lexRuntimeServiceClient",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSLexProvider.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "_botsCompleteCallback",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSLexProvider.d.ts",
+      "line": 21,
+      "character": 43,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSLexProvider.d.ts",
+      "line": 21,
+      "character": 53,
+      "text": "confirmation",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSLexV2Provider.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "_lexRuntimeServiceV2Client",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSLexV2Provider.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "_botsCompleteCallback",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSLexV2Provider.d.ts",
+      "line": 40,
+      "character": 12,
+      "text": "_reportBotStatus",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSLexV2Provider.d.ts",
+      "line": 46,
+      "character": 12,
+      "text": "_formatUtteranceCommandOutput",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSLexV2Provider.d.ts",
+      "line": 51,
+      "character": 12,
+      "text": "_handleRecognizeTextCommand",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSLexV2Provider.d.ts",
+      "line": 56,
+      "character": 12,
+      "text": "_handleRecognizeUtteranceCommand",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Provider.ts",
+      "line": 29,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Providers/AWSLexProvider.ts",
+      "line": 17,
+      "character": 41,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Providers/AWSLexProvider.ts",
+      "line": 17,
+      "character": 46,
+      "text": "confirmation",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Providers/AWSLexV2Provider.ts",
+      "line": 19,
+      "character": 41,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Providers/AWSLexV2Provider.ts",
+      "line": 19,
+      "character": 46,
+      "text": "confirmation",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/InteractionsProvider.ts",
+      "line": 56,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 92,
+      "character": 33,
+      "text": "onComplete",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 94,
+      "character": 43,
+      "text": "onComplete",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 108,
+      "character": 33,
+      "text": "onComplete",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 111,
+      "character": 33,
+      "text": "onComplete",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 128,
+      "character": 6,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 130,
+      "character": 3,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 131,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 136,
+      "character": 33,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 144,
+      "character": 36,
+      "text": "alias",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 147,
+      "character": 12,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 147,
+      "character": 24,
+      "text": "identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 158,
+      "character": 26,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 157,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 173,
+      "character": 37,
+      "text": "alias",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 176,
+      "character": 13,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 176,
+      "character": 25,
+      "text": "identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 185,
+      "character": 37,
+      "text": "alias",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 189,
+      "character": 13,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 189,
+      "character": 25,
+      "text": "identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 209,
+      "character": 26,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 208,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 214,
+      "character": 40,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProvider.ts",
+      "line": 214,
+      "character": 45,
+      "text": "confirmation",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProviderHelper/commonUtils.ts",
+      "line": 24,
+      "character": 61,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProviderHelper/commonUtils.ts",
+      "line": 23,
+      "character": 10,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexV2Provider.ts",
+      "line": 131,
+      "character": 6,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexV2Provider.ts",
+      "line": 133,
+      "character": 3,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexV2Provider.ts",
+      "line": 134,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexV2Provider.ts",
+      "line": 139,
+      "character": 33,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexV2Provider.ts",
+      "line": 148,
+      "character": 37,
+      "text": "aliasId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexV2Provider.ts",
+      "line": 149,
+      "character": 32,
+      "text": "botId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexV2Provider.ts",
+      "line": 150,
+      "character": 35,
+      "text": "localeId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexV2Provider.ts",
+      "line": 151,
+      "character": 14,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexV2Provider.ts",
+      "line": 151,
+      "character": 26,
+      "text": "identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexV2Provider.ts",
+      "line": 201,
+      "character": 34,
+      "text": "onComplete",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexV2Provider.ts",
+      "line": 218,
+      "character": 43,
+      "text": "onComplete",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexV2Provider.ts",
+      "line": 229,
+      "character": 43,
+      "text": "onComplete",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexV2Provider.ts",
+      "line": 281,
+      "character": 25,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexV2Provider.ts",
+      "line": 280,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexV2Provider.ts",
+      "line": 339,
+      "character": 25,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexV2Provider.ts",
+      "line": 338,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 49,
+      "character": 8,
+      "text": "opt",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 49,
+      "character": 32,
+      "text": "Interactions",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 50,
+      "character": 43,
+      "text": "opt",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 51,
+      "character": 41,
+      "text": "opt",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 51,
+      "character": 45,
+      "text": "Interactions",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 53,
+      "character": 8,
+      "text": "aws_bots_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 53,
+      "character": 40,
+      "text": "aws_bots_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 54,
+      "character": 8,
+      "text": "bots_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 54,
+      "character": 36,
+      "text": "bots",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 56,
+      "character": 42,
+      "text": "aws_bots_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 58,
+      "character": 21,
+      "text": "aws_bots_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 59,
+      "character": 28,
+      "text": "bot",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 60,
+      "character": 19,
+      "text": "bots",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 60,
+      "character": 24,
+      "text": "bot",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 60,
+      "character": 28,
+      "text": "name",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 60,
+      "character": 36,
+      "text": "bot",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 67,
+      "character": 9,
+      "text": "bot",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 67,
+      "character": 15,
+      "text": "bots_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 68,
+      "character": 9,
+      "text": "providerName",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 68,
+      "character": 24,
+      "text": "bot",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 68,
+      "character": 28,
+      "text": "providerName",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 73,
+      "character": 4,
+      "text": "providerName",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 79,
+      "character": 24,
+      "text": "providerName",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 80,
+      "character": 21,
+      "text": "providerName",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 80,
+      "character": 48,
+      "text": "bot",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 80,
+      "character": 52,
+      "text": "name",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 80,
+      "character": 59,
+      "text": "bot",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 83,
+      "character": 12,
+      "text": "bot",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 83,
+      "character": 16,
+      "text": "name",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 83,
+      "character": 46,
+      "text": "providerName",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 95,
+      "character": 30,
+      "text": "bots",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 98,
+      "character": 21,
+      "text": "bots",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 98,
+      "character": 34,
+      "text": "providerName",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 102,
+      "character": 12,
+      "text": "bot",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 102,
+      "character": 32,
+      "text": "bots",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 103,
+      "character": 29,
+      "text": "bot",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 103,
+      "character": 33,
+      "text": "name",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 103,
+      "character": 40,
+      "text": "bot",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 132,
+      "character": 21,
+      "text": "bots",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 132,
+      "character": 44,
+      "text": "bots",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 136,
+      "character": 8,
+      "text": "botProvider",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 137,
+      "character": 17,
+      "text": "bots",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 137,
+      "character": 31,
+      "text": "providerName",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 139,
+      "character": 24,
+      "text": "botProvider",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 142,
+      "character": 5,
+      "text": "botProvider",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 146,
+      "character": 32,
+      "text": "botProvider",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 151,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 151,
+      "character": 18,
+      "text": "confirmation",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 153,
+      "character": 21,
+      "text": "bots",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 153,
+      "character": 44,
+      "text": "bots",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 156,
+      "character": 8,
+      "text": "botProvider",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 157,
+      "character": 17,
+      "text": "bots",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 157,
+      "character": 31,
+      "text": "providerName",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 159,
+      "character": 24,
+      "text": "botProvider",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 162,
+      "character": 5,
+      "text": "botProvider",
+      "kind": 1
+    },
+    {
+      "file": "src/Interactions.ts",
+      "line": 166,
+      "character": 19,
+      "text": "botProvider",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProviderHelper/utils.native.ts",
+      "line": 34,
+      "character": 54,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProviderHelper/utils.native.ts",
+      "line": 33,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProviderHelper/utils.native.ts",
+      "line": 52,
+      "character": 35,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSLexProviderHelper/utils.native.ts",
+      "line": 51,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    }
+  ],
+  "percentage": 90.59500959692899,
+  "total": 1563,
+  "covered": 1416,
+  "uncovered": 147
+}

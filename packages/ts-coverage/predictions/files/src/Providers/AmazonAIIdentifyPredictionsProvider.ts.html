@@ -1,0 +1,504 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>AmazonAIIdentifyPredictionsProvider.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Providers/AmazonAIIdentifyPredictionsProvider.ts</td><td class="">90.28%</td><td class="">0%</td><td class="">638</td><td class="">576</td><td class="">62</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import {
+	Credentials,
+	ConsoleLogger as Logger,
+	getAmplifyUserAgent,
+} from &#x27;@aws-amplify/core&#x27;;
+import Storage from &#x27;@aws-amplify/storage&#x27;;
+import { AbstractIdentifyPredictionsProvider } from &#x27;../types/Providers&#x27;;
+import {
+	RekognitionClient,
+	SearchFacesByImageCommand,
+	DetectTextCommand,
+	DetectTextCommandInput,
+	DetectLabelsCommand,
+	DetectLabelsCommandInput,
+	DetectFacesCommand,
+	DetectModerationLabelsCommand,
+	DetectModerationLabelsCommandInput,
+	RecognizeCelebritiesCommand,
+} from &#x27;@aws-sdk/client-rekognition&#x27;;
+import {
+	IdentifyLabelsInput,
+	IdentifyLabelsOutput,
+	IdentifySource,
+	IdentifyEntitiesInput,
+	IdentifyEntitiesOutput,
+	isStorageSource,
+	isFileSource,
+	isBytesSource,
+	IdentifyTextInput,
+	IdentifyTextOutput,
+	isIdentifyCelebrities,
+	isIdentifyFromCollection,
+	IdentifyFromCollection,
+	FeatureTypes,
+} from &#x27;../types&#x27;;
+import {
+	Image,
+	Document,
+	TextDetectionList,
+	BlockList,
+} from &#x27;../types/AWSTypes&#x27;;
+import {
+	TextractClient,
+	DetectDocumentTextCommand,
+	DetectDocumentTextCommandInput,
+	AnalyzeDocumentCommand,
+	AnalyzeDocumentCommandInput,
+} from &#x27;@aws-sdk/client-textract&#x27;;
+import { makeCamelCase, makeCamelCaseArray, blobToArrayBuffer } from &#x27;./Utils&#x27;;
+import {
+	categorizeRekognitionBlocks,
+	categorizeTextractBlocks,
+} from &#x27;./IdentifyTextUtils&#x27;;
+
+export class AmazonAIIdentifyPredictionsProvider extends AbstractIdentifyPredictionsProvider {
+	private rekognitionClient: RekognitionClient;
+	private textractClient: TextractClient;
+
+	constructor() {
+		super();
+	}
+
+	getProviderName() {
+		return &#x27;AmazonAIIdentifyPredictionsProvider&#x27;;
+	}
+
+	/**
+	 * Verify user input source and converts it into source object readable by Rekognition and Textract.
+	 * Note that Rekognition and Textract use the same source interface, so we need not worry about types.
+	 * @param {IdentifySource} source - User input source that directs to the object user wants
+	 * to identify (storage, file, or bytes).
+	 * @return {Promise&lt;Image&gt;} - Promise resolving to the converted source object.
+	 */
+	private configureSource(source: IdentifySource): Promise&lt;Image&gt; {
+		return new Promise((res, rej) =&gt; {
+			if (isStorageSource(source)) {
+				const storageConfig = {
+					level: source.level,
+					identityId: source.identityId,
+				};
+				Storage.get(source.key, storageConfig)
+					.then((url: string) =&gt; {
+						const parser = /https:\/\/([a-zA-Z0-9%-_.]+)\.s3\.[A-Za-z0-9%-._~]+\/([a-zA-Z0-9%-._~/]+)\?/;
+						const parsedURL = url.match(parser);
+						if (parsedURL.length &lt; 3) rej(&#x27;Invalid S3 key was given.&#x27;);
+						res({
+							S3Object: {
+								Bucket: parsedURL[1],
+								Name: decodeURIComponent(parsedURL[2]),
+							},
+						});
+					})
+					.catch(err =&gt; rej(err));
+			} else if (isFileSource(source)) {
+				blobToArrayBuffer(source.file)
+					.then(buffer =&gt; {
+						res({ Bytes: new Uint8Array(buffer) });
+					})
+					.catch(err =&gt; rej(err));
+			} else if (isBytesSource(source)) {
+				const bytes = source.bytes;
+				if (bytes instanceof Blob) {
+					blobToArrayBuffer(bytes)
+						.then(buffer =&gt; {
+							res({ Bytes: new Uint8Array(buffer) });
+						})
+						.catch(err =&gt; rej(err));
+				}
+				if (bytes instanceof ArrayBuffer || bytes instanceof Buffer) {
+					res({ Bytes: new Uint8Array(bytes) } as Image);
+				}
+				// everything else can be directly passed to Rekognition / Textract.
+				res({ Bytes: bytes } as Image);
+			} else {
+				rej(&#x27;Input source is not configured correctly.&#x27;);
+			}
+		});
+	}
+
+	/**
+	 * Recognize text from real-world images and documents (plain text, forms and tables). Detects text in the input
+	 * image and converts it into machine-readable text.
+	 * @param {IdentifySource} source - Object containing the source image and feature types to analyze.
+	 * @return {Promise&lt;IdentifyTextOutput&gt;} - Promise resolving to object containing identified texts.
+	 */
+	protected async identifyText(
+		input: IdentifyTextInput
+	): Promise&lt;IdentifyTextOutput&gt; {
+		const credentials = await Credentials.get();
+		if (!credentials) return Promise.reject(&#x27;No credentials&#x27;);
+		const {
+			identifyText: {
+				region = &#x27;&#x27;,
+				defaults: { format: configFormat = &#x27;PLAIN&#x27; } = {},
+			} = {},
+		} = this._config;
+		this.rekognitionClient = new RekognitionClient({
+			region,
+			credentials,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+		this.textractClient = new TextractClient({
+			region,
+			credentials,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+		let inputDocument: Document;
+
+		try {
+			inputDocument = await this.configureSource(input.text.source);
+		} catch (err) {
+			return Promise.reject(err);
+		}
+
+		// get default value if format isn&#x27;t specified in the input.
+		const format = input.text.format || configFormat;
+		const featureTypes: FeatureTypes = []; // structures we want to analyze (e.g. [TABLES, FORMS]).
+		if (format === &#x27;FORM&#x27; || format === &#x27;ALL&#x27;) featureTypes.push(&#x27;FORMS&#x27;);
+		if (format === &#x27;TABLE&#x27; || format === &#x27;ALL&#x27;) featureTypes.push(&#x27;TABLES&#x27;);
+
+		if (featureTypes.length === 0) {
+			/**
+			 * Empty featureTypes indicates that we will identify plain text. We will use rekognition (suitable
+			 * for everyday images but has 50 word limit) first and see if reaches its word limit. If it does, then
+			 * we call textract and use the data that identify more words.
+			 */
+			const textractParam: DetectDocumentTextCommandInput = {
+				Document: inputDocument,
+			};
+			const rekognitionParam: DetectTextCommandInput = {
+				Image: inputDocument,
+			};
+
+			try {
+				const detectTextCommand = new DetectTextCommand(rekognitionParam);
+				const rekognitionData = await this.rekognitionClient.send(
+					detectTextCommand
+				);
+
+				const rekognitionResponse = categorizeRekognitionBlocks(
+					rekognitionData.TextDetections as TextDetectionList
+				);
+				if (rekognitionResponse.text.words.length &lt; 50) {
+					// did not hit the word limit, return the data
+					return rekognitionResponse;
+				}
+
+				const detectDocumentTextCommand = new DetectDocumentTextCommand(
+					textractParam
+				);
+
+				const { Blocks } = await this.textractClient.send(
+					detectDocumentTextCommand
+				);
+
+				if (rekognitionData.TextDetections.length &gt; Blocks.length) {
+					return rekognitionResponse;
+				}
+
+				return categorizeTextractBlocks(Blocks as BlockList);
+			} catch (err) {
+				Promise.reject(err);
+			}
+		} else {
+			const param: AnalyzeDocumentCommandInput = {
+				Document: inputDocument,
+				FeatureTypes: featureTypes,
+			};
+
+			try {
+				const analyzeDocumentCommand = new AnalyzeDocumentCommand(param);
+				const { Blocks } = await this.textractClient.send(
+					analyzeDocumentCommand
+				);
+				return categorizeTextractBlocks(Blocks as BlockList);
+			} catch (err) {
+				return Promise.reject(err);
+			}
+		}
+	}
+
+	/**
+	 * Identify instances of real world entities from an image and if it contains unsafe content.
+	 * @param {IdentifyLabelsInput} input - Object containing the source image and entity type to identify.
+	 * @return {Promise&lt;IdentifyLabelsOutput&gt;} - Promise resolving to an array of identified entities.
+	 */
+	protected async identifyLabels(
+		input: IdentifyLabelsInput
+	): Promise&lt;IdentifyLabelsOutput&gt; {
+		try {
+			const credentials = await Credentials.get();
+			if (!credentials) return Promise.reject(&#x27;No credentials&#x27;);
+			const {
+				identifyLabels: {
+					region = &#x27;&#x27;,
+					defaults: { type = &#x27;LABELS&#x27; } = {},
+				} = {},
+			} = this._config;
+			this.rekognitionClient = new RekognitionClient({
+				region,
+				credentials,
+				customUserAgent: getAmplifyUserAgent(),
+			});
+			let inputImage: Image;
+			await this.configureSource(input.labels.source)
+				.then(data =&gt; {
+					inputImage = data;
+				})
+				.catch(err =&gt; {
+					return Promise.reject(err);
+				});
+			const param = { Image: inputImage };
+			const servicePromises = [];
+
+			// get default argument
+			const entityType = input.labels.type || type;
+			if (entityType === &#x27;LABELS&#x27; || entityType === &#x27;ALL&#x27;) {
+				servicePromises.push(this.detectLabels(param));
+			}
+			if (entityType === &#x27;UNSAFE&#x27; || entityType === &#x27;ALL&#x27;) {
+				servicePromises.push(this.detectModerationLabels(param));
+			}
+
+			return Promise.all(servicePromises)
+				.then(data =&gt; {
+					let identifyResult: IdentifyLabelsOutput = {};
+					// concatenate resolved promises to a single object
+					data.forEach(val =&gt; {
+						identifyResult = { ...identifyResult, ...val };
+					});
+					return identifyResult;
+				})
+				.catch(err =&gt; Promise.reject(err));
+		} catch (err) {
+			return Promise.reject(err);
+		}
+	}
+
+	/**
+	 * Calls Rekognition.detectLabels and organizes the returned data.
+	 * @param {DetectLabelsInput} param - parameter to be passed onto Rekognition
+	 * @return {Promise&lt;IdentifyLabelsOutput&gt;} - Promise resolving to organized detectLabels response.
+	 */
+	private async detectLabels(
+		param: DetectLabelsCommandInput
+	): Promise&lt;IdentifyLabelsOutput&gt; {
+		try {
+			const detectLabelsCommand = new DetectLabelsCommand(param);
+			const data = await this.rekognitionClient.send(detectLabelsCommand);
+			if (!data.Labels) return { labels: null }; // no image was detected
+			const detectLabelData = data.Labels.map(val =&gt; {
+				const boxes = val.Instances
+					? val.Instances.map(val =&gt; makeCamelCase(val.BoundingBox))
+					: undefined;
+				return {
+					name: val.Name,
+					boundingBoxes: boxes,
+					metadata: {
+						confidence: val.Confidence,
+						parents: makeCamelCaseArray(val.Parents),
+					},
+				};
+			});
+			return { labels: detectLabelData };
+		} catch (err) {
+			return Promise.reject(err);
+		}
+	}
+
+	/**
+	 * Calls Rekognition.detectModerationLabels and organizes the returned data.
+	 * @param {Rekognition.DetectLabelsRequest} param - Parameter to be passed onto Rekognition
+	 * @return {Promise&lt;IdentifyLabelsOutput&gt;} - Promise resolving to organized detectModerationLabels response.
+	 */
+	private async detectModerationLabels(
+		param: DetectModerationLabelsCommandInput
+	): Promise&lt;IdentifyLabelsOutput&gt; {
+		try {
+			const detectModerationLabelsCommand = new DetectModerationLabelsCommand(
+				param
+			);
+			const data = await this.rekognitionClient.send(
+				detectModerationLabelsCommand
+			);
+			if (data.ModerationLabels.length !== 0) {
+				return { unsafe: &#x27;YES&#x27; };
+			} else {
+				return { unsafe: &#x27;NO&#x27; };
+			}
+		} catch (err) {
+			return Promise.reject(err);
+		}
+	}
+
+	/**
+	 * Identify faces within an image that is provided as input, and match faces from a collection
+	 * or identify celebrities.
+	 * @param {IdentifyEntityInput} input - object containing the source image and face match options.
+	 * @return {Promise&lt;IdentifyEntityOutput&gt;} Promise resolving to identify results.
+	 */
+	protected async identifyEntities(
+		input: IdentifyEntitiesInput
+	): Promise&lt;IdentifyEntitiesOutput&gt; {
+		const credentials = await Credentials.get();
+		if (!credentials) return Promise.reject(&#x27;No credentials&#x27;);
+		const {
+			identifyEntities: {
+				region = &#x27;&#x27;,
+				celebrityDetectionEnabled = false,
+				defaults: {
+					collectionId: collectionIdConfig = &#x27;&#x27;,
+					maxEntities: maxFacesConfig = 50,
+				} = {},
+			} = {},
+		} = this._config;
+		// default arguments
+
+		this.rekognitionClient = new RekognitionClient({
+			region,
+			credentials,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+		let inputImage: Image;
+		await this.configureSource(input.entities.source)
+			.then(data =&gt; (inputImage = data))
+			.catch(err =&gt; {
+				return Promise.reject(err);
+			});
+
+		const param = { Attributes: [&#x27;ALL&#x27;], Image: inputImage };
+
+		if (
+			isIdentifyCelebrities(input.entities) &amp;&amp;
+			input.entities.celebrityDetection
+		) {
+			if (!celebrityDetectionEnabled) {
+				return Promise.reject(
+					&#x27;Error: You have to enable celebrity detection first&#x27;
+				);
+			}
+			try {
+				const recognizeCelebritiesCommand = new RecognizeCelebritiesCommand(
+					param
+				);
+				const data = await this.rekognitionClient.send(
+					recognizeCelebritiesCommand
+				);
+				const faces = data.CelebrityFaces.map(celebrity =&gt; {
+					return {
+						boundingBox: makeCamelCase(celebrity.Face.BoundingBox),
+						landmarks: makeCamelCaseArray(celebrity.Face.Landmarks),
+						metadata: {
+							...makeCamelCase(celebrity, [&#x27;Id&#x27;, &#x27;Name&#x27;, &#x27;Urls&#x27;]),
+							pose: makeCamelCase(celebrity.Face.Pose),
+						},
+					};
+				});
+				return { entities: faces };
+			} catch (err) {
+				return Promise.reject(err);
+			}
+		} else if (
+			isIdentifyFromCollection(input.entities) &amp;&amp;
+			input.entities.collection
+		) {
+			const {
+				collectionId = collectionIdConfig,
+				maxEntities: maxFaces = maxFacesConfig,
+			} = input.entities as IdentifyFromCollection;
+			// Concatenate additional parameters
+			const updatedParam = {
+				...param,
+				CollectionId: collectionId,
+				MaxFaces: maxFaces,
+			};
+			try {
+				const searchFacesByImageCommand = new SearchFacesByImageCommand(
+					updatedParam
+				);
+				const data = await this.rekognitionClient.send(
+					searchFacesByImageCommand
+				);
+				const faces = data.FaceMatches.map(val =&gt; {
+					return {
+						boundingBox: makeCamelCase(val.Face.BoundingBox),
+						metadata: {
+							externalImageId: this.decodeExternalImageId(
+								val.Face.ExternalImageId
+							),
+							similarity: val.Similarity,
+						},
+					};
+				});
+				return { entities: faces };
+			} catch (err) {
+				return Promise.reject(err);
+			}
+		} else {
+			try {
+				const detectFacesCommand = new DetectFacesCommand(param);
+				const data = await this.rekognitionClient.send(detectFacesCommand);
+				const faces = data.FaceDetails.map(detail =&gt; {
+					// face attributes keys we want to extract from Rekognition&#x27;s response
+					const attributeKeys = [
+						&#x27;Smile&#x27;,
+						&#x27;Eyeglasses&#x27;,
+						&#x27;Sunglasses&#x27;,
+						&#x27;Gender&#x27;,
+						&#x27;Beard&#x27;,
+						&#x27;Mustache&#x27;,
+						&#x27;EyesOpen&#x27;,
+						&#x27;MouthOpen&#x27;
+					];
+					const faceAttributes = makeCamelCase(detail, attributeKeys);
+					if (detail.Emotions) {
+						faceAttributes[&#x27;emotions&#x27;] = detail.Emotions.map(
+							emotion =&gt; emotion.Type
+						);
+					}
+					return {
+						boundingBox: makeCamelCase(detail.BoundingBox),
+						landmarks: makeCamelCaseArray(detail.Landmarks),
+						ageRange: makeCamelCase(detail.AgeRange),
+						attributes: faceAttributes,
+						metadata: {
+							confidence: detail.Confidence,
+							pose: makeCamelCase(detail.Pose),
+						},
+					};
+				});
+				return { entities: faces };
+			} catch (err) {
+				return Promise.reject(err);
+			}
+		}
+	}
+
+	private decodeExternalImageId(externalImageId: string): string {
+		return (&#x27;&#x27; + externalImageId).replace(/::/g, &#x27;/&#x27;);
+	}
+}
+
+/**
+ * @deprecated use named import
+ */
+export default AmazonAIIdentifyPredictionsProvider;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:23,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:98,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:98,&quot;character&quot;:23,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:106,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:106,&quot;character&quot;:24,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:128,&quot;character&quot;:8,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:129,&quot;character&quot;:7,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:132,&quot;character&quot;:4,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:133,&quot;character&quot;:24,&quot;text&quot;:&quot;configFormat&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:151,&quot;character&quot;:25,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:150,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:155,&quot;character&quot;:8,&quot;text&quot;:&quot;format&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:157,&quot;character&quot;:6,&quot;text&quot;:&quot;format&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:157,&quot;character&quot;:27,&quot;text&quot;:&quot;format&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:158,&quot;character&quot;:6,&quot;text&quot;:&quot;format&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:158,&quot;character&quot;:28,&quot;text&quot;:&quot;format&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:201,&quot;character&quot;:19,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:200,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:216,&quot;character&quot;:26,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:215,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:230,&quot;character&quot;:9,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:8,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:234,&quot;character&quot;:5,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:235,&quot;character&quot;:17,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:248,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:249,&quot;character&quot;:27,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:255,&quot;character&quot;:9,&quot;text&quot;:&quot;entityType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:256,&quot;character&quot;:7,&quot;text&quot;:&quot;entityType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:256,&quot;character&quot;:34,&quot;text&quot;:&quot;entityType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:259,&quot;character&quot;:7,&quot;text&quot;:&quot;entityType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:259,&quot;character&quot;:34,&quot;text&quot;:&quot;entityType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:267,&quot;character&quot;:18,&quot;text&quot;:&quot;val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:272,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:272,&quot;character&quot;:33,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:274,&quot;character&quot;:25,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:305,&quot;character&quot;:25,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:304,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:330,&quot;character&quot;:25,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:329,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:343,&quot;character&quot;:8,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:344,&quot;character&quot;:7,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:347,&quot;character&quot;:4,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:348,&quot;character&quot;:4,&quot;text&quot;:&quot;celebrityDetectionEnabled&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:350,&quot;character&quot;:19,&quot;text&quot;:&quot;collectionIdConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:351,&quot;character&quot;:18,&quot;text&quot;:&quot;maxFacesConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:365,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:366,&quot;character&quot;:26,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:375,&quot;character&quot;:8,&quot;text&quot;:&quot;celebrityDetectionEnabled&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:399,&quot;character&quot;:26,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:398,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:406,&quot;character&quot;:4,&quot;text&quot;:&quot;collectionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:407,&quot;character&quot;:17,&quot;text&quot;:&quot;maxFaces&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:412,&quot;character&quot;:4,&quot;text&quot;:&quot;CollectionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:412,&quot;character&quot;:18,&quot;text&quot;:&quot;collectionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:413,&quot;character&quot;:4,&quot;text&quot;:&quot;MaxFaces&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:413,&quot;character&quot;:14,&quot;text&quot;:&quot;maxFaces&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:435,&quot;character&quot;:26,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:434,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:472,&quot;character&quot;:26,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIIdentifyPredictionsProvider.ts&quot;,&quot;line&quot;:471,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:25 GMT</p>
+    </body>
+  </html>
+  

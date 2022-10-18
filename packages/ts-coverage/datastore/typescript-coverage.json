@@ -1,0 +1,8682 @@
+{
+  "fileCounts": {},
+  "anys": [
+    {
+      "file": "lib/types.d.ts",
+      "line": 34,
+      "character": 38,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types.d.ts",
+      "line": 53,
+      "character": 41,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types.d.ts",
+      "line": 59,
+      "character": 48,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types.d.ts",
+      "line": 159,
+      "character": 44,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types.d.ts",
+      "line": 163,
+      "character": 41,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types.d.ts",
+      "line": 167,
+      "character": 44,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types.d.ts",
+      "line": 171,
+      "character": 40,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types.d.ts",
+      "line": 242,
+      "character": 70,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types.d.ts",
+      "line": 307,
+      "character": 66,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types.d.ts",
+      "line": 308,
+      "character": 68,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types.d.ts",
+      "line": 312,
+      "character": 4,
+      "text": "operand",
+      "kind": 1
+    },
+    {
+      "file": "lib/types.d.ts",
+      "line": 366,
+      "character": 4,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "lib/types.d.ts",
+      "line": 443,
+      "character": 4,
+      "text": "modelConstructor",
+      "kind": 1
+    },
+    {
+      "file": "lib/types.d.ts",
+      "line": 444,
+      "character": 24,
+      "text": "c",
+      "kind": 1
+    },
+    {
+      "file": "lib/predicates/sort.d.ts",
+      "line": 2,
+      "character": 19,
+      "text": "sortPredicateGroupsMap",
+      "kind": 1
+    },
+    {
+      "file": "lib/predicates/sort.d.ts",
+      "line": 3,
+      "character": 19,
+      "text": "createPredicateBuilder",
+      "kind": 1
+    },
+    {
+      "file": "lib/predicates/sort.d.ts",
+      "line": 4,
+      "character": 55,
+      "text": "predicate",
+      "kind": 1
+    },
+    {
+      "file": "lib/predicates/index.d.ts",
+      "line": 2,
+      "character": 40,
+      "text": "predicate",
+      "kind": 1
+    },
+    {
+      "file": "lib/predicates/index.d.ts",
+      "line": 8,
+      "character": 19,
+      "text": "predicateGroupsMap",
+      "kind": 1
+    },
+    {
+      "file": "lib/predicates/index.d.ts",
+      "line": 9,
+      "character": 19,
+      "text": "createPredicateBuilder",
+      "kind": 1
+    },
+    {
+      "file": "lib/predicates/index.d.ts",
+      "line": 10,
+      "character": 55,
+      "text": "predicate",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "API",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 10,
+      "character": 12,
+      "text": "Cache",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "amplifyConfig",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "authModeStrategy",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "conflictHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "errorHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 15,
+      "character": 12,
+      "text": "fullSyncInterval",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "initialized",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "initReject",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 18,
+      "character": 12,
+      "text": "initResolve",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 19,
+      "character": 12,
+      "text": "maxRecordsToSync",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 20,
+      "character": 12,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 21,
+      "character": 12,
+      "text": "sync",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 22,
+      "character": 12,
+      "text": "syncPageSize",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 23,
+      "character": 12,
+      "text": "syncExpressions",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "syncPredicates",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "sessionId",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 26,
+      "character": 12,
+      "text": "storageAdapter",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 27,
+      "character": 12,
+      "text": "amplifyContext",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 54,
+      "character": 12,
+      "text": "processPagination",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 55,
+      "character": 12,
+      "text": "processSyncExpressions",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 56,
+      "character": 12,
+      "text": "createFromCondition",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 57,
+      "character": 12,
+      "text": "unwrapPromise",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 58,
+      "character": 12,
+      "text": "weakMapFromEntries",
+      "kind": 1
+    },
+    {
+      "file": "lib/datastore/datastore.d.ts",
+      "line": 59,
+      "character": 12,
+      "text": "retrieveSessionId",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 37,
+      "character": 41,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 40,
+      "character": 83,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 42,
+      "character": 45,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 63,
+      "character": 113,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 63,
+      "character": 121,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 64,
+      "character": 36,
+      "text": "valA",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 64,
+      "character": 47,
+      "text": "valB",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 81,
+      "character": 12,
+      "text": "limitPromise",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 82,
+      "character": 12,
+      "text": "timerPromise",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 83,
+      "character": 12,
+      "text": "maxInterval",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 84,
+      "character": 12,
+      "text": "timer",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 85,
+      "character": 12,
+      "text": "raceInFlight",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 86,
+      "character": 12,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 87,
+      "character": 12,
+      "text": "errorHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 88,
+      "character": 12,
+      "text": "defaultErrorHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 90,
+      "character": 12,
+      "text": "startTimer",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 91,
+      "character": 12,
+      "text": "racePromises",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 143,
+      "character": 33,
+      "text": "keysA",
+      "kind": 1
+    },
+    {
+      "file": "lib/util.d.ts",
+      "line": 143,
+      "character": 45,
+      "text": "keysB",
+      "kind": 1
+    },
+    {
+      "file": "lib/index.d.ts",
+      "line": 11,
+      "character": 28,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/index.d.ts",
+      "line": 12,
+      "character": 68,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types.d.ts",
+      "line": 34,
+      "character": 38,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types.d.ts",
+      "line": 53,
+      "character": 41,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types.d.ts",
+      "line": 59,
+      "character": 48,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types.d.ts",
+      "line": 159,
+      "character": 44,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types.d.ts",
+      "line": 163,
+      "character": 41,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types.d.ts",
+      "line": 167,
+      "character": 44,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types.d.ts",
+      "line": 171,
+      "character": 40,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types.d.ts",
+      "line": 242,
+      "character": 70,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types.d.ts",
+      "line": 307,
+      "character": 66,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types.d.ts",
+      "line": 308,
+      "character": 68,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types.d.ts",
+      "line": 312,
+      "character": 4,
+      "text": "operand",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types.d.ts",
+      "line": 366,
+      "character": 4,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types.d.ts",
+      "line": 443,
+      "character": 4,
+      "text": "modelConstructor",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types.d.ts",
+      "line": 444,
+      "character": 24,
+      "text": "c",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/predicates/sort.d.ts",
+      "line": 2,
+      "character": 19,
+      "text": "sortPredicateGroupsMap",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/predicates/sort.d.ts",
+      "line": 3,
+      "character": 19,
+      "text": "createPredicateBuilder",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/predicates/sort.d.ts",
+      "line": 4,
+      "character": 55,
+      "text": "predicate",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/predicates/index.d.ts",
+      "line": 2,
+      "character": 40,
+      "text": "predicate",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/predicates/index.d.ts",
+      "line": 8,
+      "character": 19,
+      "text": "predicateGroupsMap",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/predicates/index.d.ts",
+      "line": 9,
+      "character": 19,
+      "text": "createPredicateBuilder",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/predicates/index.d.ts",
+      "line": 10,
+      "character": 55,
+      "text": "predicate",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "API",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 10,
+      "character": 12,
+      "text": "Cache",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "amplifyConfig",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "authModeStrategy",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "conflictHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "errorHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 15,
+      "character": 12,
+      "text": "fullSyncInterval",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "initialized",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "initReject",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 18,
+      "character": 12,
+      "text": "initResolve",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 19,
+      "character": 12,
+      "text": "maxRecordsToSync",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 20,
+      "character": 12,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 21,
+      "character": 12,
+      "text": "sync",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 22,
+      "character": 12,
+      "text": "syncPageSize",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 23,
+      "character": 12,
+      "text": "syncExpressions",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "syncPredicates",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "sessionId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 26,
+      "character": 12,
+      "text": "storageAdapter",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 27,
+      "character": 12,
+      "text": "amplifyContext",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 54,
+      "character": 12,
+      "text": "processPagination",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 55,
+      "character": 12,
+      "text": "processSyncExpressions",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 56,
+      "character": 12,
+      "text": "createFromCondition",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 57,
+      "character": 12,
+      "text": "unwrapPromise",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 58,
+      "character": 12,
+      "text": "weakMapFromEntries",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/datastore/datastore.d.ts",
+      "line": 59,
+      "character": 12,
+      "text": "retrieveSessionId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 37,
+      "character": 41,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 40,
+      "character": 83,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 42,
+      "character": 45,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 63,
+      "character": 113,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 63,
+      "character": 121,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 64,
+      "character": 36,
+      "text": "valA",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 64,
+      "character": 47,
+      "text": "valB",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 81,
+      "character": 12,
+      "text": "limitPromise",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 82,
+      "character": 12,
+      "text": "timerPromise",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 83,
+      "character": 12,
+      "text": "maxInterval",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 84,
+      "character": 12,
+      "text": "timer",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 85,
+      "character": 12,
+      "text": "raceInFlight",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 86,
+      "character": 12,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 87,
+      "character": 12,
+      "text": "errorHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 88,
+      "character": 12,
+      "text": "defaultErrorHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 90,
+      "character": 12,
+      "text": "startTimer",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 91,
+      "character": 12,
+      "text": "racePromises",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 143,
+      "character": 33,
+      "text": "keysA",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/util.d.ts",
+      "line": 143,
+      "character": 45,
+      "text": "keysB",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/index.d.ts",
+      "line": 11,
+      "character": 28,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/index.d.ts",
+      "line": 12,
+      "character": 68,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/storage.d.ts",
+      "line": 11,
+      "character": 21,
+      "text": "schema",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/storage.d.ts",
+      "line": 12,
+      "character": 21,
+      "text": "namespaceResolver",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/storage.d.ts",
+      "line": 13,
+      "character": 21,
+      "text": "getModelConstructorByModelName",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/storage.d.ts",
+      "line": 14,
+      "character": 21,
+      "text": "modelInstanceCreator",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/storage.d.ts",
+      "line": 15,
+      "character": 21,
+      "text": "adapter",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/storage.d.ts",
+      "line": 16,
+      "character": 21,
+      "text": "sessionId",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/storage.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "initialized",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/storage.d.ts",
+      "line": 18,
+      "character": 21,
+      "text": "pushStream",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/storage.d.ts",
+      "line": 30,
+      "character": 12,
+      "text": "getUpdateMutationInput",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/storage.d.ts",
+      "line": 33,
+      "character": 12,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/storage.d.ts",
+      "line": 34,
+      "character": 21,
+      "text": "mutex",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/datastoreConnectivity.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "connectionStatus",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/datastoreConnectivity.d.ts",
+      "line": 6,
+      "character": 12,
+      "text": "observer",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/datastoreConnectivity.d.ts",
+      "line": 7,
+      "character": 12,
+      "text": "subscription",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/datastoreConnectivity.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "timeout",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/utils.d.ts",
+      "line": 37,
+      "character": 42,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/utils.d.ts",
+      "line": 38,
+      "character": 47,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 49,
+      "character": 21,
+      "text": "schema",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 50,
+      "character": 21,
+      "text": "namespaceResolver",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 51,
+      "character": 21,
+      "text": "modelClasses",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 52,
+      "character": 21,
+      "text": "userModelClasses",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 53,
+      "character": 21,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 54,
+      "character": 21,
+      "text": "modelInstanceCreator",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 55,
+      "character": 21,
+      "text": "syncPredicates",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 56,
+      "character": 21,
+      "text": "amplifyConfig",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 57,
+      "character": 21,
+      "text": "authModeStrategy",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 58,
+      "character": 21,
+      "text": "amplifyContext",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 59,
+      "character": 12,
+      "text": "online",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 60,
+      "character": 21,
+      "text": "syncQueriesProcessor",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 61,
+      "character": 21,
+      "text": "subscriptionsProcessor",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 62,
+      "character": 21,
+      "text": "mutationsProcessor",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 63,
+      "character": 21,
+      "text": "modelMerger",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 64,
+      "character": 21,
+      "text": "outbox",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 65,
+      "character": 21,
+      "text": "datastoreConnectivity",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 66,
+      "character": 21,
+      "text": "modelSyncedStatus",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 70,
+      "character": 12,
+      "text": "getModelsMetadataWithNextFullSync",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 71,
+      "character": 12,
+      "text": "syncQueriesObservable",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 72,
+      "character": 12,
+      "text": "disconnectionHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 74,
+      "character": 12,
+      "text": "setupModels",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 75,
+      "character": 12,
+      "text": "getModelsMetadata",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 76,
+      "character": 12,
+      "text": "getModelMetadata",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/index.d.ts",
+      "line": 77,
+      "character": 12,
+      "text": "getModelDefinition",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/outbox.d.ts",
+      "line": 6,
+      "character": 21,
+      "text": "schema",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/outbox.d.ts",
+      "line": 7,
+      "character": 21,
+      "text": "MutationEvent",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/outbox.d.ts",
+      "line": 8,
+      "character": 21,
+      "text": "modelInstanceCreator",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/outbox.d.ts",
+      "line": 9,
+      "character": 21,
+      "text": "ownSymbol",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/outbox.d.ts",
+      "line": 10,
+      "character": 12,
+      "text": "inProgressMutationEventId",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/outbox.d.ts",
+      "line": 22,
+      "character": 12,
+      "text": "syncOutboxVersionsOnDequeue",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/outbox.d.ts",
+      "line": 23,
+      "character": 12,
+      "text": "mergeUserFields",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/outbox.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "removeTimestampFields",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/merger.d.ts",
+      "line": 4,
+      "character": 21,
+      "text": "outbox",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/merger.d.ts",
+      "line": 5,
+      "character": 21,
+      "text": "ownSymbol",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/storage.d.ts",
+      "line": 11,
+      "character": 21,
+      "text": "schema",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/storage.d.ts",
+      "line": 12,
+      "character": 21,
+      "text": "namespaceResolver",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/storage.d.ts",
+      "line": 13,
+      "character": 21,
+      "text": "getModelConstructorByModelName",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/storage.d.ts",
+      "line": 14,
+      "character": 21,
+      "text": "modelInstanceCreator",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/storage.d.ts",
+      "line": 15,
+      "character": 21,
+      "text": "adapter",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/storage.d.ts",
+      "line": 16,
+      "character": 21,
+      "text": "sessionId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/storage.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "initialized",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/storage.d.ts",
+      "line": 18,
+      "character": 21,
+      "text": "pushStream",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/storage.d.ts",
+      "line": 30,
+      "character": 12,
+      "text": "getUpdateMutationInput",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/storage.d.ts",
+      "line": 33,
+      "character": 12,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/storage.d.ts",
+      "line": 34,
+      "character": 21,
+      "text": "mutex",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/datastoreConnectivity.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "connectionStatus",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/datastoreConnectivity.d.ts",
+      "line": 6,
+      "character": 12,
+      "text": "observer",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/datastoreConnectivity.d.ts",
+      "line": 7,
+      "character": 12,
+      "text": "subscription",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/datastoreConnectivity.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "timeout",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/utils.d.ts",
+      "line": 37,
+      "character": 42,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/utils.d.ts",
+      "line": 38,
+      "character": 47,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 49,
+      "character": 21,
+      "text": "schema",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 50,
+      "character": 21,
+      "text": "namespaceResolver",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 51,
+      "character": 21,
+      "text": "modelClasses",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 52,
+      "character": 21,
+      "text": "userModelClasses",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 53,
+      "character": 21,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 54,
+      "character": 21,
+      "text": "modelInstanceCreator",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 55,
+      "character": 21,
+      "text": "syncPredicates",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 56,
+      "character": 21,
+      "text": "amplifyConfig",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 57,
+      "character": 21,
+      "text": "authModeStrategy",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 58,
+      "character": 21,
+      "text": "amplifyContext",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 59,
+      "character": 12,
+      "text": "online",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 60,
+      "character": 21,
+      "text": "syncQueriesProcessor",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 61,
+      "character": 21,
+      "text": "subscriptionsProcessor",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 62,
+      "character": 21,
+      "text": "mutationsProcessor",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 63,
+      "character": 21,
+      "text": "modelMerger",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 64,
+      "character": 21,
+      "text": "outbox",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 65,
+      "character": 21,
+      "text": "datastoreConnectivity",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 66,
+      "character": 21,
+      "text": "modelSyncedStatus",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 70,
+      "character": 12,
+      "text": "getModelsMetadataWithNextFullSync",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 71,
+      "character": 12,
+      "text": "syncQueriesObservable",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 72,
+      "character": 12,
+      "text": "disconnectionHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 74,
+      "character": 12,
+      "text": "setupModels",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 75,
+      "character": 12,
+      "text": "getModelsMetadata",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 76,
+      "character": 12,
+      "text": "getModelMetadata",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/index.d.ts",
+      "line": 77,
+      "character": 12,
+      "text": "getModelDefinition",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/outbox.d.ts",
+      "line": 6,
+      "character": 21,
+      "text": "schema",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/outbox.d.ts",
+      "line": 7,
+      "character": 21,
+      "text": "MutationEvent",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/outbox.d.ts",
+      "line": 8,
+      "character": 21,
+      "text": "modelInstanceCreator",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/outbox.d.ts",
+      "line": 9,
+      "character": 21,
+      "text": "ownSymbol",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/outbox.d.ts",
+      "line": 10,
+      "character": 12,
+      "text": "inProgressMutationEventId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/outbox.d.ts",
+      "line": 22,
+      "character": 12,
+      "text": "syncOutboxVersionsOnDequeue",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/outbox.d.ts",
+      "line": 23,
+      "character": 12,
+      "text": "mergeUserFields",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/outbox.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "removeTimestampFields",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/merger.d.ts",
+      "line": 4,
+      "character": 21,
+      "text": "outbox",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/merger.d.ts",
+      "line": 5,
+      "character": 21,
+      "text": "ownSymbol",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "schema",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "namespaceResolver",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 6,
+      "character": 12,
+      "text": "modelInstanceCreator",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 7,
+      "character": 12,
+      "text": "getModelConstructorByModelName",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "db",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "initPromise",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 10,
+      "character": 12,
+      "text": "resolve",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "reject",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "getStorenameForModel",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "getIndexKeyValuesFromModel",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "getIndexKeyValuesPath",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "load",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 19,
+      "character": 12,
+      "text": "getByKey",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 20,
+      "character": 12,
+      "text": "getAll",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 21,
+      "character": 12,
+      "text": "keyValueFromPredicate",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 22,
+      "character": 12,
+      "text": "filterOnPredicate",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 23,
+      "character": 12,
+      "text": "inMemoryPagination",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 26,
+      "character": 12,
+      "text": "deleteItem",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 35,
+      "character": 12,
+      "text": "deleteTraverse",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageDatabase.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "_collectionInMemoryIndex",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageDatabase.d.ts",
+      "line": 6,
+      "character": 12,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageDatabase.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "getCollectionIndex",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageDatabase.d.ts",
+      "line": 18,
+      "character": 12,
+      "text": "getMonotonicFactory",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageDatabase.d.ts",
+      "line": 34,
+      "character": 12,
+      "text": "getKeyForItem",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageDatabase.d.ts",
+      "line": 35,
+      "character": 12,
+      "text": "getLegacyKeyForItem",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/AsyncStorageDatabase.d.ts",
+      "line": 36,
+      "character": 12,
+      "text": "getKeyPrefixForStoreItems",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/InMemoryStore.d.ts",
+      "line": 4,
+      "character": 34,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/InMemoryStore.d.ts",
+      "line": 5,
+      "character": 36,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "schema",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "namespaceResolver",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 6,
+      "character": 12,
+      "text": "modelInstanceCreator",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 7,
+      "character": 12,
+      "text": "getModelConstructorByModelName",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "db",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "initPromise",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 10,
+      "character": 12,
+      "text": "resolve",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "reject",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "dbName",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "getStorenameForModel",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "getIndexKeyValuesFromModel",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 15,
+      "character": 12,
+      "text": "checkPrivate",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "getNamespaceAndModelFromStorename",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 18,
+      "character": 12,
+      "text": "_get",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 20,
+      "character": 12,
+      "text": "load",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 22,
+      "character": 12,
+      "text": "getByKey",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 23,
+      "character": 12,
+      "text": "getAll",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "keyValueFromPredicate",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "filterOnPredicate",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 26,
+      "character": 12,
+      "text": "inMemoryPagination",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 27,
+      "character": 12,
+      "text": "enginePagination",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 30,
+      "character": 12,
+      "text": "deleteItem",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 31,
+      "character": 12,
+      "text": "deleteTraverse",
+      "kind": 1
+    },
+    {
+      "file": "lib/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 34,
+      "character": 12,
+      "text": "createObjectStoreForModel",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 14,
+      "character": 21,
+      "text": "schema",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 15,
+      "character": 21,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 16,
+      "character": 21,
+      "text": "userClasses",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 17,
+      "character": 21,
+      "text": "outbox",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 18,
+      "character": 21,
+      "text": "modelInstanceCreator",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 19,
+      "character": 21,
+      "text": "MutationEvent",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 20,
+      "character": 21,
+      "text": "amplifyConfig",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 21,
+      "character": 21,
+      "text": "authModeStrategy",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 22,
+      "character": 21,
+      "text": "errorHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 23,
+      "character": 21,
+      "text": "conflictHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 24,
+      "character": 21,
+      "text": "amplifyContext",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "observer",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 26,
+      "character": 21,
+      "text": "typeQuery",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 27,
+      "character": 12,
+      "text": "processing",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 29,
+      "character": 12,
+      "text": "generateQueries",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 30,
+      "character": 12,
+      "text": "isReady",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 33,
+      "character": 12,
+      "text": "jitteredRetry",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 34,
+      "character": 12,
+      "text": "createQueryVariables",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/mutation.d.ts",
+      "line": 35,
+      "character": 12,
+      "text": "opTypeFromTransformerOperation",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/subscription.d.ts",
+      "line": 12,
+      "character": 21,
+      "text": "schema",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/subscription.d.ts",
+      "line": 13,
+      "character": 21,
+      "text": "syncPredicates",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/subscription.d.ts",
+      "line": 14,
+      "character": 21,
+      "text": "amplifyConfig",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/subscription.d.ts",
+      "line": 15,
+      "character": 21,
+      "text": "authModeStrategy",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/subscription.d.ts",
+      "line": 16,
+      "character": 21,
+      "text": "errorHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/subscription.d.ts",
+      "line": 17,
+      "character": 21,
+      "text": "amplifyContext",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/subscription.d.ts",
+      "line": 18,
+      "character": 21,
+      "text": "typeQuery",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/subscription.d.ts",
+      "line": 19,
+      "character": 12,
+      "text": "buffer",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/subscription.d.ts",
+      "line": 20,
+      "character": 12,
+      "text": "dataObserver",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/subscription.d.ts",
+      "line": 22,
+      "character": 12,
+      "text": "buildSubscription",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/subscription.d.ts",
+      "line": 23,
+      "character": 12,
+      "text": "getAuthorizationInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/subscription.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "hubQueryCompletionListener",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/subscription.d.ts",
+      "line": 26,
+      "character": 12,
+      "text": "passesPredicateValidation",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/subscription.d.ts",
+      "line": 27,
+      "character": 12,
+      "text": "pushToBuffer",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/subscription.d.ts",
+      "line": 28,
+      "character": 12,
+      "text": "drainBuffer",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/sync.d.ts",
+      "line": 3,
+      "character": 21,
+      "text": "schema",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/sync.d.ts",
+      "line": 4,
+      "character": 21,
+      "text": "syncPredicates",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/sync.d.ts",
+      "line": 5,
+      "character": 21,
+      "text": "amplifyConfig",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/sync.d.ts",
+      "line": 6,
+      "character": 21,
+      "text": "authModeStrategy",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/sync.d.ts",
+      "line": 7,
+      "character": 21,
+      "text": "errorHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/sync.d.ts",
+      "line": 8,
+      "character": 21,
+      "text": "amplifyContext",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/sync.d.ts",
+      "line": 9,
+      "character": 21,
+      "text": "typeQuery",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/sync.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "generateQueries",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/sync.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "graphqlFilterFromPredicate",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/sync.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "retrievePage",
+      "kind": 1
+    },
+    {
+      "file": "lib/sync/processors/sync.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "jitteredRetry",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "schema",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "namespaceResolver",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 6,
+      "character": 12,
+      "text": "modelInstanceCreator",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 7,
+      "character": 12,
+      "text": "getModelConstructorByModelName",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "db",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "initPromise",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 10,
+      "character": 12,
+      "text": "resolve",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "reject",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "getStorenameForModel",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "getIndexKeyValuesFromModel",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "getIndexKeyValuesPath",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "load",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 19,
+      "character": 12,
+      "text": "getByKey",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 20,
+      "character": 12,
+      "text": "getAll",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 21,
+      "character": 12,
+      "text": "keyValueFromPredicate",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 22,
+      "character": 12,
+      "text": "filterOnPredicate",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 23,
+      "character": 12,
+      "text": "inMemoryPagination",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 26,
+      "character": 12,
+      "text": "deleteItem",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageAdapter.d.ts",
+      "line": 35,
+      "character": 12,
+      "text": "deleteTraverse",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageDatabase.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "_collectionInMemoryIndex",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageDatabase.d.ts",
+      "line": 6,
+      "character": 12,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageDatabase.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "getCollectionIndex",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageDatabase.d.ts",
+      "line": 18,
+      "character": 12,
+      "text": "getMonotonicFactory",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageDatabase.d.ts",
+      "line": 34,
+      "character": 12,
+      "text": "getKeyForItem",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageDatabase.d.ts",
+      "line": 35,
+      "character": 12,
+      "text": "getLegacyKeyForItem",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/AsyncStorageDatabase.d.ts",
+      "line": 36,
+      "character": 12,
+      "text": "getKeyPrefixForStoreItems",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/InMemoryStore.d.ts",
+      "line": 4,
+      "character": 34,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/InMemoryStore.d.ts",
+      "line": 5,
+      "character": 36,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "schema",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "namespaceResolver",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 6,
+      "character": 12,
+      "text": "modelInstanceCreator",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 7,
+      "character": 12,
+      "text": "getModelConstructorByModelName",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "db",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "initPromise",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 10,
+      "character": 12,
+      "text": "resolve",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "reject",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "dbName",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "getStorenameForModel",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "getIndexKeyValuesFromModel",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 15,
+      "character": 12,
+      "text": "checkPrivate",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "getNamespaceAndModelFromStorename",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 18,
+      "character": 12,
+      "text": "_get",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 20,
+      "character": 12,
+      "text": "load",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 22,
+      "character": 12,
+      "text": "getByKey",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 23,
+      "character": 12,
+      "text": "getAll",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "keyValueFromPredicate",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "filterOnPredicate",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 26,
+      "character": 12,
+      "text": "inMemoryPagination",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 27,
+      "character": 12,
+      "text": "enginePagination",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 30,
+      "character": 12,
+      "text": "deleteItem",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 31,
+      "character": 12,
+      "text": "deleteTraverse",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/storage/adapter/IndexedDBAdapter.d.ts",
+      "line": 34,
+      "character": 12,
+      "text": "createObjectStoreForModel",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 14,
+      "character": 21,
+      "text": "schema",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 15,
+      "character": 21,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 16,
+      "character": 21,
+      "text": "userClasses",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 17,
+      "character": 21,
+      "text": "outbox",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 18,
+      "character": 21,
+      "text": "modelInstanceCreator",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 19,
+      "character": 21,
+      "text": "MutationEvent",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 20,
+      "character": 21,
+      "text": "amplifyConfig",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 21,
+      "character": 21,
+      "text": "authModeStrategy",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 22,
+      "character": 21,
+      "text": "errorHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 23,
+      "character": 21,
+      "text": "conflictHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 24,
+      "character": 21,
+      "text": "amplifyContext",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "observer",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 26,
+      "character": 21,
+      "text": "typeQuery",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 27,
+      "character": 12,
+      "text": "processing",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 29,
+      "character": 12,
+      "text": "generateQueries",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 30,
+      "character": 12,
+      "text": "isReady",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 33,
+      "character": 12,
+      "text": "jitteredRetry",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 34,
+      "character": 12,
+      "text": "createQueryVariables",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/mutation.d.ts",
+      "line": 35,
+      "character": 12,
+      "text": "opTypeFromTransformerOperation",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/subscription.d.ts",
+      "line": 12,
+      "character": 21,
+      "text": "schema",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/subscription.d.ts",
+      "line": 13,
+      "character": 21,
+      "text": "syncPredicates",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/subscription.d.ts",
+      "line": 14,
+      "character": 21,
+      "text": "amplifyConfig",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/subscription.d.ts",
+      "line": 15,
+      "character": 21,
+      "text": "authModeStrategy",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/subscription.d.ts",
+      "line": 16,
+      "character": 21,
+      "text": "errorHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/subscription.d.ts",
+      "line": 17,
+      "character": 21,
+      "text": "amplifyContext",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/subscription.d.ts",
+      "line": 18,
+      "character": 21,
+      "text": "typeQuery",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/subscription.d.ts",
+      "line": 19,
+      "character": 12,
+      "text": "buffer",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/subscription.d.ts",
+      "line": 20,
+      "character": 12,
+      "text": "dataObserver",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/subscription.d.ts",
+      "line": 22,
+      "character": 12,
+      "text": "buildSubscription",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/subscription.d.ts",
+      "line": 23,
+      "character": 12,
+      "text": "getAuthorizationInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/subscription.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "hubQueryCompletionListener",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/subscription.d.ts",
+      "line": 26,
+      "character": 12,
+      "text": "passesPredicateValidation",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/subscription.d.ts",
+      "line": 27,
+      "character": 12,
+      "text": "pushToBuffer",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/subscription.d.ts",
+      "line": 28,
+      "character": 12,
+      "text": "drainBuffer",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/sync.d.ts",
+      "line": 3,
+      "character": 21,
+      "text": "schema",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/sync.d.ts",
+      "line": 4,
+      "character": 21,
+      "text": "syncPredicates",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/sync.d.ts",
+      "line": 5,
+      "character": 21,
+      "text": "amplifyConfig",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/sync.d.ts",
+      "line": 6,
+      "character": 21,
+      "text": "authModeStrategy",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/sync.d.ts",
+      "line": 7,
+      "character": 21,
+      "text": "errorHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/sync.d.ts",
+      "line": 8,
+      "character": 21,
+      "text": "amplifyContext",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/sync.d.ts",
+      "line": 9,
+      "character": 21,
+      "text": "typeQuery",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/sync.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "generateQueries",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/sync.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "graphqlFilterFromPredicate",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/sync.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "retrievePage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/sync/processors/sync.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "jitteredRetry",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 84,
+      "character": 34,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 85,
+      "character": 15,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 85,
+      "character": 38,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 85,
+      "character": 59,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 117,
+      "character": 28,
+      "text": "operand",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 118,
+      "character": 9,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 120,
+      "character": 33,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 120,
+      "character": 50,
+      "text": "operand",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 177,
+      "character": 1,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 180,
+      "character": 2,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 191,
+      "character": 1,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 223,
+      "character": 7,
+      "text": "newInstance",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 241,
+      "character": 19,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 239,
+      "character": 15,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 272,
+      "character": 14,
+      "text": "relatedRecordInProxyPkValue",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 276,
+      "character": 43,
+      "text": "relatedRecordInProxyPkValue",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 283,
+      "character": 10,
+      "text": "id",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 296,
+      "character": 15,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 332,
+      "character": 14,
+      "text": "relatedRecordInProxyPkValue",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 336,
+      "character": 43,
+      "text": "relatedRecordInProxyPkValue",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 378,
+      "character": 4,
+      "text": "privateModeCheckResult",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 383,
+      "character": 6,
+      "text": "db",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 386,
+      "character": 3,
+      "text": "privateModeCheckResult",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 392,
+      "character": 7,
+      "text": "db",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 392,
+      "character": 13,
+      "text": "db",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 392,
+      "character": 16,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 392,
+      "character": 33,
+      "text": "db",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 392,
+      "character": 36,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 392,
+      "character": 43,
+      "text": "close",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 393,
+      "character": 10,
+      "text": "db",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 393,
+      "character": 13,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 393,
+      "character": 20,
+      "text": "close",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 398,
+      "character": 3,
+      "text": "privateModeCheckResult",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 403,
+      "character": 6,
+      "text": "privateModeCheckResult",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 407,
+      "character": 6,
+      "text": "privateModeCheckResult",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 413,
+      "character": 2,
+      "text": "db",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 414,
+      "character": 2,
+      "text": "db",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 414,
+      "character": 5,
+      "text": "onerror",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 415,
+      "character": 2,
+      "text": "db",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 415,
+      "character": 5,
+      "text": "onsuccess",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 458,
+      "character": 33,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 458,
+      "character": 36,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 467,
+      "character": 7,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 467,
+      "character": 18,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 471,
+      "character": 7,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 471,
+      "character": 18,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 486,
+      "character": 1,
+      "text": "valA",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 487,
+      "character": 1,
+      "text": "valB",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 490,
+      "character": 5,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 490,
+      "character": 9,
+      "text": "valA",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 491,
+      "character": 5,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 491,
+      "character": 9,
+      "text": "valB",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 493,
+      "character": 25,
+      "text": "_a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 493,
+      "character": 29,
+      "text": "_b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 495,
+      "character": 4,
+      "text": "_a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 495,
+      "character": 24,
+      "text": "_a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 495,
+      "character": 41,
+      "text": "_b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 495,
+      "character": 61,
+      "text": "_b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 501,
+      "character": 3,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 501,
+      "character": 28,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 502,
+      "character": 5,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 502,
+      "character": 29,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 508,
+      "character": 7,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 509,
+      "character": 32,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 509,
+      "character": 35,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 513,
+      "character": 9,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 513,
+      "character": 15,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 518,
+      "character": 17,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 518,
+      "character": 38,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 519,
+      "character": 17,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 519,
+      "character": 38,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 524,
+      "character": 5,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 524,
+      "character": 25,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 525,
+      "character": 2,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 526,
+      "character": 2,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 529,
+      "character": 5,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 529,
+      "character": 25,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 530,
+      "character": 2,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 531,
+      "character": 2,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 538,
+      "character": 65,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 548,
+      "character": 8,
+      "text": "aVal",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 548,
+      "character": 15,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 549,
+      "character": 8,
+      "text": "bVal",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 549,
+      "character": 15,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 551,
+      "character": 19,
+      "text": "aVal",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 551,
+      "character": 25,
+      "text": "bVal",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 665,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 784,
+      "character": 30,
+      "text": "fields",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 785,
+      "character": 2,
+      "text": "fields",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 785,
+      "character": 9,
+      "text": "reduce",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 785,
+      "character": 17,
+      "text": "combined",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 785,
+      "character": 27,
+      "text": "sortKeyFields",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 788,
+      "character": 7,
+      "text": "combined",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 788,
+      "character": 16,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 789,
+      "character": 4,
+      "text": "combined",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 789,
+      "character": 13,
+      "text": "push",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 790,
+      "character": 11,
+      "text": "combined",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 794,
+      "character": 9,
+      "text": "intersectingSetIdx",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 794,
+      "character": 30,
+      "text": "combined",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 794,
+      "character": 39,
+      "text": "findIndex",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 794,
+      "character": 49,
+      "text": "existingSet",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 795,
+      "character": 15,
+      "text": "existingSet",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 795,
+      "character": 33,
+      "text": "f",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 798,
+      "character": 7,
+      "text": "intersectingSetIdx",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 800,
+      "character": 8,
+      "text": "combined",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 800,
+      "character": 17,
+      "text": "intersectingSetIdx",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 804,
+      "character": 4,
+      "text": "combined",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 804,
+      "character": 13,
+      "text": "intersectingSetIdx",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 807,
+      "character": 4,
+      "text": "combined",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 807,
+      "character": 13,
+      "text": "push",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 810,
+      "character": 10,
+      "text": "combined",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 969,
+      "character": 5,
+      "text": "indexName",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 973,
+      "character": 3,
+      "text": "indexName",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 1029,
+      "character": 26,
+      "text": "keysA",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 1029,
+      "character": 33,
+      "text": "keysB",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 1030,
+      "character": 5,
+      "text": "keysA",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 1030,
+      "character": 11,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 1030,
+      "character": 22,
+      "text": "keysB",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 1030,
+      "character": 28,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 1034,
+      "character": 8,
+      "text": "keysA",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 1034,
+      "character": 14,
+      "text": "every",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 1034,
+      "character": 21,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 1034,
+      "character": 26,
+      "text": "idx",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 1034,
+      "character": 34,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 1034,
+      "character": 42,
+      "text": "keysB",
+      "kind": 1
+    },
+    {
+      "file": "src/util.ts",
+      "line": 1034,
+      "character": 48,
+      "text": "idx",
+      "kind": 1
+    },
+    {
+      "file": "src/predicates/sort.ts",
+      "line": 52,
+      "character": 2,
+      "text": "predicate",
+      "kind": 1
+    },
+    {
+      "file": "src/predicates/index.ts",
+      "line": 21,
+      "character": 1,
+      "text": "predicate",
+      "kind": 1
+    },
+    {
+      "file": "src/predicates/index.ts",
+      "line": 112,
+      "character": 6,
+      "text": "operand",
+      "kind": 1
+    },
+    {
+      "file": "src/predicates/index.ts",
+      "line": 116,
+      "character": 43,
+      "text": "operand",
+      "kind": 1
+    },
+    {
+      "file": "src/predicates/index.ts",
+      "line": 134,
+      "character": 2,
+      "text": "predicate",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 50,
+      "character": 30,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 51,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 79,
+      "character": 33,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 80,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 80,
+      "character": 15,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 80,
+      "character": 19,
+      "text": "associatedWith",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 90,
+      "character": 1,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 92,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 92,
+      "character": 13,
+      "text": "targetName",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 92,
+      "character": 27,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 92,
+      "character": 32,
+      "text": "targetNames",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 122,
+      "character": 18,
+      "text": "rules",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 123,
+      "character": 18,
+      "text": "rules",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 123,
+      "character": 24,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 157,
+      "character": 18,
+      "text": "fields",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 158,
+      "character": 18,
+      "text": "fields",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 158,
+      "character": 25,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 295,
+      "character": 1,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 300,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 300,
+      "character": 33,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 304,
+      "character": 33,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 306,
+      "character": 5,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 306,
+      "character": 12,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 312,
+      "character": 36,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 314,
+      "character": 5,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 314,
+      "character": 12,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 320,
+      "character": 32,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 322,
+      "character": 5,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 322,
+      "character": 12,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 521,
+      "character": 1,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 527,
+      "character": 9,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 527,
+      "character": 29,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 527,
+      "character": 52,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 647,
+      "character": 1,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 649,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 653,
+      "character": 1,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 655,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 661,
+      "character": 1,
+      "text": "operand",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 768,
+      "character": 1,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 874,
+      "character": 1,
+      "text": "modelConstructor",
+      "kind": 1
+    },
+    {
+      "file": "src/types.ts",
+      "line": 875,
+      "character": 21,
+      "text": "c",
+      "kind": 1
+    },
+    {
+      "file": "src/authModeStrategies/multiAuthStrategy.ts",
+      "line": 130,
+      "character": 6,
+      "text": "currentUser",
+      "kind": 1
+    },
+    {
+      "file": "src/authModeStrategies/multiAuthStrategy.ts",
+      "line": 132,
+      "character": 3,
+      "text": "currentUser",
+      "kind": 1
+    },
+    {
+      "file": "src/authModeStrategies/multiAuthStrategy.ts",
+      "line": 133,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/authModeStrategies/multiAuthStrategy.ts",
+      "line": 142,
+      "character": 34,
+      "text": "rules",
+      "kind": 1
+    },
+    {
+      "file": "src/authModeStrategies/multiAuthStrategy.ts",
+      "line": 144,
+      "character": 30,
+      "text": "rules",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 79,
+      "character": 10,
+      "text": "incomingCondition",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 168,
+      "character": 11,
+      "text": "operation",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 172,
+      "character": 10,
+      "text": "_version",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 172,
+      "character": 20,
+      "text": "_lastChangedAt",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 172,
+      "character": 36,
+      "text": "_deleted",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 173,
+      "character": 55,
+      "text": "model",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 175,
+      "character": 8,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 175,
+      "character": 31,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 177,
+      "character": 7,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 182,
+      "character": 13,
+      "text": "__version",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 183,
+      "character": 19,
+      "text": "__lastChangedAt",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 184,
+      "character": 13,
+      "text": "__deleted",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 185,
+      "character": 6,
+      "text": "_outgoingData",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 187,
+      "character": 55,
+      "text": "model",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 199,
+      "character": 46,
+      "text": "model",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 218,
+      "character": 9,
+      "text": "oldData",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 220,
+      "character": 9,
+      "text": "newData",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 220,
+      "character": 24,
+      "text": "oldData",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 220,
+      "character": 33,
+      "text": "_version",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 220,
+      "character": 43,
+      "text": "_lastChangedAt",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 223,
+      "character": 32,
+      "text": "newData",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 240,
+      "character": 10,
+      "text": "_version",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 240,
+      "character": 20,
+      "text": "_lastChangedAt",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 240,
+      "character": 36,
+      "text": "_deleted",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 240,
+      "character": 49,
+      "text": "previousData",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 245,
+      "character": 13,
+      "text": "__version",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 246,
+      "character": 19,
+      "text": "__lastChangedAt",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 247,
+      "character": 13,
+      "text": "__deleted",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 248,
+      "character": 6,
+      "text": "currentData",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 252,
+      "character": 3,
+      "text": "_version",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 253,
+      "character": 3,
+      "text": "_lastChangedAt",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 254,
+      "character": 3,
+      "text": "_deleted",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 255,
+      "character": 6,
+      "text": "previousData",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 256,
+      "character": 6,
+      "text": "currentData",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 295,
+      "character": 8,
+      "text": "timestampFieldsMap",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 295,
+      "character": 58,
+      "text": "timestamps",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 297,
+      "character": 6,
+      "text": "timestampFieldsMap",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 298,
+      "character": 25,
+      "text": "timestampFieldsMap",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/outbox.ts",
+      "line": 299,
+      "character": 25,
+      "text": "timestampFieldsMap",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/errorMaps.ts",
+      "line": 6,
+      "character": 26,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/errorMaps.ts",
+      "line": 7,
+      "character": 47,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/errorMaps.ts",
+      "line": 7,
+      "character": 53,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/errorMaps.ts",
+      "line": 9,
+      "character": 20,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/errorMaps.ts",
+      "line": 10,
+      "character": 54,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/errorMaps.ts",
+      "line": 10,
+      "character": 60,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/errorMaps.ts",
+      "line": 32,
+      "character": 8,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/errorMaps.ts",
+      "line": 33,
+      "character": 27,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/errorMaps.ts",
+      "line": 33,
+      "character": 49,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/errorMaps.ts",
+      "line": 36,
+      "character": 8,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/errorMaps.ts",
+      "line": 37,
+      "character": 48,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/errorMaps.ts",
+      "line": 37,
+      "character": 54,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/errorMaps.ts",
+      "line": 55,
+      "character": 31,
+      "text": "observableError",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/errorMaps.ts",
+      "line": 57,
+      "character": 20,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/errorMaps.ts",
+      "line": 62,
+      "character": 8,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 154,
+      "character": 41,
+      "text": "aws_appsync_authenticationType",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 192,
+      "character": 13,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 184,
+      "character": 14,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 207,
+      "character": 8,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 207,
+      "character": 14,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 207,
+      "character": 39,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 207,
+      "character": 45,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 206,
+      "character": 12,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 297,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 297,
+      "character": 14,
+      "text": "errors",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 297,
+      "character": 24,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 297,
+      "character": 28,
+      "text": "errors",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 297,
+      "character": 35,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 298,
+      "character": 14,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 298,
+      "character": 23,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 298,
+      "character": 27,
+      "text": "errors",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 299,
+      "character": 32,
+      "text": "code",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 301,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 301,
+      "character": 17,
+      "text": "errorType",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 306,
+      "character": 8,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 306,
+      "character": 14,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 307,
+      "character": 8,
+      "text": "code",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 316,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 316,
+      "character": 17,
+      "text": "errorType",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 329,
+      "character": 22,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 333,
+      "character": 12,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 333,
+      "character": 18,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 339,
+      "character": 43,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 338,
+      "character": 18,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 362,
+      "character": 23,
+      "text": "id",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 362,
+      "character": 37,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 362,
+      "character": 43,
+      "text": "id",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 395,
+      "character": 32,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 396,
+      "character": 19,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 396,
+      "character": 25,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 399,
+      "character": 21,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 399,
+      "character": 27,
+      "text": "errorInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 402,
+      "character": 23,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 402,
+      "character": 29,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 403,
+      "character": 57,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 403,
+      "character": 63,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 407,
+      "character": 60,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 406,
+      "character": 17,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 410,
+      "character": 16,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 410,
+      "character": 22,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 412,
+      "character": 32,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 412,
+      "character": 38,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 296,
+      "character": 14,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 465,
+      "character": 39,
+      "text": "id",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 468,
+      "character": 6,
+      "text": "mutationInput",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 472,
+      "character": 3,
+      "text": "mutationInput",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 475,
+      "character": 3,
+      "text": "mutationInput",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 492,
+      "character": 8,
+      "text": "mutationInput",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/mutation.ts",
+      "line": 508,
+      "character": 4,
+      "text": "mutationInput",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 84,
+      "character": 10,
+      "text": "aws_appsync_authenticationType",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 175,
+      "character": 9,
+      "text": "ownerValue",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 177,
+      "character": 7,
+      "text": "ownerValue",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 202,
+      "character": 9,
+      "text": "ownerValue",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 204,
+      "character": 7,
+      "text": "ownerValue",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 262,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 270,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 278,
+      "character": 13,
+      "text": "aws_cognito_region",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 278,
+      "character": 39,
+      "text": "AuthConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 279,
+      "character": 10,
+      "text": "aws_cognito_region",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 279,
+      "character": 33,
+      "text": "AuthConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 279,
+      "character": 48,
+      "text": "AuthConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 279,
+      "character": 59,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 283,
+      "character": 9,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 285,
+      "character": 11,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 288,
+      "character": 9,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 289,
+      "character": 6,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 289,
+      "character": 14,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 289,
+      "character": 28,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 291,
+      "character": 12,
+      "text": "currentUser",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 293,
+      "character": 10,
+      "text": "currentUser",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 294,
+      "character": 7,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 294,
+      "character": 15,
+      "text": "currentUser",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 294,
+      "character": 27,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 298,
+      "character": 9,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 299,
+      "character": 12,
+      "text": "payload",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 299,
+      "character": 22,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 299,
+      "character": 28,
+      "text": "split",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 305,
+      "character": 44,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 304,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 316,
+      "character": 28,
+      "text": "aws_appsync_authenticationType",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 346,
+      "character": 35,
+      "text": "operation",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 362,
+      "character": 49,
+      "text": "operation",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 384,
+      "character": 23,
+      "text": "operation",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 385,
+      "character": 50,
+      "text": "operation",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 451,
+      "character": 24,
+      "text": "subscriptionError",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 453,
+      "character": 33,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 459,
+      "character": 13,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 459,
+      "character": 21,
+      "text": "includes",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 462,
+      "character": 13,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 462,
+      "character": 21,
+      "text": "includes",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 467,
+      "character": 23,
+      "text": "subscription",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 467,
+      "character": 39,
+      "text": "subscription",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 467,
+      "character": 52,
+      "text": "unsubscribe",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 472,
+      "character": 39,
+      "text": "operation",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 474,
+      "character": 40,
+      "text": "operation",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 479,
+      "character": 18,
+      "text": "operation",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 481,
+      "character": 43,
+      "text": "operation",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 489,
+      "character": 18,
+      "text": "operation",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 491,
+      "character": 43,
+      "text": "operation",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 495,
+      "character": 43,
+      "text": "operation",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 499,
+      "character": 28,
+      "text": "operation",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 503,
+      "character": 45,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 522,
+      "character": 14,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 519,
+      "character": 21,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 531,
+      "character": 13,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 531,
+      "character": 21,
+      "text": "includes",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 532,
+      "character": 13,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 532,
+      "character": 21,
+      "text": "includes",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 536,
+      "character": 27,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 543,
+      "character": 14,
+      "text": "boundFunction",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/subscription.ts",
+      "line": 547,
+      "character": 11,
+      "text": "boundFunction",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 105,
+      "character": 39,
+      "text": "aws_appsync_authenticationType",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 134,
+      "character": 60,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 135,
+      "character": 32,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 135,
+      "character": 60,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 147,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 130,
+      "character": 12,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 158,
+      "character": 10,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 160,
+      "character": 20,
+      "text": "opResult",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 162,
+      "character": 10,
+      "text": "items",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 162,
+      "character": 28,
+      "text": "newNextToken",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 162,
+      "character": 42,
+      "text": "startedAt",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 193,
+      "character": 10,
+      "text": "query",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 193,
+      "character": 17,
+      "text": "variables",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 209,
+      "character": 11,
+      "text": "clientOrForbiddenErrorMessage",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 210,
+      "character": 29,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 210,
+      "character": 57,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 211,
+      "character": 9,
+      "text": "clientOrForbiddenErrorMessage",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 215,
+      "character": 30,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 215,
+      "character": 37,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 215,
+      "character": 53,
+      "text": "items",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 218,
+      "character": 6,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 218,
+      "character": 13,
+      "text": "errors",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 219,
+      "character": 7,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 219,
+      "character": 13,
+      "text": "errors",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 220,
+      "character": 7,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 220,
+      "character": 14,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 220,
+      "character": 18,
+      "text": "errorType",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 224,
+      "character": 6,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 224,
+      "character": 13,
+      "text": "errors",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 225,
+      "character": 7,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 225,
+      "character": 13,
+      "text": "errors",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 226,
+      "character": 7,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 226,
+      "character": 14,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 226,
+      "character": 18,
+      "text": "errorType",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 229,
+      "character": 11,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 229,
+      "character": 20,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 232,
+      "character": 6,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 232,
+      "character": 13,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 232,
+      "character": 26,
+      "text": "items",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 232,
+      "character": 34,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 232,
+      "character": 41,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 232,
+      "character": 54,
+      "text": "items",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 232,
+      "character": 60,
+      "text": "filter",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 233,
+      "character": 7,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 233,
+      "character": 15,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 239,
+      "character": 29,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 245,
+      "character": 19,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 245,
+      "character": 23,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 254,
+      "character": 57,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 253,
+      "character": 17,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 273,
+      "character": 6,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 273,
+      "character": 13,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 273,
+      "character": 20,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 273,
+      "character": 27,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 275,
+      "character": 6,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 275,
+      "character": 13,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 277,
+      "character": 10,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 277,
+      "character": 17,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 280,
+      "character": 13,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 283,
+      "character": 9,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 283,
+      "character": 16,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 283,
+      "character": 31,
+      "text": "items",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 283,
+      "character": 38,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 284,
+      "character": 13,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 287,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 207,
+      "character": 13,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 298,
+      "character": 10,
+      "text": "maxRecordsToSync",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 298,
+      "character": 28,
+      "text": "syncPageSize",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 341,
+      "character": 8,
+      "text": "maxRecordsToSync",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/processors/sync.ts",
+      "line": 355,
+      "character": 55,
+      "text": "maxRecordsToSync",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 193,
+      "character": 20,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 192,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 238,
+      "character": 18,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 239,
+      "character": 19,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 248,
+      "character": 24,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 247,
+      "character": 17,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 280,
+      "character": 18,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 281,
+      "character": 19,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 290,
+      "character": 23,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 289,
+      "character": 16,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 304,
+      "character": 16,
+      "text": "model",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 310,
+      "character": 43,
+      "text": "model",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 317,
+      "character": 12,
+      "text": "element",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 317,
+      "character": 21,
+      "text": "model",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 341,
+      "character": 17,
+      "text": "model",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 347,
+      "character": 44,
+      "text": "model",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 670,
+      "character": 15,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 671,
+      "character": 24,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 734,
+      "character": 6,
+      "text": "savedModel",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 761,
+      "character": 6,
+      "text": "savedModel",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 779,
+      "character": 6,
+      "text": "savedModel",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 793,
+      "character": 10,
+      "text": "savedModel",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 797,
+      "character": 13,
+      "text": "modelMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 798,
+      "character": 18,
+      "text": "modelName",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/index.ts",
+      "line": 800,
+      "character": 10,
+      "text": "modelName",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 113,
+      "character": 42,
+      "text": "rules",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 114,
+      "character": 10,
+      "text": "rule",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 114,
+      "character": 33,
+      "text": "rules",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 114,
+      "character": 39,
+      "text": "find",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 114,
+      "character": 44,
+      "text": "rule",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 114,
+      "character": 52,
+      "text": "rule",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 114,
+      "character": 57,
+      "text": "allow",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 115,
+      "character": 8,
+      "text": "rule",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 115,
+      "character": 16,
+      "text": "rule",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 115,
+      "character": 21,
+      "text": "ownerField",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 116,
+      "character": 22,
+      "text": "rule",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 116,
+      "character": 27,
+      "text": "ownerField",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 232,
+      "character": 7,
+      "text": "authConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 234,
+      "character": 8,
+      "text": "attr",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 234,
+      "character": 16,
+      "text": "attr",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 234,
+      "character": 24,
+      "text": "attr",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 234,
+      "character": 29,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 236,
+      "character": 23,
+      "text": "rules",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 240,
+      "character": 1,
+      "text": "rules",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 240,
+      "character": 7,
+      "text": "forEach",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 240,
+      "character": 15,
+      "text": "rule",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 243,
+      "character": 3,
+      "text": "identityClaim",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 244,
+      "character": 3,
+      "text": "ownerField",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 245,
+      "character": 3,
+      "text": "operations",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 246,
+      "character": 3,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 247,
+      "character": 3,
+      "text": "groupClaim",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 248,
+      "character": 10,
+      "text": "authStrategy",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 249,
+      "character": 3,
+      "text": "groups",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 252,
+      "character": 8,
+      "text": "isReadAuthorized",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 252,
+      "character": 27,
+      "text": "operations",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 252,
+      "character": 38,
+      "text": "includes",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 253,
+      "character": 22,
+      "text": "authStrategy",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 255,
+      "character": 7,
+      "text": "isReadAuthorized",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 277,
+      "character": 42,
+      "text": "level",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 283,
+      "character": 5,
+      "text": "operations",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 283,
+      "character": 16,
+      "text": "includes",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 283,
+      "character": 36,
+      "text": "level",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 429,
+      "character": 19,
+      "text": "k",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 429,
+      "character": 22,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 431,
+      "character": 3,
+      "text": "k",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 432,
+      "character": 3,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 433,
+      "character": 10,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 434,
+      "character": 26,
+      "text": "k",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 435,
+      "character": 26,
+      "text": "k",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 438,
+      "character": 25,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 440,
+      "character": 9,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 472,
+      "character": 28,
+      "text": "operand",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 486,
+      "character": 33,
+      "text": "operand",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 509,
+      "character": 24,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 510,
+      "character": 29,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 514,
+      "character": 28,
+      "text": "operand",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 538,
+      "character": 6,
+      "text": "parsedGroups",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 540,
+      "character": 3,
+      "text": "parsedGroups",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 542,
+      "character": 3,
+      "text": "parsedGroups",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 541,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 544,
+      "character": 25,
+      "text": "parsedGroups",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 594,
+      "character": 67,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 593,
+      "character": 10,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 599,
+      "character": 34,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 604,
+      "character": 5,
+      "text": "forbiddenError",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 605,
+      "character": 5,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 605,
+      "character": 14,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 605,
+      "character": 20,
+      "text": "errors",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 606,
+      "character": 2,
+      "text": "forbiddenError",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 606,
+      "character": 20,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 606,
+      "character": 26,
+      "text": "errors",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 606,
+      "character": 48,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 607,
+      "character": 35,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 607,
+      "character": 39,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 609,
+      "character": 12,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 609,
+      "character": 21,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 609,
+      "character": 27,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 610,
+      "character": 2,
+      "text": "forbiddenError",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 610,
+      "character": 19,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 613,
+      "character": 5,
+      "text": "forbiddenError",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 614,
+      "character": 9,
+      "text": "forbiddenError",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 614,
+      "character": 24,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 619,
+      "character": 39,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 622,
+      "character": 2,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 623,
+      "character": 2,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 623,
+      "character": 8,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 625,
+      "character": 3,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 625,
+      "character": 9,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 625,
+      "character": 17,
+      "text": "includes",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 636,
+      "character": 20,
+      "text": "functionAuthProvider",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 638,
+      "character": 6,
+      "text": "functionAuthProvider",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 638,
+      "character": 37,
+      "text": "functionAuthProvider",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 640,
+      "character": 12,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 640,
+      "character": 28,
+      "text": "functionAuthProvider",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 644,
+      "character": 62,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/sync/utils.ts",
+      "line": 642,
+      "character": 12,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 51,
+      "character": 19,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 52,
+      "character": 18,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 176,
+      "character": 33,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 178,
+      "character": 36,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 215,
+      "character": 55,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 217,
+      "character": 14,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 214,
+      "character": 16,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 228,
+      "character": 15,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 227,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 246,
+      "character": 8,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 296,
+      "character": 9,
+      "text": "isValid",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 298,
+      "character": 8,
+      "text": "isValid",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 313,
+      "character": 10,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 314,
+      "character": 11,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 379,
+      "character": 11,
+      "text": "allPresent",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 381,
+      "character": 7,
+      "text": "allPresent",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 385,
+      "character": 12,
+      "text": "allPresent",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 393,
+      "character": 8,
+      "text": "getByField",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 393,
+      "character": 33,
+      "text": "getByField",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 425,
+      "character": 11,
+      "text": "allPresent",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 427,
+      "character": 7,
+      "text": "allPresent",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 432,
+      "character": 12,
+      "text": "allPresent",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 554,
+      "character": 47,
+      "text": "operand",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 623,
+      "character": 27,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 624,
+      "character": 28,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 653,
+      "character": 36,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 741,
+      "character": 10,
+      "text": "isValid",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 743,
+      "character": 9,
+      "text": "isValid",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 872,
+      "character": 11,
+      "text": "index",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 876,
+      "character": 8,
+      "text": "index",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 877,
+      "character": 14,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 884,
+      "character": 8,
+      "text": "index",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 892,
+      "character": 23,
+      "text": "index",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 898,
+      "character": 16,
+      "text": "index",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 997,
+      "character": 9,
+      "text": "model",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 1001,
+      "character": 4,
+      "text": "model",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 1007,
+      "character": 53,
+      "text": "model",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 1014,
+      "character": 12,
+      "text": "instance",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 1014,
+      "character": 49,
+      "text": "instance",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 1015,
+      "character": 63,
+      "text": "instance",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/IndexedDBAdapter.ts",
+      "line": 1023,
+      "character": 20,
+      "text": "instance",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/InMemoryStore.ts",
+      "line": 11,
+      "character": 38,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/InMemoryStore.ts",
+      "line": 14,
+      "character": 9,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/InMemoryStore.ts",
+      "line": 14,
+      "character": 36,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/InMemoryStore.ts",
+      "line": 17,
+      "character": 40,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/InMemoryStore.ts",
+      "line": 22,
+      "character": 9,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/InMemoryStore.ts",
+      "line": 22,
+      "character": 36,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageDatabase.ts",
+      "line": 236,
+      "character": 13,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageDatabase.ts",
+      "line": 238,
+      "character": 26,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageDatabase.ts",
+      "line": 241,
+      "character": 14,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageDatabase.ts",
+      "line": 257,
+      "character": 8,
+      "text": "record",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageDatabase.ts",
+      "line": 280,
+      "character": 8,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageDatabase.ts",
+      "line": 282,
+      "character": 9,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageDatabase.ts",
+      "line": 317,
+      "character": 15,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageDatabase.ts",
+      "line": 318,
+      "character": 12,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 51,
+      "character": 19,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 52,
+      "character": 18,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 114,
+      "character": 15,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 113,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 156,
+      "character": 9,
+      "text": "isValid",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 158,
+      "character": 8,
+      "text": "isValid",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 231,
+      "character": 11,
+      "text": "allPresent",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 233,
+      "character": 7,
+      "text": "allPresent",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 237,
+      "character": 12,
+      "text": "allPresent",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 245,
+      "character": 13,
+      "text": "getByField",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 245,
+      "character": 38,
+      "text": "getByField",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 274,
+      "character": 11,
+      "text": "allPresent",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 276,
+      "character": 7,
+      "text": "allPresent",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 281,
+      "character": 12,
+      "text": "allPresent",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 399,
+      "character": 47,
+      "text": "operand",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 534,
+      "character": 10,
+      "text": "isValid",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 535,
+      "character": 9,
+      "text": "isValid",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 639,
+      "character": 11,
+      "text": "hasOneIndex",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 642,
+      "character": 8,
+      "text": "hasOneIndex",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 645,
+      "character": 9,
+      "text": "hasOneIndex",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 647,
+      "character": 9,
+      "text": "hasOneIndex",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 660,
+      "character": 11,
+      "text": "values",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 662,
+      "character": 42,
+      "text": "hasOneIndex",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 666,
+      "character": 8,
+      "text": "values",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 671,
+      "character": 8,
+      "text": "values",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 676,
+      "character": 11,
+      "text": "values",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 676,
+      "character": 18,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 680,
+      "character": 11,
+      "text": "recordToDelete",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 693,
+      "character": 8,
+      "text": "recordToDelete",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 694,
+      "character": 9,
+      "text": "hasOneIndex",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 694,
+      "character": 21,
+      "text": "every",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 694,
+      "character": 27,
+      "text": "index",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 694,
+      "character": 36,
+      "text": "values",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 694,
+      "character": 43,
+      "text": "includes",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 694,
+      "character": 62,
+      "text": "index",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 698,
+      "character": 8,
+      "text": "recordToDelete",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 699,
+      "character": 32,
+      "text": "hasOneIndex",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 699,
+      "character": 49,
+      "text": "values",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 715,
+      "character": 13,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 719,
+      "character": 12,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 724,
+      "character": 58,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 799,
+      "character": 9,
+      "text": "model",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 803,
+      "character": 4,
+      "text": "model",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 809,
+      "character": 52,
+      "text": "model",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 811,
+      "character": 11,
+      "text": "instance",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 811,
+      "character": 48,
+      "text": "instance",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/adapter/AsyncStorageAdapter.ts",
+      "line": 812,
+      "character": 61,
+      "text": "instance",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 120,
+      "character": 7,
+      "text": "updateMutationInput",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 136,
+      "character": 4,
+      "text": "updateMutationInput",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 143,
+      "character": 8,
+      "text": "updateMutationInput",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 148,
+      "character": 9,
+      "text": "element",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 148,
+      "character": 19,
+      "text": "updateMutationInput",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 313,
+      "character": 19,
+      "text": "element",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 355,
+      "character": 9,
+      "text": "targetNames",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 359,
+      "character": 21,
+      "text": "targetNames",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 362,
+      "character": 15,
+      "text": "targetName",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 364,
+      "character": 29,
+      "text": "targetName",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 364,
+      "character": 58,
+      "text": "targetName",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 367,
+      "character": 21,
+      "text": "targetName",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 368,
+      "character": 23,
+      "text": "targetName",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 370,
+      "character": 26,
+      "text": "targetName",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 387,
+      "character": 10,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 387,
+      "character": 16,
+      "text": "targetNames",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 390,
+      "character": 28,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 390,
+      "character": 50,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 393,
+      "character": 20,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 394,
+      "character": 22,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 394,
+      "character": 66,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 421,
+      "character": 10,
+      "text": "id",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 421,
+      "character": 14,
+      "text": "_version",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 421,
+      "character": 24,
+      "text": "_lastChangedAt",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 421,
+      "character": 40,
+      "text": "_deleted",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 427,
+      "character": 3,
+      "text": "id",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 428,
+      "character": 3,
+      "text": "_version",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 429,
+      "character": 3,
+      "text": "_lastChangedAt",
+      "kind": 1
+    },
+    {
+      "file": "src/storage/storage.ts",
+      "line": 430,
+      "character": 3,
+      "text": "_deleted",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 141,
+      "character": 1,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 143,
+      "character": 27,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 299,
+      "character": 64,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 308,
+      "character": 5,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 308,
+      "character": 19,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 318,
+      "character": 28,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 319,
+      "character": 52,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 319,
+      "character": 59,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 329,
+      "character": 16,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 332,
+      "character": 16,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 336,
+      "character": 15,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 348,
+      "character": 24,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 350,
+      "character": 69,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 350,
+      "character": 84,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 355,
+      "character": 25,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 365,
+      "character": 105,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 369,
+      "character": 46,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 382,
+      "character": 116,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 386,
+      "character": 30,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 388,
+      "character": 22,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 388,
+      "character": 38,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 390,
+      "character": 59,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 390,
+      "character": 74,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 393,
+      "character": 24,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 398,
+      "character": 69,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 403,
+      "character": 27,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 413,
+      "character": 25,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 415,
+      "character": 70,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 415,
+      "character": 85,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 419,
+      "character": 16,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 421,
+      "character": 27,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 422,
+      "character": 16,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 422,
+      "character": 44,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 427,
+      "character": 22,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 427,
+      "character": 41,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 431,
+      "character": 30,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 433,
+      "character": 32,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 438,
+      "character": 17,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 442,
+      "character": 20,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 442,
+      "character": 35,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 447,
+      "character": 30,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 458,
+      "character": 1,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 463,
+      "character": 9,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 477,
+      "character": 12,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 481,
+      "character": 8,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 491,
+      "character": 8,
+      "text": "parsedValue",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 493,
+      "character": 20,
+      "text": "parsedValue",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 494,
+      "character": 20,
+      "text": "parsedValue",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 533,
+      "character": 59,
+      "text": "id",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 554,
+      "character": 9,
+      "text": "modelConstructor",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 555,
+      "character": 32,
+      "text": "modelConstructor",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 561,
+      "character": 7,
+      "text": "patches",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 572,
+      "character": 40,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 573,
+      "character": 12,
+      "text": "parsedValue",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 573,
+      "character": 63,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 575,
+      "character": 24,
+      "text": "parsedValue",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 578,
+      "character": 10,
+      "text": "patches",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 583,
+      "character": 7,
+      "text": "patches",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 583,
+      "character": 15,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 613,
+      "character": 41,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 614,
+      "character": 22,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 646,
+      "character": 51,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 649,
+      "character": 22,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 649,
+      "character": 27,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 650,
+      "character": 7,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 650,
+      "character": 22,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 652,
+      "character": 13,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 653,
+      "character": 22,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 683,
+      "character": 20,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 684,
+      "character": 15,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 689,
+      "character": 9,
+      "text": "_version",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 690,
+      "character": 64,
+      "text": "_version",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 753,
+      "character": 9,
+      "text": "storedValue",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 755,
+      "character": 7,
+      "text": "storedValue",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 870,
+      "character": 10,
+      "text": "aws_appsync_graphqlEndpoint",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 872,
+      "character": 6,
+      "text": "aws_appsync_graphqlEndpoint",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 873,
+      "character": 46,
+      "text": "aws_appsync_graphqlEndpoint",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 897,
+      "character": 20,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 910,
+      "character": 7,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 913,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 914,
+      "character": 32,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1282,
+      "character": 48,
+      "text": "id",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1366,
+      "character": 14,
+      "text": "primaryKeysAndValues",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1382,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1382,
+      "character": 35,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1527,
+      "character": 20,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1526,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1609,
+      "character": 26,
+      "text": "payload",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1610,
+      "character": 12,
+      "text": "event",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1610,
+      "character": 19,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1612,
+      "character": 5,
+      "text": "event",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1613,
+      "character": 5,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1613,
+      "character": 11,
+      "text": "model",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1613,
+      "character": 18,
+      "text": "name",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1674,
+      "character": 21,
+      "text": "authProviders",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1689,
+      "character": 21,
+      "text": "maxRecordsToSync",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1698,
+      "character": 21,
+      "text": "syncPageSize",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1717,
+      "character": 6,
+      "text": "this",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1717,
+      "character": 11,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1719,
+      "character": 3,
+      "text": "this",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1719,
+      "character": 8,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1724,
+      "character": 4,
+      "text": "this",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1724,
+      "character": 9,
+      "text": "storageAdapter",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1725,
+      "character": 4,
+      "text": "this",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1725,
+      "character": 9,
+      "text": "sessionId",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1727,
+      "character": 9,
+      "text": "this",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1727,
+      "character": 14,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1727,
+      "character": 22,
+      "text": "init",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1734,
+      "character": 8,
+      "text": "this",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1734,
+      "character": 13,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1734,
+      "character": 21,
+      "text": "clear",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1736,
+      "character": 6,
+      "text": "this",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1736,
+      "character": 11,
+      "text": "sync",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1737,
+      "character": 3,
+      "text": "this",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1737,
+      "character": 8,
+      "text": "sync",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1737,
+      "character": 13,
+      "text": "unsubscribeConnectivity",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1740,
+      "character": 2,
+      "text": "this",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1740,
+      "character": 7,
+      "text": "initialized",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1741,
+      "character": 2,
+      "text": "this",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1741,
+      "character": 7,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1742,
+      "character": 2,
+      "text": "this",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1742,
+      "character": 7,
+      "text": "sync",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1743,
+      "character": 2,
+      "text": "this",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1743,
+      "character": 7,
+      "text": "syncPredicates",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1824,
+      "character": 13,
+      "text": "modelConstructor",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1858,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1856,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1863,
+      "character": 2,
+      "text": "conditionProducer",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1866,
+      "character": 9,
+      "text": "condition",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1866,
+      "character": 27,
+      "text": "conditionProducer",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1869,
+      "character": 7,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1872,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1868,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1903,
+      "character": 12,
+      "text": "aws_appsync_graphqlEndpoint",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1905,
+      "character": 10,
+      "text": "appSyncUrl",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1905,
+      "character": 23,
+      "text": "aws_appsync_graphqlEndpoint",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1905,
+      "character": 51,
+      "text": "split",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1906,
+      "character": 11,
+      "text": "appSyncId",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1906,
+      "character": 24,
+      "text": "appSyncUrl",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1906,
+      "character": 35,
+      "text": "split",
+      "kind": 1
+    },
+    {
+      "file": "src/datastore/datastore.ts",
+      "line": 1908,
+      "character": 27,
+      "text": "appSyncId",
+      "kind": 1
+    }
+  ],
+  "percentage": 94.04613166746756,
+  "total": 20810,
+  "covered": 19571,
+  "uncovered": 1239
+}

@@ -1,0 +1,177 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>StorageCache.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/StorageCache.ts</td><td class="">100.00%</td><td class="">0%</td><td class="">190</td><td class="">190</td><td class="">0</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import { getCurrTime, getByteLength, defaultConfig, isInteger } from &#x27;./Utils&#x27;;
+
+import { CacheConfig, CacheItem, CacheItemOptions } from &#x27;./types&#x27;;
+import { ConsoleLogger as Logger } from &#x27;@aws-amplify/core&#x27;;
+
+const logger = new Logger(&#x27;StorageCache&#x27;);
+
+/**
+ * Initialization of the cache
+ *
+ */
+export class StorageCache {
+	protected cacheCurSizeKey: string;
+	protected config: CacheConfig;
+
+	/**
+	 * Initialize the cache
+	 * @param config - the configuration of the cache
+	 */
+	constructor(config: CacheConfig) {
+		this.config = Object.assign({}, config);
+		this.cacheCurSizeKey = this.config.keyPrefix + &#x27;CurSize&#x27;;
+		this.checkConfig();
+	}
+
+	public getModuleName() {
+		return &#x27;Cache&#x27;;
+	}
+
+	private checkConfig(): void {
+		// check configuration
+		if (!isInteger(this.config.capacityInBytes)) {
+			logger.error(
+				&#x27;Invalid parameter: capacityInBytes. It should be an Integer. Setting back to default.&#x27;
+			);
+			this.config.capacityInBytes = defaultConfig.capacityInBytes;
+		}
+
+		if (!isInteger(this.config.itemMaxSize)) {
+			logger.error(
+				&#x27;Invalid parameter: itemMaxSize. It should be an Integer. Setting back to default.&#x27;
+			);
+			this.config.itemMaxSize = defaultConfig.itemMaxSize;
+		}
+
+		if (!isInteger(this.config.defaultTTL)) {
+			logger.error(
+				&#x27;Invalid parameter: defaultTTL. It should be an Integer. Setting back to default.&#x27;
+			);
+			this.config.defaultTTL = defaultConfig.defaultTTL;
+		}
+
+		if (!isInteger(this.config.defaultPriority)) {
+			logger.error(
+				&#x27;Invalid parameter: defaultPriority. It should be an Integer. Setting back to default.&#x27;
+			);
+			this.config.defaultPriority = defaultConfig.defaultPriority;
+		}
+
+		if (this.config.itemMaxSize &gt; this.config.capacityInBytes) {
+			logger.error(
+				&#x27;Invalid parameter: itemMaxSize. It should be smaller than capacityInBytes. Setting back to default.&#x27;
+			);
+			this.config.itemMaxSize = defaultConfig.itemMaxSize;
+		}
+
+		if (this.config.defaultPriority &gt; 5 || this.config.defaultPriority &lt; 1) {
+			logger.error(
+				&#x27;Invalid parameter: defaultPriority. It should be between 1 and 5. Setting back to default.&#x27;
+			);
+			this.config.defaultPriority = defaultConfig.defaultPriority;
+		}
+
+		if (
+			Number(this.config.warningThreshold) &gt; 1 ||
+			Number(this.config.warningThreshold) &lt; 0
+		) {
+			logger.error(
+				&#x27;Invalid parameter: warningThreshold. It should be between 0 and 1. Setting back to default.&#x27;
+			);
+			this.config.warningThreshold = defaultConfig.warningThreshold;
+		}
+		// set 5MB limit
+		const cacheLimit: number = 5 * 1024 * 1024;
+		if (this.config.capacityInBytes &gt; cacheLimit) {
+			logger.error(
+				&#x27;Cache Capacity should be less than 5MB. Setting back to default. Setting back to default.&#x27;
+			);
+			this.config.capacityInBytes = defaultConfig.capacityInBytes;
+		}
+	}
+
+	/**
+	 * produce a JSON object with meta-data and data value
+	 * @param value - the value of the item
+	 * @param options - optional, the specified meta-data
+	 *
+	 * @return - the item which has the meta-data and the value
+	 */
+	protected fillCacheItem(
+		key: string,
+		value: object | number | string | boolean,
+		options: CacheItemOptions
+	): CacheItem {
+		const ret: CacheItem = {
+			key,
+			data: value,
+			timestamp: getCurrTime(),
+			visitedTime: getCurrTime(),
+			priority: options.priority,
+			expires: options.expires,
+			type: typeof value,
+			byteSize: 0,
+		};
+
+		ret.byteSize = getByteLength(JSON.stringify(ret));
+
+		// for accurate size
+		ret.byteSize = getByteLength(JSON.stringify(ret));
+		return ret;
+	}
+
+	/**
+	 * set cache with customized configuration
+	 * @param config - customized configuration
+	 *
+	 * @return - the current configuration
+	 */
+	public configure(config?: CacheConfig): CacheConfig {
+		if (!config) {
+			return this.config;
+		}
+		if (config.keyPrefix) {
+			logger.warn(`Don&#x27;t try to configure keyPrefix!`);
+		}
+
+		this.config = Object.assign({}, this.config, config, config.Cache);
+		this.checkConfig();
+		return this.config;
+	}
+}
+
+/**
+ * @deprecated use named import
+ */
+export default StorageCache;
+</textarea><pre id="annotations" style="display:none">[]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:22 GMT</p>
+    </body>
+  </html>
+  

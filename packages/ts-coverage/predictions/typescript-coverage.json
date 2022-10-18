@@ -1,0 +1,3369 @@
+{
+  "fileCounts": {},
+  "anys": [
+    {
+      "file": "lib-esm/types/Predictions.d.ts",
+      "line": 247,
+      "character": 49,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Predictions.d.ts",
+      "line": 248,
+      "character": 46,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Predictions.d.ts",
+      "line": 249,
+      "character": 45,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Predictions.d.ts",
+      "line": 250,
+      "character": 44,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Predictions.d.ts",
+      "line": 251,
+      "character": 44,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Predictions.d.ts",
+      "line": 252,
+      "character": 40,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Predictions.d.ts",
+      "line": 253,
+      "character": 37,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Predictions.d.ts",
+      "line": 254,
+      "character": 38,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Predictions.d.ts",
+      "line": 255,
+      "character": 44,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Predictions.d.ts",
+      "line": 256,
+      "character": 46,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Predictions.d.ts",
+      "line": 257,
+      "character": 48,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Predictions.d.ts",
+      "line": 258,
+      "character": 45,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Predictions.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Predictions.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "_convertPluggables",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Predictions.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "_identifyPluggables",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Predictions.d.ts",
+      "line": 6,
+      "character": 12,
+      "text": "_interpretPluggables",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Predictions.d.ts",
+      "line": 41,
+      "character": 12,
+      "text": "getPluggableToExecute",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Predictions.d.ts",
+      "line": 42,
+      "character": 12,
+      "text": "getAllProviders",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Predictions.d.ts",
+      "line": 43,
+      "character": 12,
+      "text": "configurePluggable",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Predictions.d.ts",
+      "line": 44,
+      "character": 12,
+      "text": "implementsConvertPluggable",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Predictions.d.ts",
+      "line": 45,
+      "character": 12,
+      "text": "implementsIdentifyPluggable",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Predictions.d.ts",
+      "line": 46,
+      "character": 12,
+      "text": "implementsInterpretPluggable",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "translateClient",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "pollyClient",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 10,
+      "character": 39,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "sendDataToTranscribe",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "sendEncodedDataToTranscribe",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "getAudioEventMessage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "pcmEncode",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 15,
+      "character": 12,
+      "text": "inputSampleRate",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "downsampleBuffer",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "openConnectionWithTranscribe",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 18,
+      "character": 12,
+      "text": "generateTranscribeUrl",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIIdentifyPredictionsProvider.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "rekognitionClient",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIIdentifyPredictionsProvider.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "textractClient",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIIdentifyPredictionsProvider.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "configureSource",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIIdentifyPredictionsProvider.d.ts",
+      "line": 33,
+      "character": 12,
+      "text": "detectLabels",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIIdentifyPredictionsProvider.d.ts",
+      "line": 39,
+      "character": 12,
+      "text": "detectModerationLabels",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIIdentifyPredictionsProvider.d.ts",
+      "line": 47,
+      "character": 12,
+      "text": "decodeExternalImageId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIInterpretPredictionsProvider.d.ts",
+      "line": 6,
+      "character": 12,
+      "text": "detectKeyPhrases",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIInterpretPredictionsProvider.d.ts",
+      "line": 7,
+      "character": 12,
+      "text": "detectSyntax",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIInterpretPredictionsProvider.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "serializeSyntaxFromComprehend",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIInterpretPredictionsProvider.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "detectSentiment",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIInterpretPredictionsProvider.d.ts",
+      "line": 10,
+      "character": 12,
+      "text": "detectEntities",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIInterpretPredictionsProvider.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "serializeEntitiesFromComprehend",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIInterpretPredictionsProvider.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "detectLanguage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIPredictionsProvider.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "convertProvider",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIPredictionsProvider.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "identifyProvider",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AmazonAIPredictionsProvider.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "interpretProvider",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Predictions.d.ts",
+      "line": 247,
+      "character": 49,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Predictions.d.ts",
+      "line": 248,
+      "character": 46,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Predictions.d.ts",
+      "line": 249,
+      "character": 45,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Predictions.d.ts",
+      "line": 250,
+      "character": 44,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Predictions.d.ts",
+      "line": 251,
+      "character": 44,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Predictions.d.ts",
+      "line": 252,
+      "character": 40,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Predictions.d.ts",
+      "line": 253,
+      "character": 37,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Predictions.d.ts",
+      "line": 254,
+      "character": 38,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Predictions.d.ts",
+      "line": 255,
+      "character": 44,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Predictions.d.ts",
+      "line": 256,
+      "character": 46,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Predictions.d.ts",
+      "line": 257,
+      "character": 48,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Predictions.d.ts",
+      "line": 258,
+      "character": 45,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/Predictions.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "lib/Predictions.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "_convertPluggables",
+      "kind": 1
+    },
+    {
+      "file": "lib/Predictions.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "_identifyPluggables",
+      "kind": 1
+    },
+    {
+      "file": "lib/Predictions.d.ts",
+      "line": 6,
+      "character": 12,
+      "text": "_interpretPluggables",
+      "kind": 1
+    },
+    {
+      "file": "lib/Predictions.d.ts",
+      "line": 41,
+      "character": 12,
+      "text": "getPluggableToExecute",
+      "kind": 1
+    },
+    {
+      "file": "lib/Predictions.d.ts",
+      "line": 42,
+      "character": 12,
+      "text": "getAllProviders",
+      "kind": 1
+    },
+    {
+      "file": "lib/Predictions.d.ts",
+      "line": 43,
+      "character": 12,
+      "text": "configurePluggable",
+      "kind": 1
+    },
+    {
+      "file": "lib/Predictions.d.ts",
+      "line": 44,
+      "character": 12,
+      "text": "implementsConvertPluggable",
+      "kind": 1
+    },
+    {
+      "file": "lib/Predictions.d.ts",
+      "line": 45,
+      "character": 12,
+      "text": "implementsIdentifyPluggable",
+      "kind": 1
+    },
+    {
+      "file": "lib/Predictions.d.ts",
+      "line": 46,
+      "character": 12,
+      "text": "implementsInterpretPluggable",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "translateClient",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "pollyClient",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 10,
+      "character": 39,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "sendDataToTranscribe",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "sendEncodedDataToTranscribe",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "getAudioEventMessage",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "pcmEncode",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 15,
+      "character": 12,
+      "text": "inputSampleRate",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "downsampleBuffer",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "openConnectionWithTranscribe",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIConvertPredictionsProvider.d.ts",
+      "line": 18,
+      "character": 12,
+      "text": "generateTranscribeUrl",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIIdentifyPredictionsProvider.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "rekognitionClient",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIIdentifyPredictionsProvider.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "textractClient",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIIdentifyPredictionsProvider.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "configureSource",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIIdentifyPredictionsProvider.d.ts",
+      "line": 33,
+      "character": 12,
+      "text": "detectLabels",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIIdentifyPredictionsProvider.d.ts",
+      "line": 39,
+      "character": 12,
+      "text": "detectModerationLabels",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIIdentifyPredictionsProvider.d.ts",
+      "line": 47,
+      "character": 12,
+      "text": "decodeExternalImageId",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIInterpretPredictionsProvider.d.ts",
+      "line": 6,
+      "character": 12,
+      "text": "detectKeyPhrases",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIInterpretPredictionsProvider.d.ts",
+      "line": 7,
+      "character": 12,
+      "text": "detectSyntax",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIInterpretPredictionsProvider.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "serializeSyntaxFromComprehend",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIInterpretPredictionsProvider.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "detectSentiment",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIInterpretPredictionsProvider.d.ts",
+      "line": 10,
+      "character": 12,
+      "text": "detectEntities",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIInterpretPredictionsProvider.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "serializeEntitiesFromComprehend",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIInterpretPredictionsProvider.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "detectLanguage",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIPredictionsProvider.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "convertProvider",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIPredictionsProvider.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "identifyProvider",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AmazonAIPredictionsProvider.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "interpretProvider",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 291,
+      "character": 1,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 295,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 295,
+      "character": 16,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 295,
+      "character": 43,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 298,
+      "character": 38,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 300,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 300,
+      "character": 15,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 303,
+      "character": 37,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 305,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 305,
+      "character": 15,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 308,
+      "character": 36,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 310,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 310,
+      "character": 15,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 313,
+      "character": 36,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 315,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 315,
+      "character": 15,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 318,
+      "character": 32,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 320,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 320,
+      "character": 15,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 323,
+      "character": 29,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 325,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 325,
+      "character": 15,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 328,
+      "character": 30,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 330,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 330,
+      "character": 15,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 333,
+      "character": 36,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 335,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 335,
+      "character": 15,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 338,
+      "character": 38,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 340,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 340,
+      "character": 15,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 344,
+      "character": 1,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 347,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 347,
+      "character": 15,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 350,
+      "character": 37,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 352,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Predictions.ts",
+      "line": 352,
+      "character": 15,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 115,
+      "character": 6,
+      "text": "predictionsConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 115,
+      "character": 44,
+      "text": "predictions",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 116,
+      "character": 2,
+      "text": "predictionsConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 116,
+      "character": 27,
+      "text": "predictionsConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 117,
+      "character": 51,
+      "text": "predictionsConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 220,
+      "character": 8,
+      "text": "categoryConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 229,
+      "character": 2,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 231,
+      "character": 9,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 231,
+      "character": 23,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 231,
+      "character": 27,
+      "text": "convert",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 235,
+      "character": 2,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 237,
+      "character": 9,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 237,
+      "character": 23,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 237,
+      "character": 27,
+      "text": "identify",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 241,
+      "character": 2,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 243,
+      "character": 9,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 243,
+      "character": 23,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Predictions.ts",
+      "line": 243,
+      "character": 27,
+      "text": "interpret",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 49,
+      "character": 16,
+      "text": "sourceLanguage",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 49,
+      "character": 37,
+      "text": "targetLanguage",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 50,
+      "character": 4,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 54,
+      "character": 7,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 58,
+      "character": 8,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 59,
+      "character": 7,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 62,
+      "character": 8,
+      "text": "sourceLanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 64,
+      "character": 8,
+      "text": "targetLanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 66,
+      "character": 7,
+      "text": "sourceLanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 66,
+      "character": 30,
+      "text": "targetLanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 87,
+      "character": 25,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 86,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 94,
+      "character": 8,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 95,
+      "character": 7,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 99,
+      "character": 34,
+      "text": "VoiceId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 99,
+      "character": 55,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 105,
+      "character": 8,
+      "text": "voiceId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 107,
+      "character": 7,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 113,
+      "character": 7,
+      "text": "voiceId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 144,
+      "character": 25,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 143,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 153,
+      "character": 9,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 154,
+      "character": 8,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 159,
+      "character": 27,
+      "text": "languageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 160,
+      "character": 5,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 163,
+      "character": 8,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 166,
+      "character": 8,
+      "text": "languageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 172,
+      "character": 29,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 177,
+      "character": 5,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 178,
+      "character": 5,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 179,
+      "character": 5,
+      "text": "languageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 179,
+      "character": 19,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 186,
+      "character": 6,
+      "text": "languageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 186,
+      "character": 20,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 194,
+      "character": 27,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 193,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 202,
+      "character": 25,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 202,
+      "character": 29,
+      "text": "name",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 202,
+      "character": 43,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 202,
+      "character": 47,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 201,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 206,
+      "character": 43,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 209,
+      "character": 15,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 209,
+      "character": 23,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 211,
+      "character": 8,
+      "text": "transcribeMessageJson",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 215,
+      "character": 19,
+      "text": "transcribeMessageJson",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 215,
+      "character": 41,
+      "text": "Message",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 217,
+      "character": 19,
+      "text": "transcribeMessageJson",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 217,
+      "character": 41,
+      "text": "Message",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 219,
+      "character": 7,
+      "text": "transcribeMessageJson",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 219,
+      "character": 29,
+      "text": "Transcript",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 219,
+      "character": 40,
+      "text": "Results",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 219,
+      "character": 48,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 221,
+      "character": 5,
+      "text": "transcribeMessageJson",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 221,
+      "character": 27,
+      "text": "Transcript",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 221,
+      "character": 38,
+      "text": "Results",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 221,
+      "character": 49,
+      "text": "Alternatives",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 221,
+      "character": 62,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 224,
+      "character": 6,
+      "text": "transcribeMessageJson",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 224,
+      "character": 28,
+      "text": "Transcript",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 224,
+      "character": 39,
+      "text": "Results",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 224,
+      "character": 50,
+      "text": "Alternatives",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 225,
+      "character": 8,
+      "text": "Transcript",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 225,
+      "character": 19,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 228,
+      "character": 7,
+      "text": "transcribeMessageJson",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 228,
+      "character": 29,
+      "text": "Transcript",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 228,
+      "character": 40,
+      "text": "Results",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 228,
+      "character": 51,
+      "text": "IsPartial",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 231,
+      "character": 8,
+      "text": "transcribeMessageJson",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 231,
+      "character": 30,
+      "text": "Transcript",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 231,
+      "character": 41,
+      "text": "Results",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 231,
+      "character": 52,
+      "text": "Alternatives",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 232,
+      "character": 10,
+      "text": "Transcript",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 236,
+      "character": 8,
+      "text": "transcript",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 237,
+      "character": 9,
+      "text": "transcribeMessageJson",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 237,
+      "character": 31,
+      "text": "Transcript",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 237,
+      "character": 42,
+      "text": "Results",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 237,
+      "character": 53,
+      "text": "Alternatives",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 248,
+      "character": 2,
+      "text": "connection",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 249,
+      "character": 2,
+      "text": "raw",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 250,
+      "character": 2,
+      "text": "languageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 254,
+      "character": 3,
+      "text": "connection",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 254,
+      "character": 14,
+      "text": "onmessage",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 254,
+      "character": 26,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 257,
+      "character": 6,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 263,
+      "character": 18,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 264,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 264,
+      "character": 13,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 262,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 268,
+      "character": 3,
+      "text": "connection",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 268,
+      "character": 14,
+      "text": "onerror",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 268,
+      "character": 24,
+      "text": "errorEvent",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 269,
+      "character": 19,
+      "text": "errorEvent",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 273,
+      "character": 3,
+      "text": "connection",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 273,
+      "character": 14,
+      "text": "onclose",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 273,
+      "character": 24,
+      "text": "closeEvent",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 274,
+      "character": 19,
+      "text": "closeEvent",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 278,
+      "character": 18,
+      "text": "raw",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 280,
+      "character": 21,
+      "text": "raw",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 283,
+      "character": 38,
+      "text": "connection",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 283,
+      "character": 56,
+      "text": "languageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 287,
+      "character": 37,
+      "text": "connection",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 287,
+      "character": 49,
+      "text": "raw",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 287,
+      "character": 54,
+      "text": "languageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 293,
+      "character": 3,
+      "text": "connection",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 293,
+      "character": 14,
+      "text": "send",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 297,
+      "character": 37,
+      "text": "connection",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 297,
+      "character": 49,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 297,
+      "character": 55,
+      "text": "languageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 298,
+      "character": 8,
+      "text": "downsampledBuffer",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 299,
+      "character": 3,
+      "text": "buffer",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 299,
+      "character": 11,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 304,
+      "character": 42,
+      "text": "downsampledBuffer",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 309,
+      "character": 2,
+      "text": "connection",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 309,
+      "character": 13,
+      "text": "send",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 312,
+      "character": 30,
+      "text": "buffer",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 330,
+      "character": 19,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 332,
+      "character": 33,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 332,
+      "character": 39,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 334,
+      "character": 22,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 334,
+      "character": 28,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 335,
+      "character": 38,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 343,
+      "character": 28,
+      "text": "buffer",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 345,
+      "character": 10,
+      "text": "buffer",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 349,
+      "character": 31,
+      "text": "buffer",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 349,
+      "character": 38,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 359,
+      "character": 32,
+      "text": "buffer",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 359,
+      "character": 39,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 362,
+      "character": 13,
+      "text": "buffer",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 374,
+      "character": 15,
+      "text": "userCredentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 375,
+      "character": 2,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 376,
+      "character": 2,
+      "text": "languageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 380,
+      "character": 17,
+      "text": "access_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 381,
+      "character": 21,
+      "text": "secret_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 382,
+      "character": 18,
+      "text": "session_token",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 386,
+      "character": 4,
+      "text": "access_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 387,
+      "character": 4,
+      "text": "secret_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 388,
+      "character": 4,
+      "text": "session_token",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 393,
+      "character": 4,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 394,
+      "character": 4,
+      "text": "languageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 408,
+      "character": 33,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 408,
+      "character": 46,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 408,
+      "character": 54,
+      "text": "languageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 410,
+      "character": 32,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 416,
+      "character": 20,
+      "text": "languageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 421,
+      "character": 3,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIConvertPredictionsProvider.ts",
+      "line": 422,
+      "character": 5,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/Utils.ts",
+      "line": 41,
+      "character": 7,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/Utils.ts",
+      "line": 40,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 92,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 92,
+      "character": 23,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 98,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 98,
+      "character": 23,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 106,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 106,
+      "character": 24,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 128,
+      "character": 8,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 129,
+      "character": 7,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 132,
+      "character": 4,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 133,
+      "character": 24,
+      "text": "configFormat",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 151,
+      "character": 25,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 150,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 155,
+      "character": 8,
+      "text": "format",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 157,
+      "character": 6,
+      "text": "format",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 157,
+      "character": 27,
+      "text": "format",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 158,
+      "character": 6,
+      "text": "format",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 158,
+      "character": 28,
+      "text": "format",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 201,
+      "character": 19,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 200,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 216,
+      "character": 26,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 215,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 230,
+      "character": 9,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 231,
+      "character": 8,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 234,
+      "character": 5,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 235,
+      "character": 17,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 248,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 249,
+      "character": 27,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 255,
+      "character": 9,
+      "text": "entityType",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 256,
+      "character": 7,
+      "text": "entityType",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 256,
+      "character": 34,
+      "text": "entityType",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 259,
+      "character": 7,
+      "text": "entityType",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 259,
+      "character": 34,
+      "text": "entityType",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 267,
+      "character": 18,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 272,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 272,
+      "character": 33,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 274,
+      "character": 25,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 273,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 305,
+      "character": 25,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 304,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 330,
+      "character": 25,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 329,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 343,
+      "character": 8,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 344,
+      "character": 7,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 347,
+      "character": 4,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 348,
+      "character": 4,
+      "text": "celebrityDetectionEnabled",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 350,
+      "character": 19,
+      "text": "collectionIdConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 351,
+      "character": 18,
+      "text": "maxFacesConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 365,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 366,
+      "character": 26,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 375,
+      "character": 8,
+      "text": "celebrityDetectionEnabled",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 399,
+      "character": 26,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 398,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 406,
+      "character": 4,
+      "text": "collectionId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 407,
+      "character": 17,
+      "text": "maxFaces",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 412,
+      "character": 4,
+      "text": "CollectionId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 412,
+      "character": 18,
+      "text": "collectionId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 413,
+      "character": 4,
+      "text": "MaxFaces",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 413,
+      "character": 14,
+      "text": "maxFaces",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 435,
+      "character": 26,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 434,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 472,
+      "character": 26,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIIdentifyPredictionsProvider.ts",
+      "line": 471,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 32,
+      "character": 9,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 33,
+      "character": 8,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 36,
+      "character": 5,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 37,
+      "character": 23,
+      "text": "interpretTypeConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 43,
+      "character": 11,
+      "text": "interpretType",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 48,
+      "character": 22,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 57,
+      "character": 17,
+      "text": "interpretType",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 60,
+      "character": 16,
+      "text": "interpretType",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 71,
+      "character": 16,
+      "text": "interpretType",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 72,
+      "character": 10,
+      "text": "LanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 72,
+      "character": 25,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 73,
+      "character": 9,
+      "text": "LanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 78,
+      "character": 5,
+      "text": "LanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 87,
+      "character": 16,
+      "text": "interpretType",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 88,
+      "character": 10,
+      "text": "LanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 88,
+      "character": 25,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 89,
+      "character": 9,
+      "text": "LanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 94,
+      "character": 5,
+      "text": "LanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 103,
+      "character": 16,
+      "text": "interpretType",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 104,
+      "character": 10,
+      "text": "LanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 104,
+      "character": 25,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 105,
+      "character": 9,
+      "text": "LanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 110,
+      "character": 5,
+      "text": "LanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 116,
+      "character": 16,
+      "text": "interpretType",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 117,
+      "character": 10,
+      "text": "LanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 117,
+      "character": 25,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 118,
+      "character": 9,
+      "text": "LanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 123,
+      "character": 5,
+      "text": "LanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 148,
+      "character": 8,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 147,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 154,
+      "character": 2,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 155,
+      "character": 2,
+      "text": "comprehend",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 159,
+      "character": 9,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 159,
+      "character": 22,
+      "text": "comprehend",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 159,
+      "character": 33,
+      "text": "send",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 160,
+      "character": 11,
+      "text": "KeyPhrases",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 161,
+      "character": 10,
+      "text": "KeyPhrases",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 161,
+      "character": 21,
+      "text": "map",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 161,
+      "character": 34,
+      "text": "text",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 162,
+      "character": 13,
+      "text": "text",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 165,
+      "character": 7,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 165,
+      "character": 11,
+      "text": "code",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 171,
+      "character": 19,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 171,
+      "character": 23,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 164,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 176,
+      "character": 28,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 176,
+      "character": 36,
+      "text": "comprehend",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 179,
+      "character": 9,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 179,
+      "character": 22,
+      "text": "comprehend",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 179,
+      "character": 33,
+      "text": "send",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 180,
+      "character": 11,
+      "text": "SyntaxTokens",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 181,
+      "character": 45,
+      "text": "SyntaxTokens",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 183,
+      "character": 7,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 183,
+      "character": 11,
+      "text": "code",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 189,
+      "character": 19,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 189,
+      "character": 23,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 182,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 194,
+      "character": 39,
+      "text": "tokens",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 196,
+      "character": 6,
+      "text": "tokens",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 196,
+      "character": 30,
+      "text": "tokens",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 198,
+      "character": 13,
+      "text": "text",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 198,
+      "character": 45,
+      "text": "syntax",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 199,
+      "character": 14,
+      "text": "text",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 199,
+      "character": 20,
+      "text": "syntax",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 206,
+      "character": 31,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 206,
+      "character": 39,
+      "text": "comprehend",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 209,
+      "character": 9,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 209,
+      "character": 22,
+      "text": "comprehend",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 209,
+      "character": 33,
+      "text": "send",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 211,
+      "character": 15,
+      "text": "predominant",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 213,
+      "character": 15,
+      "text": "positive",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 214,
+      "character": 15,
+      "text": "negative",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 215,
+      "character": 14,
+      "text": "neutral",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 216,
+      "character": 12,
+      "text": "mixed",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 221,
+      "character": 7,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 221,
+      "character": 11,
+      "text": "code",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 227,
+      "character": 19,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 227,
+      "character": 23,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 220,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 233,
+      "character": 2,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 234,
+      "character": 2,
+      "text": "comprehend",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 238,
+      "character": 9,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 238,
+      "character": 22,
+      "text": "comprehend",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 238,
+      "character": 33,
+      "text": "send",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 239,
+      "character": 11,
+      "text": "Entities",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 240,
+      "character": 47,
+      "text": "Entities",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 242,
+      "character": 7,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 242,
+      "character": 11,
+      "text": "code",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 248,
+      "character": 19,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 248,
+      "character": 23,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 241,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 253,
+      "character": 41,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 255,
+      "character": 6,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 255,
+      "character": 28,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 256,
+      "character": 32,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 256,
+      "character": 44,
+      "text": "text",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 257,
+      "character": 13,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 257,
+      "character": 19,
+      "text": "text",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 263,
+      "character": 30,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 263,
+      "character": 38,
+      "text": "comprehend",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 268,
+      "character": 9,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 268,
+      "character": 22,
+      "text": "comprehend",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 268,
+      "character": 33,
+      "text": "send",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 269,
+      "character": 25,
+      "text": "LanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 270,
+      "character": 8,
+      "text": "LanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 273,
+      "character": 10,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 273,
+      "character": 15,
+      "text": "Languages",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 273,
+      "character": 28,
+      "text": "LanguageCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 275,
+      "character": 7,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 275,
+      "character": 11,
+      "text": "code",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 281,
+      "character": 19,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 281,
+      "character": 23,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIInterpretPredictionsProvider.ts",
+      "line": 274,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIPredictionsProvider.ts",
+      "line": 43,
+      "character": 40,
+      "text": "convert",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIPredictionsProvider.ts",
+      "line": 44,
+      "character": 41,
+      "text": "identify",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AmazonAIPredictionsProvider.ts",
+      "line": 45,
+      "character": 42,
+      "text": "interpret",
+      "kind": 1
+    }
+  ],
+  "percentage": 89.83696802879525,
+  "total": 4723,
+  "covered": 4243,
+  "uncovered": 480
+}

@@ -1,0 +1,116 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>FacebookOAuth.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/OAuthHelper/FacebookOAuth.ts</td><td class="">83.02%</td><td class="">0%</td><td class="">106</td><td class="">88</td><td class="">18</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import { ConsoleLogger as Logger } from &#x27;../Logger&#x27;;
+import { browserOrNode } from &#x27;../JS&#x27;;
+import { NonRetryableError } from &#x27;../Util&#x27;;
+
+const logger = new Logger(&#x27;CognitoCredentials&#x27;);
+
+const waitForInit = new Promise((res, rej) =&gt; {
+	if (!browserOrNode().isBrowser) {
+		logger.debug(&#x27;not in the browser, directly resolved&#x27;);
+		return res();
+	}
+	const fb = window[&#x27;FB&#x27;];
+	if (fb) {
+		logger.debug(&#x27;FB SDK already loaded&#x27;);
+		return res();
+	} else {
+		setTimeout(() =&gt; {
+			return res();
+		}, 2000);
+	}
+});
+
+export class FacebookOAuth {
+	public initialized = false;
+
+	constructor() {
+		this.refreshFacebookToken = this.refreshFacebookToken.bind(this);
+		this._refreshFacebookTokenImpl = this._refreshFacebookTokenImpl.bind(this);
+	}
+
+	public async refreshFacebookToken() {
+		if (!this.initialized) {
+			logger.debug(&#x27;need to wait for the Facebook SDK loaded&#x27;);
+			await waitForInit;
+			this.initialized = true;
+			logger.debug(&#x27;finish waiting&#x27;);
+		}
+
+		return this._refreshFacebookTokenImpl();
+	}
+
+	private _refreshFacebookTokenImpl() {
+		let fb = null;
+		if (browserOrNode().isBrowser) fb = window[&#x27;FB&#x27;];
+		if (!fb) {
+			const errorMessage = &#x27;no fb sdk available&#x27;;
+			logger.debug(errorMessage);
+			return Promise.reject(new NonRetryableError(errorMessage));
+		}
+
+		return new Promise((res, rej) =&gt; {
+			fb.getLoginStatus(
+				fbResponse =&gt; {
+					if (!fbResponse || !fbResponse.authResponse) {
+						const errorMessage =
+							&#x27;no response from facebook when refreshing the jwt token&#x27;;
+						logger.debug(errorMessage);
+						// There is no definitive indication for a network error in
+						// fbResponse, so we are treating it as an invalid token.
+						rej(new NonRetryableError(errorMessage));
+					} else {
+						const response = fbResponse.authResponse;
+						const { accessToken, expiresIn } = response;
+						const date = new Date();
+						const expires_at = expiresIn * 1000 + date.getTime();
+						if (!accessToken) {
+							const errorMessage = &#x27;the jwtToken is undefined&#x27;;
+							logger.debug(errorMessage);
+							rej(new NonRetryableError(errorMessage));
+						}
+						res({
+							token: accessToken,
+							expires_at,
+						});
+					}
+				},
+				{ scope: &#x27;public_profile,email&#x27; }
+			);
+		});
+	}
+}
+
+/**
+ * @deprecated use named import
+ */
+export default FacebookOAuth;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:54,&quot;character&quot;:6,&quot;text&quot;:&quot;fb&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:55,&quot;character&quot;:33,&quot;text&quot;:&quot;fb&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:56,&quot;character&quot;:7,&quot;text&quot;:&quot;fb&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:63,&quot;character&quot;:3,&quot;text&quot;:&quot;fb&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:63,&quot;character&quot;:6,&quot;text&quot;:&quot;getLoginStatus&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:64,&quot;character&quot;:4,&quot;text&quot;:&quot;fbResponse&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:10,&quot;text&quot;:&quot;fbResponse&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:25,&quot;text&quot;:&quot;fbResponse&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:36,&quot;text&quot;:&quot;authResponse&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:12,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:23,&quot;text&quot;:&quot;fbResponse&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:34,&quot;text&quot;:&quot;authResponse&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:74,&quot;character&quot;:14,&quot;text&quot;:&quot;accessToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:74,&quot;character&quot;:27,&quot;text&quot;:&quot;expiresIn&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:76,&quot;character&quot;:25,&quot;text&quot;:&quot;expiresIn&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:77,&quot;character&quot;:11,&quot;text&quot;:&quot;accessToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:83,&quot;character&quot;:7,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/FacebookOAuth.ts&quot;,&quot;line&quot;:83,&quot;character&quot;:14,&quot;text&quot;:&quot;accessToken&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:20 GMT</p>
+    </body>
+  </html>
+  

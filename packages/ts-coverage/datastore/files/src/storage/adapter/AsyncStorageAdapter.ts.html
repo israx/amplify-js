@@ -1,0 +1,842 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>AsyncStorageAdapter.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/storage/adapter/AsyncStorageAdapter.ts</td><td class="">96.39%</td><td class="">0%</td><td class="">1301</td><td class="">1254</td><td class="">47</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import { ConsoleLogger as Logger } from &#x27;@aws-amplify/core&#x27;;
+import AsyncStorageDatabase from &#x27;./AsyncStorageDatabase&#x27;;
+import { Adapter } from &#x27;./index&#x27;;
+import { ModelInstanceCreator } from &#x27;../../datastore/datastore&#x27;;
+import {
+	ModelPredicateCreator,
+	ModelSortPredicateCreator,
+} from &#x27;../../predicates&#x27;;
+import {
+	InternalSchema,
+	isPredicateObj,
+	ModelInstanceMetadata,
+	ModelPredicate,
+	NamespaceResolver,
+	OpType,
+	PaginationInput,
+	PersistentModel,
+	PersistentModelConstructor,
+	PredicateObject,
+	PredicatesGroup,
+	QueryOne,
+	RelationType,
+} from &#x27;../../types&#x27;;
+import {
+	DEFAULT_PRIMARY_KEY_VALUE_SEPARATOR,
+	exhaustiveCheck,
+	getIndex,
+	getIndexFromAssociation,
+	isModelConstructor,
+	traverseModel,
+	validatePredicate,
+	sortCompareFunction,
+	keysEqual,
+	getStorename,
+	getIndexKeys,
+	extractPrimaryKeyValues,
+	IDENTIFIER_KEY_SEPARATOR,
+} from &#x27;../../util&#x27;;
+
+const logger = new Logger(&#x27;DataStore&#x27;);
+
+export class AsyncStorageAdapter implements Adapter {
+	private schema: InternalSchema;
+	private namespaceResolver: NamespaceResolver;
+	private modelInstanceCreator: ModelInstanceCreator;
+	private getModelConstructorByModelName: (
+		namsespaceName: string,
+		modelName: string
+	) =&gt; PersistentModelConstructor&lt;any&gt;;
+	private db: AsyncStorageDatabase;
+	private initPromise: Promise&lt;void&gt;;
+	private resolve: (value?: any) =&gt; void;
+	private reject: (value?: any) =&gt; void;
+
+	private getStorenameForModel(
+		modelConstructor: PersistentModelConstructor&lt;any&gt;
+	) {
+		const namespace = this.namespaceResolver(modelConstructor);
+		const { name: modelName } = modelConstructor;
+
+		return getStorename(namespace, modelName);
+	}
+
+	// Retrieves primary key values from a model
+	private getIndexKeyValuesFromModel&lt;T extends PersistentModel&gt;(
+		model: T
+	): string[] {
+		const modelConstructor = Object.getPrototypeOf(model)
+			.constructor as PersistentModelConstructor&lt;T&gt;;
+		const namespaceName = this.namespaceResolver(modelConstructor);
+		const keys = getIndexKeys(
+			this.schema.namespaces[namespaceName],
+			modelConstructor.name
+		);
+
+		return extractPrimaryKeyValues(model, keys);
+	}
+
+	// Retrieves concatenated primary key values from a model
+	private getIndexKeyValuesPath&lt;T extends PersistentModel&gt;(model: T): string {
+		return this.getIndexKeyValuesFromModel(model).join(
+			DEFAULT_PRIMARY_KEY_VALUE_SEPARATOR
+		);
+	}
+
+	async setUp(
+		theSchema: InternalSchema,
+		namespaceResolver: NamespaceResolver,
+		modelInstanceCreator: ModelInstanceCreator,
+		getModelConstructorByModelName: (
+			namsespaceName: string,
+			modelName: string
+		) =&gt; PersistentModelConstructor&lt;any&gt;
+	) {
+		if (!this.initPromise) {
+			this.initPromise = new Promise((res, rej) =&gt; {
+				this.resolve = res;
+				this.reject = rej;
+			});
+		} else {
+			await this.initPromise;
+			return;
+		}
+		this.schema = theSchema;
+		this.namespaceResolver = namespaceResolver;
+		this.modelInstanceCreator = modelInstanceCreator;
+		this.getModelConstructorByModelName = getModelConstructorByModelName;
+		try {
+			if (!this.db) {
+				this.db = new AsyncStorageDatabase();
+				await this.db.init();
+				this.resolve();
+			}
+		} catch (error) {
+			this.reject(error);
+		}
+	}
+
+	async save&lt;T extends PersistentModel&gt;(
+		model: T,
+		condition?: ModelPredicate&lt;T&gt;
+	): Promise&lt;[T, OpType.INSERT | OpType.UPDATE][]&gt; {
+		const modelConstructor = Object.getPrototypeOf(model)
+			.constructor as PersistentModelConstructor&lt;T&gt;;
+		const storeName = this.getStorenameForModel(modelConstructor);
+
+		const namespaceName = this.namespaceResolver(modelConstructor);
+
+		const connectedModels = traverseModel(
+			modelConstructor.name,
+			model,
+			this.schema.namespaces[namespaceName],
+			this.modelInstanceCreator,
+			this.getModelConstructorByModelName
+		);
+
+		const set = new Set&lt;string&gt;();
+		const connectionStoreNames = Object.values(connectedModels).map(
+			({ modelName, item, instance }) =&gt; {
+				const storeName = getStorename(namespaceName, modelName);
+				set.add(storeName);
+				const keys = getIndexKeys(
+					this.schema.namespaces[namespaceName],
+					modelName
+				);
+				return { storeName, item, instance, keys };
+			}
+		);
+		const keyValuesPath = this.getIndexKeyValuesPath(model);
+
+		const fromDB = await this.db.get(keyValuesPath, storeName);
+
+		if (condition &amp;&amp; fromDB) {
+			const predicates = ModelPredicateCreator.getPredicates(condition);
+			const { predicates: predicateObjs, type } = predicates;
+
+			const isValid = validatePredicate(fromDB, type, predicateObjs);
+
+			if (!isValid) {
+				const msg = &#x27;Conditional update failed&#x27;;
+				logger.error(msg, { model: fromDB, condition: predicateObjs });
+
+				throw new Error(msg);
+			}
+		}
+
+		const result: [T, OpType.INSERT | OpType.UPDATE][] = [];
+
+		for await (const resItem of connectionStoreNames) {
+			const { storeName, item, instance, keys } = resItem;
+
+			/* Find the key values in the item, and concatenate them */
+			const itemKeyValues: string[] = keys.map(key =&gt; item[key]);
+			const itemKeyValuesPath: string = itemKeyValues.join(
+				DEFAULT_PRIMARY_KEY_VALUE_SEPARATOR
+			);
+
+			const fromDB = &lt;T&gt;await this.db.get(itemKeyValuesPath, storeName);
+			const opType: OpType = fromDB ? OpType.UPDATE : OpType.INSERT;
+			const modelKeyValues = this.getIndexKeyValuesFromModel(model);
+
+			// If item key values and model key values are equal, save to db
+			if (
+				keysEqual(itemKeyValues, modelKeyValues) ||
+				opType === OpType.INSERT
+			) {
+				await this.db.save(item, storeName, keys, itemKeyValuesPath);
+
+				result.push([instance, opType]);
+			}
+		}
+
+		return result;
+	}
+
+	private async load&lt;T&gt;(
+		namespaceName: string,
+		srcModelName: string,
+		records: T[]
+	): Promise&lt;T[]&gt; {
+		const namespace = this.schema.namespaces[namespaceName];
+		const relations = namespace.relationships[srcModelName].relationTypes;
+		const connectionStoreNames = relations.map(({ modelName }) =&gt; {
+			return getStorename(namespaceName, modelName);
+		});
+		const modelConstructor = this.getModelConstructorByModelName(
+			namespaceName,
+			srcModelName
+		);
+
+		if (connectionStoreNames.length === 0) {
+			return records.map(record =&gt;
+				this.modelInstanceCreator(modelConstructor, record)
+			);
+		}
+
+		for await (const relation of relations) {
+			const { fieldName, modelName, targetName, targetNames, relationType } =
+				relation;
+			const storeName = getStorename(namespaceName, modelName);
+			const modelConstructor = this.getModelConstructorByModelName(
+				namespaceName,
+				modelName
+			);
+
+			switch (relationType) {
+				case &#x27;HAS_ONE&#x27;:
+					for await (const recordItem of records) {
+						// ASYNC CPK TODO: make this cleaner
+						if (targetNames?.length) {
+							let getByFields = [];
+							let allPresent;
+							// iterate through all targetnames to make sure they are all present in the recordItem
+							allPresent = targetNames.every(targetName =&gt; {
+								return recordItem[targetName] != null;
+							});
+
+							if (!allPresent) {
+								break;
+							}
+
+							getByFields = targetNames as any;
+
+							// keys are the key values
+							const keys = getByFields
+								.map(getByField =&gt; recordItem[getByField])
+								.join(DEFAULT_PRIMARY_KEY_VALUE_SEPARATOR);
+
+							const connectionRecord = await this.db.get(keys, storeName);
+
+							recordItem[fieldName] =
+								connectionRecord &amp;&amp;
+								this.modelInstanceCreator(modelConstructor, connectionRecord);
+						} else {
+							const getByfield = recordItem[targetName]
+								? targetName
+								: fieldName;
+							if (!recordItem[getByfield]) break;
+
+							const key = recordItem[getByfield];
+
+							const connectionRecord = await this.db.get(key, storeName);
+
+							recordItem[fieldName] =
+								connectionRecord &amp;&amp;
+								this.modelInstanceCreator(modelConstructor, connectionRecord);
+						}
+					}
+
+					break;
+				case &#x27;BELONGS_TO&#x27;:
+					for await (const recordItem of records) {
+						// ASYNC CPK TODO: make this cleaner
+						if (targetNames?.length) {
+							let allPresent;
+							// iterate through all targetnames to make sure they are all present in the recordItem
+							allPresent = targetNames.every(targetName =&gt; {
+								return recordItem[targetName] != null;
+							});
+
+							// If not present, there is not yet a connected record
+							if (!allPresent) {
+								break;
+							}
+
+							const keys = targetNames
+								.map(targetName =&gt; recordItem[targetName])
+								.join(DEFAULT_PRIMARY_KEY_VALUE_SEPARATOR);
+
+							// Retrieve the connected record
+							const connectionRecord = await this.db.get(keys, storeName);
+
+							recordItem[fieldName] =
+								connectionRecord &amp;&amp;
+								this.modelInstanceCreator(modelConstructor, connectionRecord);
+
+							targetNames?.map(targetName =&gt; {
+								delete recordItem[targetName];
+							});
+						} else if (recordItem[targetName as any]) {
+							const key = recordItem[targetName];
+
+							const connectionRecord = await this.db.get(key, storeName);
+
+							recordItem[fieldName] =
+								connectionRecord &amp;&amp;
+								this.modelInstanceCreator(modelConstructor, connectionRecord);
+							delete recordItem[targetName];
+						}
+					}
+
+					break;
+				case &#x27;HAS_MANY&#x27;:
+					// TODO: Lazy loading
+					break;
+				default:
+					exhaustiveCheck(relationType);
+					break;
+			}
+		}
+
+		return records.map(record =&gt;
+			this.modelInstanceCreator(modelConstructor, record)
+		);
+	}
+
+	async query&lt;T extends PersistentModel&gt;(
+		modelConstructor: PersistentModelConstructor&lt;T&gt;,
+		predicate?: ModelPredicate&lt;T&gt;,
+		pagination?: PaginationInput&lt;T&gt;
+	): Promise&lt;T[]&gt; {
+		const storeName = this.getStorenameForModel(modelConstructor);
+		const namespaceName = this.namespaceResolver(modelConstructor);
+
+		const predicates =
+			predicate &amp;&amp; ModelPredicateCreator.getPredicates(predicate);
+		const keys = getIndexKeys(
+			this.schema.namespaces[namespaceName],
+			modelConstructor.name
+		);
+		const queryByKey =
+			predicates &amp;&amp; this.keyValueFromPredicate(predicates, keys);
+
+		const hasSort = pagination &amp;&amp; pagination.sort;
+		const hasPagination = pagination &amp;&amp; pagination.limit;
+
+		const records: T[] = await (async () =&gt; {
+			if (queryByKey) {
+				const record = await this.getByKey(storeName, queryByKey);
+				return record ? [record] : [];
+			}
+
+			if (predicates) {
+				const filtered = await this.filterOnPredicate(storeName, predicates);
+				return this.inMemoryPagination(filtered, pagination);
+			}
+
+			if (hasSort || hasPagination) {
+				const all = await this.getAll(storeName);
+				return this.inMemoryPagination(all, pagination);
+			}
+
+			return this.getAll(storeName);
+		})();
+
+		return await this.load(namespaceName, modelConstructor.name, records);
+	}
+
+	private async getByKey&lt;T extends PersistentModel&gt;(
+		storeName: string,
+		keyValuePath: string
+	): Promise&lt;T&gt; {
+		const record = &lt;T&gt;await this.db.get(keyValuePath, storeName);
+		return record;
+	}
+
+	private async getAll&lt;T extends PersistentModel&gt;(
+		storeName: string
+	): Promise&lt;T[]&gt; {
+		return await this.db.getAll(storeName);
+	}
+
+	private keyValueFromPredicate&lt;T extends PersistentModel&gt;(
+		predicates: PredicatesGroup&lt;T&gt;,
+		keys: string[]
+	): string | undefined {
+		const { predicates: predicateObjs } = predicates;
+
+		if (predicateObjs.length !== keys.length) {
+			return;
+		}
+
+		const keyValues = [];
+
+		for (const key of keys) {
+			const predicateObj = predicateObjs.find(
+				p =&gt; isPredicateObj(p) &amp;&amp; p.field === key &amp;&amp; p.operator === &#x27;eq&#x27;
+			) as PredicateObject&lt;T&gt;;
+
+			predicateObj &amp;&amp; keyValues.push(predicateObj.operand);
+		}
+
+		return keyValues.length === keys.length
+			? keyValues.join(DEFAULT_PRIMARY_KEY_VALUE_SEPARATOR)
+			: undefined;
+	}
+
+	private async filterOnPredicate&lt;T extends PersistentModel&gt;(
+		storeName: string,
+		predicates: PredicatesGroup&lt;T&gt;
+	) {
+		const { predicates: predicateObjs, type } = predicates;
+
+		const all = &lt;T[]&gt;await this.getAll(storeName);
+
+		const filtered = predicateObjs
+			? all.filter(m =&gt; validatePredicate(m, type, predicateObjs))
+			: all;
+
+		return filtered;
+	}
+
+	private inMemoryPagination&lt;T extends PersistentModel&gt;(
+		records: T[],
+		pagination?: PaginationInput&lt;T&gt;
+	): T[] {
+		if (pagination &amp;&amp; records.length &gt; 1) {
+			if (pagination.sort) {
+				const sortPredicates = ModelSortPredicateCreator.getPredicates(
+					pagination.sort
+				);
+
+				if (sortPredicates.length) {
+					const compareFn = sortCompareFunction(sortPredicates);
+					records.sort(compareFn);
+				}
+			}
+			const { page = 0, limit = 0 } = pagination;
+			const start = Math.max(0, page * limit) || 0;
+
+			const end = limit &gt; 0 ? start + limit : records.length;
+
+			return records.slice(start, end);
+		}
+
+		return records;
+	}
+
+	async queryOne&lt;T extends PersistentModel&gt;(
+		modelConstructor: PersistentModelConstructor&lt;T&gt;,
+		firstOrLast: QueryOne = QueryOne.FIRST
+	): Promise&lt;T | undefined&gt; {
+		const storeName = this.getStorenameForModel(modelConstructor);
+		const result = &lt;T&gt;await this.db.getOne(firstOrLast, storeName);
+
+		return result &amp;&amp; this.modelInstanceCreator(modelConstructor, result);
+	}
+
+	async delete&lt;T extends PersistentModel&gt;(
+		modelOrModelConstructor: T | PersistentModelConstructor&lt;T&gt;,
+		condition?: ModelPredicate&lt;T&gt;
+	): Promise&lt;[T[], T[]]&gt; {
+		const deleteQueue: { storeName: string; items: T[] }[] = [];
+
+		if (isModelConstructor(modelOrModelConstructor)) {
+			const modelConstructor = modelOrModelConstructor;
+			const nameSpace = this.namespaceResolver(modelConstructor);
+
+			// models to be deleted.
+			const models = await this.query(modelConstructor, condition);
+			// TODO: refactor this to use a function like getRelations()
+			const relations =
+				this.schema.namespaces[nameSpace].relationships[modelConstructor.name]
+					.relationTypes;
+
+			if (condition !== undefined) {
+				await this.deleteTraverse(
+					relations,
+					models,
+					modelConstructor.name,
+					nameSpace,
+					deleteQueue
+				);
+
+				await this.deleteItem(deleteQueue);
+
+				const deletedModels = deleteQueue.reduce(
+					(acc, { items }) =&gt; acc.concat(items),
+					&lt;T[]&gt;[]
+				);
+
+				return [models, deletedModels];
+			} else {
+				await this.deleteTraverse(
+					relations,
+					models,
+					modelConstructor.name,
+					nameSpace,
+					deleteQueue
+				);
+
+				await this.deleteItem(deleteQueue);
+
+				const deletedModels = deleteQueue.reduce(
+					(acc, { items }) =&gt; acc.concat(items),
+					&lt;T[]&gt;[]
+				);
+
+				return [models, deletedModels];
+			}
+		} else {
+			const model = modelOrModelConstructor;
+
+			const modelConstructor = Object.getPrototypeOf(model)
+				.constructor as PersistentModelConstructor&lt;T&gt;;
+			const namespaceName = this.namespaceResolver(modelConstructor);
+
+			const storeName = this.getStorenameForModel(modelConstructor);
+
+			if (condition) {
+				const keyValuePath = this.getIndexKeyValuesPath(model);
+
+				const fromDB = await this.db.get(keyValuePath, storeName);
+
+				if (fromDB === undefined) {
+					const msg = &#x27;Model instance not found in storage&#x27;;
+					logger.warn(msg, { model });
+
+					return [[model], []];
+				}
+
+				const predicates = ModelPredicateCreator.getPredicates(condition);
+				const { predicates: predicateObjs, type } = predicates;
+
+				const isValid = validatePredicate(fromDB, type, predicateObjs);
+				if (!isValid) {
+					const msg = &#x27;Conditional update failed&#x27;;
+					logger.error(msg, { model: fromDB, condition: predicateObjs });
+
+					throw new Error(msg);
+				}
+
+				const relations =
+					this.schema.namespaces[namespaceName].relationships[
+						modelConstructor.name
+					].relationTypes;
+
+				await this.deleteTraverse(
+					relations,
+					[model],
+					modelConstructor.name,
+					namespaceName,
+					deleteQueue
+				);
+			} else {
+				const relations =
+					this.schema.namespaces[namespaceName].relationships[
+						modelConstructor.name
+					].relationTypes;
+
+				await this.deleteTraverse(
+					relations,
+					[model],
+					modelConstructor.name,
+					namespaceName,
+					deleteQueue
+				);
+			}
+
+			await this.deleteItem(deleteQueue);
+
+			const deletedModels = deleteQueue.reduce(
+				(acc, { items }) =&gt; acc.concat(items),
+				&lt;T[]&gt;[]
+			);
+
+			return [[model], deletedModels];
+		}
+	}
+
+	private async deleteItem&lt;T extends PersistentModel&gt;(
+		deleteQueue?: { storeName: string; items: T[] | IDBValidKey[] }[]
+	) {
+		for await (const deleteItem of deleteQueue) {
+			const { storeName, items } = deleteItem;
+
+			for await (const item of items) {
+				if (item) {
+					if (typeof item === &#x27;object&#x27;) {
+						const keyValuesPath: string = this.getIndexKeyValuesPath(item as T);
+						await this.db.delete(keyValuesPath, storeName);
+					}
+				}
+			}
+		}
+	}
+	/**
+	 * Populates the delete Queue with all the items to delete
+	 * @param relations
+	 * @param models
+	 * @param srcModel
+	 * @param nameSpace
+	 * @param deleteQueue
+	 */
+	private async deleteTraverse&lt;T extends PersistentModel&gt;(
+		relations: RelationType[],
+		models: T[],
+		srcModel: string,
+		nameSpace: string,
+		deleteQueue: { storeName: string; items: T[] }[]
+	): Promise&lt;void&gt; {
+		for await (const rel of relations) {
+			const {
+				relationType,
+				modelName,
+				targetName,
+				targetNames,
+				associatedWith,
+			} = rel;
+			const storeName = getStorename(nameSpace, modelName);
+
+			const index: string | undefined =
+				getIndex(
+					this.schema.namespaces[nameSpace].relationships[modelName]
+						.relationTypes,
+					srcModel
+				) ||
+				// if we were unable to find an index via relationTypes
+				// i.e. for keyName connections, attempt to find one by the
+				// associatedWith property
+				getIndexFromAssociation(
+					this.schema.namespaces[nameSpace].relationships[modelName].indexes,
+					rel.associatedWith
+				);
+
+			switch (relationType) {
+				case &#x27;HAS_ONE&#x27;:
+					for await (const model of models) {
+						if (targetNames &amp;&amp; targetNames?.length) {
+							let hasOneIndex;
+
+							if (index) {
+								hasOneIndex = index.split(IDENTIFIER_KEY_SEPARATOR);
+							} else if (associatedWith) {
+								if (Array.isArray(associatedWith)) {
+									hasOneIndex = associatedWith;
+								} else {
+									hasOneIndex = [associatedWith];
+								}
+							}
+
+							// iterate over targetNames array and see if each key is present in model object
+							// targetNames here being the keys for the CHILD model
+							const hasConnectedModelFields = targetNames.every(targetName =&gt;
+								model.hasOwnProperty(targetName)
+							);
+
+							// PK / Composite key for the parent model
+							const keyValuesPath: string = this.getIndexKeyValuesPath(model);
+
+							let values;
+
+							const isUnidirectionalConnection = hasOneIndex === associatedWith;
+
+							if (hasConnectedModelFields &amp;&amp; isUnidirectionalConnection) {
+								// Values will be that of the child model
+								values = targetNames.map(
+									targetName =&gt; model[targetName]
+								) as any;
+							} else {
+								// values will be that of the parent model
+								values = keyValuesPath.split(
+									DEFAULT_PRIMARY_KEY_VALUE_SEPARATOR
+								);
+							}
+
+							if (values.length === 0) break;
+
+							const allRecords = await this.db.getAll(storeName);
+
+							let recordToDelete;
+
+							// values === targetNames
+							if (hasConnectedModelFields) {
+								/**
+								 * Retrieve record by finding the record where all
+								 * targetNames are present on the connected model.
+								 *
+								 */
+								// recordToDelete = allRecords.filter(childItem =&gt;
+								// 	values.every(value =&gt; childItem[value] != null)
+								// ) as T[];
+
+								recordToDelete = allRecords.filter(childItem =&gt;
+									hasOneIndex.every(index =&gt; values.includes(childItem[index]))
+								);
+							} else {
+								// values === keyValuePath
+								recordToDelete = allRecords.filter(
+									childItem =&gt; childItem[hasOneIndex] === values
+								) as T[];
+							}
+
+							await this.deleteTraverse&lt;T&gt;(
+								this.schema.namespaces[nameSpace].relationships[modelName]
+									.relationTypes,
+								recordToDelete,
+								modelName,
+								nameSpace,
+								deleteQueue
+							);
+						} else {
+							const hasOneIndex = index || associatedWith;
+							const hasOneCustomField = targetName in model;
+							const keyValuesPath: string = this.getIndexKeyValuesPath(model);
+							const value = hasOneCustomField
+								? model[targetName]
+								: keyValuesPath;
+
+							if (!value) break;
+
+							const allRecords = await this.db.getAll(storeName);
+
+							const recordToDelete = allRecords.filter(
+								childItem =&gt; childItem[hasOneIndex as string] === value
+							) as T[];
+
+							await this.deleteTraverse&lt;T&gt;(
+								this.schema.namespaces[nameSpace].relationships[modelName]
+									.relationTypes,
+								recordToDelete,
+								modelName,
+								nameSpace,
+								deleteQueue
+							);
+						}
+					}
+					break;
+				case &#x27;HAS_MANY&#x27;:
+					for await (const model of models) {
+						// Key values for the parent model:
+						const keyValues: string[] = this.getIndexKeyValuesFromModel(model);
+
+						const allRecords = await this.db.getAll(storeName);
+
+						const indices = index.split(IDENTIFIER_KEY_SEPARATOR);
+
+						const childrenArray = allRecords.filter(childItem =&gt;
+							indices.every(index =&gt; keyValues.includes(childItem[index]))
+						) as T[];
+
+						await this.deleteTraverse&lt;T&gt;(
+							this.schema.namespaces[nameSpace].relationships[modelName]
+								.relationTypes,
+							childrenArray,
+							modelName,
+							nameSpace,
+							deleteQueue
+						);
+					}
+					break;
+				case &#x27;BELONGS_TO&#x27;:
+					// Intentionally blank
+					break;
+				default:
+					exhaustiveCheck(relationType);
+					break;
+			}
+		}
+
+		deleteQueue.push({
+			storeName: getStorename(nameSpace, srcModel),
+			items: models.map(record =&gt;
+				this.modelInstanceCreator(
+					this.getModelConstructorByModelName(nameSpace, srcModel),
+					record
+				)
+			),
+		});
+	}
+
+	async clear(): Promise&lt;void&gt; {
+		await this.db.clear();
+
+		this.db = undefined;
+		this.initPromise = undefined;
+	}
+
+	async batchSave&lt;T extends PersistentModel&gt;(
+		modelConstructor: PersistentModelConstructor&lt;any&gt;,
+		items: ModelInstanceMetadata[]
+	): Promise&lt;[T, OpType][]&gt; {
+		const { name: modelName } = modelConstructor;
+		const namespaceName = this.namespaceResolver(modelConstructor);
+		const storeName = getStorename(namespaceName, modelName);
+		const keys = getIndexKeys(this.schema.namespaces[namespaceName], modelName);
+		const batch: ModelInstanceMetadata[] = [];
+
+		for (const item of items) {
+			const model = this.modelInstanceCreator(modelConstructor, item);
+
+			const connectedModels = traverseModel(
+				modelName,
+				model,
+				this.schema.namespaces[namespaceName],
+				this.modelInstanceCreator,
+				this.getModelConstructorByModelName
+			);
+
+			const keyValuesPath = this.getIndexKeyValuesPath(model);
+
+			const { instance } = connectedModels.find(({ instance }) =&gt; {
+				const instanceKeyValuesPath = this.getIndexKeyValuesPath(instance);
+				return keysEqual([instanceKeyValuesPath], [keyValuesPath]);
+			});
+
+			batch.push(instance);
+		}
+
+		return await this.db.batchSave(storeName, batch, keys);
+	}
+}
+
+export default new AsyncStorageAdapter();
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:51,&quot;character&quot;:19,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:52,&quot;character&quot;:18,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:114,&quot;character&quot;:15,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:113,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:156,&quot;character&quot;:9,&quot;text&quot;:&quot;isValid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:158,&quot;character&quot;:8,&quot;text&quot;:&quot;isValid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:11,&quot;text&quot;:&quot;allPresent&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:233,&quot;character&quot;:7,&quot;text&quot;:&quot;allPresent&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:237,&quot;character&quot;:12,&quot;text&quot;:&quot;allPresent&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:245,&quot;character&quot;:13,&quot;text&quot;:&quot;getByField&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:245,&quot;character&quot;:38,&quot;text&quot;:&quot;getByField&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:274,&quot;character&quot;:11,&quot;text&quot;:&quot;allPresent&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:276,&quot;character&quot;:7,&quot;text&quot;:&quot;allPresent&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:281,&quot;character&quot;:12,&quot;text&quot;:&quot;allPresent&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:399,&quot;character&quot;:47,&quot;text&quot;:&quot;operand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:534,&quot;character&quot;:10,&quot;text&quot;:&quot;isValid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:535,&quot;character&quot;:9,&quot;text&quot;:&quot;isValid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:639,&quot;character&quot;:11,&quot;text&quot;:&quot;hasOneIndex&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:642,&quot;character&quot;:8,&quot;text&quot;:&quot;hasOneIndex&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:645,&quot;character&quot;:9,&quot;text&quot;:&quot;hasOneIndex&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:647,&quot;character&quot;:9,&quot;text&quot;:&quot;hasOneIndex&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:660,&quot;character&quot;:11,&quot;text&quot;:&quot;values&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:662,&quot;character&quot;:42,&quot;text&quot;:&quot;hasOneIndex&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:666,&quot;character&quot;:8,&quot;text&quot;:&quot;values&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:671,&quot;character&quot;:8,&quot;text&quot;:&quot;values&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:676,&quot;character&quot;:11,&quot;text&quot;:&quot;values&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:676,&quot;character&quot;:18,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:680,&quot;character&quot;:11,&quot;text&quot;:&quot;recordToDelete&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:693,&quot;character&quot;:8,&quot;text&quot;:&quot;recordToDelete&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:694,&quot;character&quot;:9,&quot;text&quot;:&quot;hasOneIndex&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:694,&quot;character&quot;:21,&quot;text&quot;:&quot;every&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:694,&quot;character&quot;:27,&quot;text&quot;:&quot;index&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:694,&quot;character&quot;:36,&quot;text&quot;:&quot;values&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:694,&quot;character&quot;:43,&quot;text&quot;:&quot;includes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:694,&quot;character&quot;:62,&quot;text&quot;:&quot;index&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:698,&quot;character&quot;:8,&quot;text&quot;:&quot;recordToDelete&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:699,&quot;character&quot;:32,&quot;text&quot;:&quot;hasOneIndex&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:699,&quot;character&quot;:49,&quot;text&quot;:&quot;values&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:715,&quot;character&quot;:13,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:719,&quot;character&quot;:12,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:724,&quot;character&quot;:58,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:799,&quot;character&quot;:9,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:803,&quot;character&quot;:4,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:809,&quot;character&quot;:52,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:811,&quot;character&quot;:11,&quot;text&quot;:&quot;instance&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:811,&quot;character&quot;:48,&quot;text&quot;:&quot;instance&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageAdapter.ts&quot;,&quot;line&quot;:812,&quot;character&quot;:61,&quot;text&quot;:&quot;instance&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:29 GMT</p>
+    </body>
+  </html>
+  

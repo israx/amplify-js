@@ -1,0 +1,300 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>ExpoSQLiteDatabase.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts</td><td class="">95.36%</td><td class="">0%</td><td class="">345</td><td class="">329</td><td class="">16</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import { ConsoleLogger as Logger } from &#x27;@aws-amplify/core&#x27;;
+import { PersistentModel } from &#x27;@aws-amplify/datastore&#x27;;
+import { deleteAsync, documentDirectory } from &#x27;expo-file-system&#x27;;
+import { openDatabase, WebSQLDatabase } from &#x27;expo-sqlite&#x27;;
+import { DB_NAME } from &#x27;../common/constants&#x27;;
+import { CommonSQLiteDatabase, ParameterizedStatement } from &#x27;../common/types&#x27;;
+
+const logger = new Logger(&#x27;ExpoSQLiteDatabase&#x27;);
+
+/*
+
+Note: 
+ExpoSQLite transaction error callbacks require returning a boolean value to indicate whether the 
+error was handled or not. Returning a true value indicates the error was handled and does not 
+rollback the whole transaction.
+
+*/
+
+class ExpoSQLiteDatabase implements CommonSQLiteDatabase {
+	private db: WebSQLDatabase;
+
+	public async init(): Promise&lt;void&gt; {
+		// only open database once.
+
+		if (!this.db) {
+			// As per expo docs version, description and size arguments are ignored,
+			// but are accepted by the function for compatibility with the WebSQL specification.
+			// Hence, we do not need those arguments.
+			this.db = openDatabase(DB_NAME);
+		}
+	}
+
+	public createSchema(statements: string[]): Promise&lt;void&gt; {
+		return this.executeStatements(statements);
+	}
+
+	public async clear(): Promise&lt;void&gt; {
+		try {
+			logger.debug(&#x27;Clearing database&#x27;);
+			await this.closeDB();
+			// delete database is not supported by expo-sqlite.
+			// Database file needs to be deleted using deleteAsync from expo-file-system
+			await deleteAsync(`${documentDirectory}SQLite/${DB_NAME}`);
+			logger.debug(&#x27;Database cleared&#x27;);
+		} catch (error) {
+			logger.warn(&#x27;Error clearing the database.&#x27;, error);
+			// open database if it was closed earlier and this.db was set to undefined.
+			this.init();
+		}
+	}
+
+	public async get&lt;T extends PersistentModel&gt;(
+		statement: string,
+		params: (string | number)[]
+	): Promise&lt;T&gt; {
+		const results: T[] = await this.getAll(statement, params);
+		return results[0];
+	}
+
+	public getAll&lt;T extends PersistentModel&gt;(
+		statement: string,
+		params: (string | number)[]
+	): Promise&lt;T[]&gt; {
+		return new Promise((resolve, reject) =&gt; {
+			this.db.readTransaction(transaction =&gt; {
+				transaction.executeSql(
+					statement,
+					params,
+					(_, result) =&gt; {
+						resolve(result.rows._array || []);
+					},
+					(_, error) =&gt; {
+						reject(error);
+						logger.warn(error);
+						return true;
+					}
+				);
+			});
+		});
+	}
+
+	public save(statement: string, params: (string | number)[]): Promise&lt;void&gt; {
+		return new Promise((resolve, reject) =&gt; {
+			this.db.transaction(transaction =&gt; {
+				transaction.executeSql(
+					statement,
+					params,
+					() =&gt; {
+						resolve(null);
+					},
+					(_, error) =&gt; {
+						reject(error);
+						logger.warn(error);
+						return true;
+					}
+				);
+			});
+		});
+	}
+
+	public batchQuery&lt;T = any&gt;(
+		queryParameterizedStatements: Set&lt;ParameterizedStatement&gt; = new Set()
+	): Promise&lt;T[]&gt; {
+		return new Promise((resolveTransaction, rejectTransaction) =&gt; {
+			this.db.transaction(async transaction =&gt; {
+				try {
+					const results: any[] = await Promise.all(
+						[...queryParameterizedStatements].map(
+							([statement, params]) =&gt;
+								new Promise((resolve, reject) =&gt; {
+									transaction.executeSql(
+										statement,
+										params,
+										(_, result) =&gt; {
+											resolve(result.rows._array[0]);
+										},
+										(_, error) =&gt; {
+											reject(error);
+											logger.warn(error);
+											return true;
+										}
+									);
+								})
+						)
+					);
+					resolveTransaction(results);
+				} catch (error) {
+					rejectTransaction(error);
+					logger.warn(error);
+				}
+			});
+		});
+	}
+
+	public batchSave(
+		saveParameterizedStatements: Set&lt;ParameterizedStatement&gt; = new Set(),
+		deleteParameterizedStatements?: Set&lt;ParameterizedStatement&gt;
+	): Promise&lt;void&gt; {
+		return new Promise((resolveTransaction, rejectTransaction) =&gt; {
+			this.db.transaction(async transaction =&gt; {
+				try {
+					// await for all sql statements promises to resolve
+					await Promise.all(
+						[...saveParameterizedStatements].map(
+							([statement, params]) =&gt;
+								new Promise((resolve, reject) =&gt; {
+									transaction.executeSql(
+										statement,
+										params,
+										() =&gt; {
+											resolve(null);
+										},
+										(_, error) =&gt; {
+											reject(error);
+											logger.warn(error);
+											return true;
+										}
+									);
+								})
+						)
+					);
+					if (deleteParameterizedStatements) {
+						await Promise.all(
+							[...deleteParameterizedStatements].map(
+								([statement, params]) =&gt;
+									new Promise((resolve, reject) =&gt;
+										transaction.executeSql(
+											statement,
+											params,
+											() =&gt; {
+												resolve(null);
+											},
+											(_, error) =&gt; {
+												reject(error);
+												logger.warn(error);
+												return true;
+											}
+										)
+									)
+							)
+						);
+					}
+					resolveTransaction(null);
+				} catch (error) {
+					rejectTransaction(error);
+					logger.warn(error);
+				}
+			});
+		});
+	}
+
+	public selectAndDelete&lt;T = any&gt;(
+		queryParameterizedStatement: ParameterizedStatement,
+		deleteParameterizedStatement: ParameterizedStatement
+	): Promise&lt;T[]&gt; {
+		const [queryStatement, queryParams] = queryParameterizedStatement;
+		const [deleteStatement, deleteParams] = deleteParameterizedStatement;
+
+		return new Promise((resolveTransaction, rejectTransaction) =&gt; {
+			this.db.transaction(async transaction =&gt; {
+				try {
+					const result: T[] = await new Promise((resolve, reject) =&gt; {
+						transaction.executeSql(
+							queryStatement,
+							queryParams,
+							(_, result) =&gt; {
+								resolve(result.rows._array || []);
+							},
+							(_, error) =&gt; {
+								reject(error);
+								logger.warn(error);
+								return true;
+							}
+						);
+					});
+					await new Promise((resolve, reject) =&gt; {
+						transaction.executeSql(
+							deleteStatement,
+							deleteParams,
+							() =&gt; {
+								resolve(null);
+							},
+							(_, error) =&gt; {
+								reject(error);
+								logger.warn(error);
+								return true;
+							}
+						);
+					});
+					resolveTransaction(result);
+				} catch (error) {
+					rejectTransaction(error);
+					logger.warn(error);
+				}
+			});
+		});
+	}
+
+	private executeStatements(statements: string[]): Promise&lt;void&gt; {
+		return new Promise((resolveTransaction, rejectTransaction) =&gt; {
+			this.db.transaction(async transaction =&gt; {
+				try {
+					await Promise.all(
+						statements.map(
+							statement =&gt;
+								new Promise((resolve, reject) =&gt; {
+									transaction.executeSql(
+										statement,
+										[],
+										() =&gt; {
+											resolve(null);
+										},
+										(_, error) =&gt; {
+											reject(error);
+											return true;
+										}
+									);
+								})
+						)
+					);
+					resolveTransaction(null);
+				} catch (error) {
+					rejectTransaction(error);
+					logger.warn(error);
+				}
+			});
+		});
+	}
+
+	private async closeDB() {
+		if (this.db) {
+			logger.debug(&#x27;Closing Database&#x27;);
+			// closing database is not supported by expo-sqlite.
+			// Workaround is to access the private db variable and call the close() method.
+			await (this.db as any)._db.close();
+			logger.debug(&#x27;Database closed&#x27;);
+			this.db = undefined;
+		}
+	}
+}
+
+export default ExpoSQLiteDatabase;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts&quot;,&quot;line&quot;:45,&quot;character&quot;:47,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts&quot;,&quot;line&quot;:44,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts&quot;,&quot;line&quot;:127,&quot;character&quot;:23,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts&quot;,&quot;line&quot;:128,&quot;character&quot;:17,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts&quot;,&quot;line&quot;:126,&quot;character&quot;:13,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts&quot;,&quot;line&quot;:184,&quot;character&quot;:23,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts&quot;,&quot;line&quot;:185,&quot;character&quot;:17,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts&quot;,&quot;line&quot;:183,&quot;character&quot;:13,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:23,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:17,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts&quot;,&quot;line&quot;:230,&quot;character&quot;:13,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts&quot;,&quot;line&quot;:262,&quot;character&quot;:23,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts&quot;,&quot;line&quot;:263,&quot;character&quot;:17,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts&quot;,&quot;line&quot;:261,&quot;character&quot;:13,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts&quot;,&quot;line&quot;:274,&quot;character&quot;:26,&quot;text&quot;:&quot;_db&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ExpoSQLiteAdapter/ExpoSQLiteDatabase.ts&quot;,&quot;line&quot;:274,&quot;character&quot;:30,&quot;text&quot;:&quot;close&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:31 GMT</p>
+    </body>
+  </html>
+  

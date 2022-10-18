@@ -1,0 +1,399 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Predictions.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/types/Predictions.ts</td><td class="">90.24%</td><td class="">0%</td><td class="">379</td><td class="">342</td><td class="">37</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/**
+ * Base types
+ */
+export interface PredictionsOptions {
+	[key: string]: any;
+}
+
+export interface ProviderOptions {
+	providerName?: string;
+}
+
+/**
+ * Convert types
+ */
+
+export enum InterpretTextCategories {
+	ALL = &#x27;ALL&#x27;,
+	LANGUAGE = &#x27;LANGUAGE&#x27;,
+	ENTITIES = &#x27;ENTITIES&#x27;,
+	SENTIMENT = &#x27;SENTIMENT&#x27;,
+	SYNTAX = &#x27;SYNTAX&#x27;,
+	KEY_PHRASES = &#x27;KEY_PHRASES&#x27;,
+}
+
+export interface InterpretTextInput {
+	text: InterpretTextInputLanguage | InterpretTextOthers | InterpretTextAll;
+}
+
+export interface InterpretTextInputLanguage {
+	source: {
+		text: string;
+	};
+	type: InterpretTextCategories.LANGUAGE;
+}
+
+export interface InterpretTextOthers {
+	source: {
+		text: string;
+		language: string;
+	};
+	type:
+		| InterpretTextCategories.ENTITIES
+		| InterpretTextCategories.SENTIMENT
+		| InterpretTextCategories.SYNTAX
+		| InterpretTextCategories.KEY_PHRASES;
+}
+
+export interface InterpretTextAll {
+	source: {
+		text: string;
+	};
+	type: InterpretTextCategories.ALL;
+}
+
+export interface TextEntities {
+	type: string;
+	text: string;
+}
+
+export interface KeyPhrases {
+	text: string;
+}
+
+export interface TextSyntax {
+	text: string;
+	syntax: string;
+}
+
+export interface TextSentiment {
+	predominant: string;
+	positive: number;
+	negative: number;
+	neutral: number;
+	mixed: number;
+}
+
+export interface InterpretTextOutput {
+	textInterpretation: {
+		language?: string;
+		textEntities?: Array&lt;TextEntities&gt;;
+		keyPhrases?: Array&lt;KeyPhrases&gt;;
+		sentiment?: TextSentiment;
+		syntax?: Array&lt;TextSyntax&gt;;
+	};
+}
+
+export interface TranslateTextInput {
+	translateText: {
+		source: {
+			text: string;
+			language?: string;
+		};
+		targetLanguage?: string;
+	};
+}
+
+export interface TranslateTextOutput {
+	text: string;
+	language: string;
+}
+
+export interface TextToSpeechInput {
+	textToSpeech: {
+		source: {
+			text: string;
+		};
+		terminology?: string;
+		voiceId?: string;
+	};
+}
+
+export interface TextToSpeechOutput {
+	speech: { url: string };
+	audioStream: Buffer;
+	text: string;
+}
+
+export interface StorageSource {
+	key: string;
+	level?: &#x27;public&#x27; | &#x27;private&#x27; | &#x27;protected&#x27;;
+	identityId?: string;
+}
+
+export interface FileSource {
+	file: File;
+}
+
+export interface BytesSource {
+	bytes: Buffer | ArrayBuffer | Blob | string;
+}
+
+export interface SpeechToTextInput {
+	transcription: {
+		source: BytesSource;
+		language?: string;
+	};
+}
+
+export interface SpeechToTextOutput {
+	transcription: {
+		fullText: string;
+	};
+}
+
+export type IdentifySource = StorageSource | FileSource | BytesSource;
+
+export interface IdentifyTextInput {
+	text: {
+		source: IdentifySource;
+		format?: &#x27;PLAIN&#x27; | &#x27;FORM&#x27; | &#x27;TABLE&#x27; | &#x27;ALL&#x27;;
+	};
+}
+
+export interface Word {
+	text?: string;
+	polygon?: Polygon;
+	boundingBox?: BoundingBox;
+}
+
+export interface LineDetailed {
+	text?: string;
+	polygon?: Polygon;
+	boundingBox?: BoundingBox;
+	page?: number;
+}
+
+export interface Content {
+	text?: string;
+	selected?: boolean;
+}
+
+export interface TableCell extends Content {
+	boundingBox?: BoundingBox;
+	polygon?: Polygon;
+	rowSpan?: Number;
+	columnSpan?: Number;
+}
+
+export interface Table {
+	size: {
+		rows: number;
+		columns: number;
+	};
+	table: TableCell[][];
+	polygon: Polygon;
+	boundingBox: BoundingBox;
+}
+
+export interface KeyValue {
+	key: string;
+	value: Content;
+	polygon: Polygon;
+	boundingBox: BoundingBox;
+}
+
+export interface IdentifyTextOutput {
+	text: {
+		fullText: string;
+		lines: string[];
+		linesDetailed: LineDetailed[];
+		words: Word[];
+		keyValues?: KeyValue[];
+		tables?: Table[];
+		selections?: {
+			selected: boolean;
+			polygon: Polygon;
+			boundingBox: BoundingBox;
+		}[];
+	};
+}
+
+export interface IdentifyLabelsInput {
+	labels: {
+		source: IdentifySource;
+		type: &#x27;LABELS&#x27; | &#x27;UNSAFE&#x27; | &#x27;ALL&#x27;;
+	};
+}
+
+export interface Point {
+	x?: Number;
+	y?: Number;
+}
+
+export type Polygon = Array&lt;Point&gt; | Iterable&lt;Point&gt;;
+
+export interface BoundingBox {
+	width?: Number;
+	height?: Number;
+	left?: Number;
+	top?: Number;
+}
+
+export interface IdentifyLabelsOutput {
+	labels?: {
+		name: string;
+		boundingBoxes: BoundingBox[];
+		metadata?: Object;
+	}[];
+	unsafe?: &#x27;YES&#x27; | &#x27;NO&#x27; | &#x27;UNKNOWN&#x27;;
+}
+
+export interface IdentifyEntitiesInput {
+	entities: IdentifyFromCollection | IdentifyCelebrities | IdentifyEntities;
+}
+
+export interface IdentifyFromCollection {
+	source: IdentifySource;
+	collection: true;
+	collectionId?: string;
+	maxEntities?: number;
+}
+
+export interface IdentifyCelebrities {
+	source: IdentifySource;
+	celebrityDetection: true;
+}
+
+export interface IdentifyEntities {
+	source: IdentifySource;
+}
+
+export interface FaceAttributes {
+	smile?: boolean;
+	eyeglasses?: boolean;
+	sunglasses?: boolean;
+	gender?: string;
+	beard?: boolean;
+	mustache?: boolean;
+	eyesOpen?: boolean;
+	mouthOpen?: boolean;
+	emotions?: string[];
+}
+
+export interface IdentifyEntitiesOutput {
+	entities: {
+		boundingBox?: BoundingBox;
+		ageRange?: {
+			low?: Number;
+			high?: Number;
+		};
+		landmarks?: {
+			type?: string;
+			x?: number;
+			y?: number;
+		}[];
+		attributes?: FaceAttributes;
+		metadata?: object;
+	}[];
+}
+
+export function isIdentifyFromCollection(
+	obj: any
+): obj is IdentifyFromCollection {
+	const key: keyof IdentifyFromCollection = &#x27;collection&#x27;;
+	const keyId: keyof IdentifyFromCollection = &#x27;collectionId&#x27;;
+	return obj &amp;&amp; (obj.hasOwnProperty(key) || obj.hasOwnProperty(keyId));
+}
+
+export function isIdentifyCelebrities(obj: any): obj is IdentifyCelebrities {
+	const key: keyof IdentifyCelebrities = &#x27;celebrityDetection&#x27;;
+	return obj &amp;&amp; obj.hasOwnProperty(key);
+}
+
+export function isTranslateTextInput(obj: any): obj is TranslateTextInput {
+	const key: keyof TranslateTextInput = &#x27;translateText&#x27;;
+	return obj &amp;&amp; obj.hasOwnProperty(key);
+}
+
+export function isTextToSpeechInput(obj: any): obj is TextToSpeechInput {
+	const key: keyof TextToSpeechInput = &#x27;textToSpeech&#x27;;
+	return obj &amp;&amp; obj.hasOwnProperty(key);
+}
+
+export function isSpeechToTextInput(obj: any): obj is SpeechToTextInput {
+	const key: keyof SpeechToTextInput = &#x27;transcription&#x27;;
+	return obj &amp;&amp; obj.hasOwnProperty(key);
+}
+
+export function isStorageSource(obj: any): obj is StorageSource {
+	const key: keyof StorageSource = &#x27;key&#x27;;
+	return obj &amp;&amp; obj.hasOwnProperty(key);
+}
+
+export function isFileSource(obj: any): obj is FileSource {
+	const key: keyof FileSource = &#x27;file&#x27;;
+	return obj &amp;&amp; obj.hasOwnProperty(key);
+}
+
+export function isBytesSource(obj: any): obj is BytesSource {
+	const key: keyof BytesSource = &#x27;bytes&#x27;;
+	return obj &amp;&amp; obj.hasOwnProperty(key);
+}
+
+export function isIdentifyTextInput(obj: any): obj is IdentifyTextInput {
+	const key: keyof IdentifyTextInput = &#x27;text&#x27;;
+	return obj &amp;&amp; obj.hasOwnProperty(key);
+}
+
+export function isIdentifyLabelsInput(obj: any): obj is IdentifyLabelsInput {
+	const key: keyof IdentifyLabelsInput = &#x27;labels&#x27;;
+	return obj &amp;&amp; obj.hasOwnProperty(key);
+}
+
+export function isIdentifyEntitiesInput(
+	obj: any
+): obj is IdentifyEntitiesInput {
+	const key: keyof IdentifyEntitiesInput = &#x27;entities&#x27;;
+	return obj &amp;&amp; obj.hasOwnProperty(key);
+}
+
+export function isInterpretTextInput(obj: any): obj is InterpretTextInput {
+	const key: keyof InterpretTextInput = &#x27;text&#x27;;
+	return obj &amp;&amp; obj.hasOwnProperty(key);
+}
+
+export interface Geometry {
+	/**
+	 * &lt;p&gt;An axis-aligned coarse representation of the detected text&#x27;s location on the image.&lt;/p&gt;
+	 */
+	BoundingBox?: BoundingBox;
+
+	/**
+	 * &lt;p&gt;Within the bounding box, a fine-grained polygon around the detected text.&lt;/p&gt;
+	 */
+	Polygon?: Array&lt;Point&gt; | Iterable&lt;Point&gt;;
+}
+
+export interface Relationship {
+	/**
+	 * &lt;p&gt;The type of relationship that the blocks in the IDs array have with the current block. The relationship can be &lt;code&gt;VALUE&lt;/code&gt; or &lt;code&gt;CHILD&lt;/code&gt;.&lt;/p&gt;
+	 */
+	Type?: &#x27;VALUE&#x27; | &#x27;CHILD&#x27; | string;
+
+	/**
+	 * &lt;p&gt;An array of IDs for related blocks. You can get the type of the relationship from the &lt;code&gt;Type&lt;/code&gt; element.&lt;/p&gt;
+	 */
+	Ids?: Array&lt;string&gt; | Iterable&lt;string&gt;;
+}
+
+export type FeatureType = &#x27;TABLES&#x27; | &#x27;FORMS&#x27; | string;
+export type FeatureTypes = FeatureType[];
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:291,&quot;character&quot;:1,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:295,&quot;character&quot;:8,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:295,&quot;character&quot;:16,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:295,&quot;character&quot;:43,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:298,&quot;character&quot;:38,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:300,&quot;character&quot;:8,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:300,&quot;character&quot;:15,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:303,&quot;character&quot;:37,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:305,&quot;character&quot;:8,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:305,&quot;character&quot;:15,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:308,&quot;character&quot;:36,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:310,&quot;character&quot;:8,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:310,&quot;character&quot;:15,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:313,&quot;character&quot;:36,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:315,&quot;character&quot;:8,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:315,&quot;character&quot;:15,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:318,&quot;character&quot;:32,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:320,&quot;character&quot;:8,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:320,&quot;character&quot;:15,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:323,&quot;character&quot;:29,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:325,&quot;character&quot;:8,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:325,&quot;character&quot;:15,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:328,&quot;character&quot;:30,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:330,&quot;character&quot;:8,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:330,&quot;character&quot;:15,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:333,&quot;character&quot;:36,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:335,&quot;character&quot;:8,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:335,&quot;character&quot;:15,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:338,&quot;character&quot;:38,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:340,&quot;character&quot;:8,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:340,&quot;character&quot;:15,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:344,&quot;character&quot;:1,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:347,&quot;character&quot;:8,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:347,&quot;character&quot;:15,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:350,&quot;character&quot;:37,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:352,&quot;character&quot;:8,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Predictions.ts&quot;,&quot;line&quot;:352,&quot;character&quot;:15,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:25 GMT</p>
+    </body>
+  </html>
+  

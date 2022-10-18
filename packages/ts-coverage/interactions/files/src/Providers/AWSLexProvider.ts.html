@@ -1,0 +1,240 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>AWSLexProvider.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Providers/AWSLexProvider.ts</td><td class="">91.45%</td><td class="">0%</td><td class="">269</td><td class="">246</td><td class="">23</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import { AbstractInteractionsProvider } from &#x27;./InteractionsProvider&#x27;;
+import {
+	InteractionsOptions,
+	AWSLexProviderOptions,
+	InteractionsResponse,
+	InteractionsMessage,
+} from &#x27;../types&#x27;;
+import {
+	LexRuntimeServiceClient,
+	PostTextCommand,
+	PostTextCommandInput,
+	PostTextCommandOutput,
+	PostContentCommand,
+	PostContentCommandInput,
+	PostContentCommandOutput,
+} from &#x27;@aws-sdk/client-lex-runtime-service&#x27;;
+import {
+	ConsoleLogger as Logger,
+	Credentials,
+	getAmplifyUserAgent,
+} from &#x27;@aws-amplify/core&#x27;;
+import { convert } from &#x27;./AWSLexProviderHelper/utils&#x27;;
+
+const logger = new Logger(&#x27;AWSLexProvider&#x27;);
+
+interface PostContentCommandOutputFormatted
+	extends Omit&lt;PostContentCommandOutput, &#x27;audioStream&#x27;&gt; {
+	audioStream?: Uint8Array;
+}
+
+type AWSLexProviderSendResponse =
+	| PostTextCommandOutput
+	| PostContentCommandOutputFormatted;
+
+export class AWSLexProvider extends AbstractInteractionsProvider {
+	private lexRuntimeServiceClient: LexRuntimeServiceClient;
+	private _botsCompleteCallback: object;
+
+	constructor(options: InteractionsOptions = {}) {
+		super(options);
+		this._botsCompleteCallback = {};
+	}
+
+	getProviderName() {
+		return &#x27;AWSLexProvider&#x27;;
+	}
+
+	configure(config: AWSLexProviderOptions = {}): AWSLexProviderOptions {
+		const propertiesToTest = [&#x27;name&#x27;, &#x27;alias&#x27;, &#x27;region&#x27;];
+
+		Object.keys(config).forEach(botKey =&gt; {
+			const botConfig = config[botKey];
+
+			// is bot config correct
+			if (!propertiesToTest.every(x =&gt; x in botConfig)) {
+				throw new Error(&#x27;invalid bot configuration&#x27;);
+			}
+		});
+		return super.configure(config);
+	}
+
+	/**
+	 * @private
+	 * @deprecated
+	 * This is used internally by &#x27;sendMessage&#x27; to call onComplete callback
+	 * for a bot if configured
+	 */
+	reportBotStatus(data: AWSLexProviderSendResponse, botname: string) {
+		// Check if state is fulfilled to resolve onFullfilment promise
+		logger.debug(&#x27;postContent state&#x27;, data.dialogState);
+		if (
+			data.dialogState === &#x27;ReadyForFulfillment&#x27; ||
+			data.dialogState === &#x27;Fulfilled&#x27;
+		) {
+			if (typeof this._botsCompleteCallback[botname] === &#x27;function&#x27;) {
+				setTimeout(() =&gt; this._botsCompleteCallback[botname](null, data), 0);
+			}
+
+			if (
+				this._config &amp;&amp;
+				typeof this._config[botname].onComplete === &#x27;function&#x27;
+			) {
+				setTimeout(() =&gt; this._config[botname].onComplete(null, data), 0);
+			}
+		}
+
+		if (data.dialogState === &#x27;Failed&#x27;) {
+			if (typeof this._botsCompleteCallback[botname] === &#x27;function&#x27;) {
+				setTimeout(
+					() =&gt; this._botsCompleteCallback[botname](&#x27;Bot conversation failed&#x27;),
+					0
+				);
+			}
+
+			if (
+				this._config &amp;&amp;
+				typeof this._config[botname].onComplete === &#x27;function&#x27;
+			) {
+				setTimeout(
+					() =&gt; this._config[botname].onComplete(&#x27;Bot conversation failed&#x27;),
+					0
+				);
+			}
+		}
+	}
+
+	async sendMessage(
+		botname: string,
+		message: string | InteractionsMessage
+	): Promise&lt;InteractionsResponse&gt; {
+		// check if bot exists
+		if (!this._config[botname]) {
+			return Promise.reject(&#x27;Bot &#x27; + botname + &#x27; does not exist&#x27;);
+		}
+
+		// check if credentials are present
+		let credentials;
+		try {
+			credentials = await Credentials.get();
+		} catch (error) {
+			return Promise.reject(&#x27;No credentials&#x27;);
+		}
+
+		this.lexRuntimeServiceClient = new LexRuntimeServiceClient({
+			region: this._config[botname].region,
+			credentials,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+
+		let params: PostTextCommandInput | PostContentCommandInput;
+		if (typeof message === &#x27;string&#x27;) {
+			params = {
+				botAlias: this._config[botname].alias,
+				botName: botname,
+				inputText: message,
+				userId: credentials.identityId,
+			};
+
+			logger.debug(&#x27;postText to lex&#x27;, message);
+			try {
+				const postTextCommand = new PostTextCommand(params);
+				const data = await this.lexRuntimeServiceClient.send(postTextCommand);
+
+				this.reportBotStatus(data, botname);
+				return data;
+			} catch (err) {
+				return Promise.reject(err);
+			}
+		} else {
+			const {
+				content,
+				options: { messageType },
+			} = message;
+			if (messageType === &#x27;voice&#x27;) {
+				if (typeof content !== &#x27;object&#x27;) {
+					return Promise.reject(&#x27;invalid content type&#x27;);
+				}
+				const inputStream =
+					content instanceof Uint8Array ? content : await convert(content);
+
+				params = {
+					botAlias: this._config[botname].alias,
+					botName: botname,
+					contentType: &#x27;audio/x-l16; sample-rate=16000; channel-count=1&#x27;,
+					userId: credentials.identityId,
+					accept: &#x27;audio/mpeg&#x27;,
+					inputStream,
+				};
+			} else {
+				if (typeof content !== &#x27;string&#x27;)
+					return Promise.reject(&#x27;invalid content type&#x27;);
+
+				params = {
+					botAlias: this._config[botname].alias,
+					botName: botname,
+					contentType: &#x27;text/plain; charset=utf-8&#x27;,
+					inputStream: content,
+					userId: credentials.identityId,
+					accept: &#x27;audio/mpeg&#x27;,
+				};
+			}
+			logger.debug(&#x27;postContent to lex&#x27;, message);
+			try {
+				const postContentCommand = new PostContentCommand(params);
+				const data = await this.lexRuntimeServiceClient.send(
+					postContentCommand
+				);
+
+				const audioArray = data.audioStream
+					? await convert(data.audioStream)
+					: undefined;
+
+				const response = { ...data, ...{ audioStream: audioArray } };
+
+				this.reportBotStatus(response, botname);
+				return response;
+			} catch (err) {
+				return Promise.reject(err);
+			}
+		}
+	}
+
+	onComplete(botname: string, callback: (err, confirmation) =&gt; void) {
+		// does bot exist
+		if (!this._config[botname]) {
+			throw new Error(&#x27;Bot &#x27; + botname + &#x27; does not exist&#x27;);
+		}
+		this._botsCompleteCallback[botname] = callback;
+	}
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:33,&quot;text&quot;:&quot;onComplete&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:94,&quot;character&quot;:43,&quot;text&quot;:&quot;onComplete&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:108,&quot;character&quot;:33,&quot;text&quot;:&quot;onComplete&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:111,&quot;character&quot;:33,&quot;text&quot;:&quot;onComplete&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:128,&quot;character&quot;:6,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:130,&quot;character&quot;:3,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:136,&quot;character&quot;:33,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:144,&quot;character&quot;:36,&quot;text&quot;:&quot;alias&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:147,&quot;character&quot;:12,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:147,&quot;character&quot;:24,&quot;text&quot;:&quot;identityId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:158,&quot;character&quot;:26,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:157,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:173,&quot;character&quot;:37,&quot;text&quot;:&quot;alias&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:176,&quot;character&quot;:13,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:176,&quot;character&quot;:25,&quot;text&quot;:&quot;identityId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:185,&quot;character&quot;:37,&quot;text&quot;:&quot;alias&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:189,&quot;character&quot;:13,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:189,&quot;character&quot;:25,&quot;text&quot;:&quot;identityId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:209,&quot;character&quot;:26,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:208,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:214,&quot;character&quot;:40,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexProvider.ts&quot;,&quot;line&quot;:214,&quot;character&quot;:45,&quot;text&quot;:&quot;confirmation&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:22 GMT</p>
+    </body>
+  </html>
+  

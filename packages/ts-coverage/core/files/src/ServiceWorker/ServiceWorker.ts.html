@@ -1,0 +1,227 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>ServiceWorker.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/ServiceWorker/ServiceWorker.ts</td><td class="">95.48%</td><td class="">0%</td><td class="">221</td><td class="">211</td><td class="">10</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/**
+ * Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import { ConsoleLogger as Logger } from &#x27;../Logger&#x27;;
+import { browserOrNode } from &#x27;../JS&#x27;;
+import { Amplify } from &#x27;../Amplify&#x27;;
+/**
+ * Provides a means to registering a service worker in the browser
+ * and communicating with it via postMessage events.
+ * https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/
+ *
+ * postMessage events are currently not supported in all browsers. See:
+ * https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
+ *
+ * At the minmum this class will register the service worker and listen
+ * and attempt to dispatch messages on state change and record analytics
+ * events based on the service worker lifecycle.
+ */
+export class ServiceWorkerClass {
+	// The active service worker will be set once it is registered
+	private _serviceWorker: ServiceWorker;
+
+	// The service worker registration object
+	private _registration: ServiceWorkerRegistration;
+
+	// The application server public key for Push
+	// https://web-push-codelab.glitch.me/
+	private _publicKey: string;
+
+	// push subscription
+	private _subscription: PushSubscription;
+
+	// The AWS Amplify logger
+	private _logger: Logger = new Logger(&#x27;ServiceWorker&#x27;);
+
+	constructor() { }
+
+	/**
+	 * Get the currently active service worker
+	 */
+	get serviceWorker(): ServiceWorker {
+		return this._serviceWorker;
+	}
+
+	/**
+	 * Register the service-worker.js file in the browser
+	 * Make sure the service-worker.js is part of the build
+	 * for example with Angular, modify the angular-cli.json file
+	 * and add to &quot;assets&quot; array &quot;service-worker.js&quot;
+	 * @param {string} - (optional) Service worker file. Defaults to &quot;/service-worker.js&quot;
+	 * @param {string} - (optional) The service worker scope. Defaults to &quot;/&quot;
+	 *  - API Doc: https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register
+	 * @returns {Promise}
+	 *	- resolve(ServiceWorkerRegistration)
+	 *	- reject(Error)
+	 **/
+	register(filePath: string = &#x27;/service-worker.js&#x27;, scope: string = &#x27;/&#x27;) {
+		this._logger.debug(`registering ${filePath}`);
+		this._logger.debug(`registering service worker with scope ${scope}`);
+		return new Promise((resolve, reject) =&gt; {
+			if (navigator &amp;&amp; &#x27;serviceWorker&#x27; in navigator) {
+				navigator.serviceWorker
+					.register(filePath, {
+						scope,
+					})
+					.then(registration =&gt; {
+						if (registration.installing) {
+							this._serviceWorker = registration.installing;
+						} else if (registration.waiting) {
+							this._serviceWorker = registration.waiting;
+						} else if (registration.active) {
+							this._serviceWorker = registration.active;
+						}
+						this._registration = registration;
+						this._setupListeners();
+						this._logger.debug(
+							`Service Worker Registration Success: ${registration}`
+						);
+						return resolve(registration);
+					})
+					.catch(error =&gt; {
+						this._logger.debug(`Service Worker Registration Failed ${error}`);
+						return reject(error);
+					});
+			} else {
+				return reject(new Error(&#x27;Service Worker not available&#x27;));
+			}
+		});
+	}
+
+	/**
+	 * Enable web push notifications. If not subscribed, a new subscription will
+	 * be created and registered.
+	 * 	Test Push Server: https://web-push-codelab.glitch.me/
+	 * 	Push Server Libraries: https://github.com/web-push-libs/
+	 * 	API Doc: https://developers.google.com/web/fundamentals/codelabs/push-notifications/
+	 * @param publicKey
+	 * @returns {Promise}
+	 * 	- resolve(PushSubscription)
+	 *  - reject(Error)
+	 */
+	enablePush(publicKey: string) {
+		if (!this._registration) throw new Error(&#x27;Service Worker not registered&#x27;);
+		this._publicKey = publicKey;
+		return new Promise((resolve, reject) =&gt; {
+			if (browserOrNode().isBrowser) {
+				this._registration.pushManager.getSubscription().then(subscription =&gt; {
+					if (subscription) {
+						this._subscription = subscription;
+						this._logger.debug(
+							`User is subscribed to push: ${JSON.stringify(subscription)}`
+						);
+						resolve(subscription);
+					} else {
+						this._logger.debug(`User is NOT subscribed to push`);
+						return this._registration.pushManager
+							.subscribe({
+								userVisibleOnly: true,
+								applicationServerKey: this._urlB64ToUint8Array(publicKey),
+							})
+							.then(subscription =&gt; {
+								this._subscription = subscription;
+								this._logger.debug(
+									`User subscribed: ${JSON.stringify(subscription)}`
+								);
+								resolve(subscription);
+							})
+							.catch(error =&gt; {
+								this._logger.error(error);
+							});
+					}
+				});
+			} else {
+				return reject(new Error(&#x27;Service Worker not available&#x27;));
+			}
+		});
+	}
+
+	/**
+	 * Convert a base64 encoded string to a Uint8 array for the push server key
+	 * @param base64String
+	 */
+	private _urlB64ToUint8Array(base64String: string) {
+		const padding = &#x27;=&#x27;.repeat((4 - (base64String.length % 4)) % 4);
+		const base64 = (base64String + padding)
+			.replace(/\-/g, &#x27;+&#x27;)
+			.replace(/_/g, &#x27;/&#x27;);
+
+		const rawData = window.atob(base64);
+		const outputArray = new Uint8Array(rawData.length);
+
+		for (let i = 0; i &lt; rawData.length; ++i) {
+			outputArray[i] = rawData.charCodeAt(i);
+		}
+		return outputArray;
+	}
+
+	/**
+	 * Send a message to the service worker. The service worker needs
+	 * to implement `self.addEventListener(&#x27;message&#x27;) to handle the
+	 * message. This ***currently*** does not work in Safari or IE.
+	 * @param {object | string} - An arbitrary JSON object or string message to send to the service worker
+	 *	- see: https://developer.mozilla.org/en-US/docs/Web/API/Transferable
+	 * @returns {Promise}
+	 **/
+	send(message: object | string) {
+		if (this._serviceWorker) {
+			this._serviceWorker.postMessage(
+				typeof message === &#x27;object&#x27; ? JSON.stringify(message) : message
+			);
+		}
+	}
+
+	/**
+	 * Listen for service worker state change and message events
+	 * https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorker/state
+	 **/
+	_setupListeners() {
+		this._serviceWorker.addEventListener(&#x27;statechange&#x27;, event =&gt; {
+			const currentState = this._serviceWorker.state;
+			this._logger.debug(`ServiceWorker statechange: ${currentState}`);
+			if (Amplify.Analytics &amp;&amp; typeof Amplify.Analytics.record === &#x27;function&#x27;) {
+				Amplify.Analytics.record({
+					name: &#x27;ServiceWorker&#x27;,
+					attributes: {
+						state: currentState,
+					},
+				});
+			}
+		});
+		this._serviceWorker.addEventListener(&#x27;message&#x27;, event =&gt; {
+			this._logger.debug(`ServiceWorker message event: ${event}`);
+		});
+	}
+}
+
+/**
+ * @deprecated use named import
+ */
+export default ServiceWorkerClass;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/ServiceWorker/ServiceWorker.ts&quot;,&quot;line&quot;:89,&quot;character&quot;:12,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ServiceWorker/ServiceWorker.ts&quot;,&quot;line&quot;:90,&quot;character&quot;:63,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ServiceWorker/ServiceWorker.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:20,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ServiceWorker/ServiceWorker.ts&quot;,&quot;line&quot;:136,&quot;character&quot;:14,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ServiceWorker/ServiceWorker.ts&quot;,&quot;line&quot;:137,&quot;character&quot;:27,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ServiceWorker/ServiceWorker.ts&quot;,&quot;line&quot;:190,&quot;character&quot;:15,&quot;text&quot;:&quot;Analytics&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ServiceWorker/ServiceWorker.ts&quot;,&quot;line&quot;:190,&quot;character&quot;:43,&quot;text&quot;:&quot;Analytics&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ServiceWorker/ServiceWorker.ts&quot;,&quot;line&quot;:190,&quot;character&quot;:53,&quot;text&quot;:&quot;record&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ServiceWorker/ServiceWorker.ts&quot;,&quot;line&quot;:191,&quot;character&quot;:12,&quot;text&quot;:&quot;Analytics&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ServiceWorker/ServiceWorker.ts&quot;,&quot;line&quot;:191,&quot;character&quot;:22,&quot;text&quot;:&quot;record&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:20 GMT</p>
+    </body>
+  </html>
+  

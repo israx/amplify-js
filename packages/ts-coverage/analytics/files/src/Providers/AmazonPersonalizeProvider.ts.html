@@ -1,0 +1,432 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>AmazonPersonalizeProvider.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Providers/AmazonPersonalizeProvider.ts</td><td class="">64.63%</td><td class="">0%</td><td class="">557</td><td class="">360</td><td class="">197</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2019-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import {
+	ConsoleLogger as Logger,
+	Credentials,
+	JS,
+	getAmplifyUserAgent,
+} from &#x27;@aws-amplify/core&#x27;;
+import {
+	PersonalizeEventsClient,
+	PutEventsCommand,
+	PutEventsCommandInput,
+} from &#x27;@aws-sdk/client-personalize-events&#x27;;
+import {
+	SessionInfo,
+	RequestParams,
+	RecordEventPayload,
+	SessionInfoManager,
+	MediaAutoTrack,
+} from &#x27;./AmazonPersonalizeHelper&#x27;;
+import get from &#x27;lodash/get&#x27;;
+import isEmpty from &#x27;lodash/isEmpty&#x27;;
+import isEqual from &#x27;lodash/isEqual&#x27;;
+import { AnalyticsProvider } from &#x27;../types&#x27;;
+
+const logger = new Logger(&#x27;AmazonPersonalizeProvider&#x27;);
+
+// events buffer
+const FLUSH_SIZE = 5;
+const FLUSH_SIZE_THRESHHOLD = 10;
+const FLUSH_INTERVAL = 5 * 1000; // 5s
+
+const IDENTIFY_EVENT = &#x27;Identify&#x27;;
+
+export class AmazonPersonalizeProvider implements AnalyticsProvider {
+	private _config;
+	private _personalize;
+	private _buffer;
+	private _timer;
+	private _sessionInfo: SessionInfo;
+	private _sessionManager;
+	private _isBrowser;
+
+	constructor(config?) {
+		this._buffer = [];
+		this._config = config ? config : {};
+		this._config.flushSize =
+			this._config.flushSize &gt; 0 &amp;&amp;
+			this._config.flushSize &lt;= FLUSH_SIZE_THRESHHOLD
+				? this._config.flushSize
+				: FLUSH_SIZE;
+		this._config.flushInterval = this._config.flushInterval || FLUSH_INTERVAL;
+		this._sessionManager = new SessionInfoManager();
+		if (!isEmpty(this._config.trackingId)) {
+			this._sessionInfo = this._sessionManager.retrieveSessionInfo(
+				this._config.trackingId
+			);
+		}
+		this._isBrowser = JS.browserOrNode().isBrowser;
+
+		// flush event buffer
+		this._setupTimer();
+	}
+
+	private _setupTimer() {
+		if (this._timer) {
+			clearInterval(this._timer);
+		}
+		const { flushInterval } = this._config;
+		const that = this;
+		this._timer = setInterval(() =&gt; {
+			that._sendFromBuffer();
+		}, flushInterval);
+	}
+
+	/**
+	 * Record event
+	 * @param eventType      - type of the event action. e.g. &quot;Click&quot;
+	 * @param properties     - properties of the event
+	 * @return Promise
+	 */
+	public async record(params): Promise&lt;boolean&gt; {
+		const credentials = await this._getCredentials();
+		if (!credentials) return Promise.resolve(false);
+
+		Object.assign(params, {
+			config: this._config,
+			credentials,
+			sentAt: new Date(),
+		});
+		const { eventType, properties } = params.event;
+
+		if (eventType === IDENTIFY_EVENT) {
+			this._sessionManager.updateSessionInfo(
+				properties &amp;&amp; properties.userId ? properties.userId : &#x27;&#x27;,
+				this._sessionInfo
+			);
+			return;
+		} else if (!isEmpty(params.event.userId)) {
+			this._sessionManager.updateSessionInfo(
+				params.event.userId,
+				this._sessionInfo
+			);
+		}
+		const requestParams: RequestParams = this.generateRequestParams(
+			params,
+			this._sessionInfo
+		);
+		if (eventType === &#x27;MediaAutoTrack&#x27;) {
+			if (this._isBrowser) {
+				if (
+					!isEmpty(
+						get(requestParams, &#x27;eventData.properties.domElementId&#x27;, null)
+					)
+				) {
+					const isLoaded = await this.isElementFullyLoaded(
+						this.loadElement,
+						requestParams.eventData.properties[&#x27;domElementId&#x27;],
+						500,
+						5
+					);
+					if (isLoaded) {
+						new MediaAutoTrack(requestParams, this);
+					} else {
+						logger.debug(&#x27;Cannot find the media element.&#x27;);
+					}
+				} else {
+					logger.debug(
+						&quot;Missing domElementId field in &#x27;properties&#x27; for MediaAutoTrack event type.&quot;
+					);
+				}
+			} else {
+				logger.debug(&#x27;MediaAutoTrack only for browser&#x27;);
+			}
+			return;
+		}
+
+		return this.putToBuffer(requestParams);
+	}
+
+	private loadElement(domId): Promise&lt;boolean&gt; {
+		return new Promise((resolve, reject) =&gt; {
+			if (
+				document.getElementById(domId) &amp;&amp;
+				document.getElementById(domId).clientHeight
+			) {
+				return resolve(true);
+			} else {
+				return reject(true);
+			}
+		});
+	}
+
+	private isElementFullyLoaded(
+		operation,
+		params,
+		delay,
+		times
+	): Promise&lt;boolean&gt; {
+		const wait = ms =&gt; new Promise(r =&gt; setTimeout(r, ms));
+		return new Promise((resolve, reject) =&gt; {
+			return operation(params)
+				.then(resolve)
+				.catch(reason =&gt; {
+					if (times - 1 &gt; 0) {
+						return wait(delay)
+							.then(
+								this.isElementFullyLoaded.bind(
+									null,
+									operation,
+									params,
+									delay,
+									times - 1
+								)
+							)
+							.then(resolve)
+							.catch(reject);
+					}
+					return reject(reason);
+				});
+		});
+	}
+
+	/**
+	 * get the category of the plugin
+	 */
+	public getCategory(): string {
+		return &#x27;Analytics&#x27;;
+	}
+
+	/**
+	 * get provider name of the plugin
+	 */
+	public getProviderName(): string {
+		return &#x27;AmazonPersonalize&#x27;;
+	}
+
+	/**
+	 * configure the plugin
+	 * @param {Object} config - configuration
+	 */
+	public configure(config): object {
+		logger.debug(&#x27;configure Analytics&#x27;, config);
+		const conf = config ? config : {};
+		this._config = Object.assign({}, this._config, conf);
+		if (!isEmpty(this._config.trackingId)) {
+			this._sessionInfo = this._sessionManager.retrieveSessionInfo(
+				this._config.trackingId
+			);
+		}
+		this._setupTimer();
+		return this._config;
+	}
+
+	/**
+	 * Generate the requestParams from customer input params and sessionInfo
+	 * @private
+	 * @param eventData      - customer input for event data
+	 * @param api            - api name
+	 * @return RequestParams - wrapper object with all information required for make request
+	 */
+	private generateRequestParams(params, sessionInfo): RequestParams {
+		const requestParams = &lt;RequestParams&gt;{};
+		const { eventType, properties } = params.event;
+		requestParams.eventData = { eventType, properties };
+		requestParams.sessionInfo = sessionInfo;
+		requestParams.sentAt = params.sentAt;
+		requestParams.credentials = params.credentials;
+		requestParams.config = params.config;
+		return requestParams;
+	}
+
+	/**
+	 * record an event
+	 * @param {Object} params - the params of an event
+	 */
+	private _sendEvents(group) {
+		const groupLen = group.length;
+		if (groupLen === 0) {
+			logger.debug(&#x27;events array is empty, directly return&#x27;);
+			return;
+		}
+
+		const { config, credentials, sessionInfo } = group[0];
+
+		const initClients = this._init(config, credentials);
+		if (!initClients) return false;
+		if (groupLen &gt; 0) {
+			const events: RecordEventPayload[] = [];
+			for (let i = 0; i &lt; groupLen; i += 1) {
+				const params: RequestParams = group.shift();
+				const eventPayload: RecordEventPayload = this._generateSingleRecordPayload(
+					params,
+					sessionInfo
+				);
+				events.push(eventPayload);
+			}
+			const payload = &lt;PutEventsCommandInput&gt;{};
+			payload.trackingId = sessionInfo.trackingId;
+			payload.sessionId = sessionInfo.sessionId;
+			payload.userId = sessionInfo.userId;
+			payload.eventList = [];
+			events.forEach(event =&gt; {
+				// @ts-ignore
+				payload.eventList.push(event);
+			});
+			const command: PutEventsCommand = new PutEventsCommand(payload);
+			this._personalize.send(command, err =&gt; {
+				if (err) logger.debug(&#x27;Failed to call putEvents in Personalize&#x27;, err);
+				else logger.debug(&#x27;Put events&#x27;);
+			});
+		}
+	}
+
+	/**
+	 * Put event into buffer
+	 * @private
+	 * @param params - params for the event recording
+	 */
+	private putToBuffer(params: RequestParams) {
+		if (this._buffer.length &lt; this._config.flushSize) {
+			this._buffer.push(params);
+		} else {
+			this._buffer.push(params);
+			this._sendFromBuffer();
+		}
+		return Promise.resolve(true);
+	}
+
+	/**
+	 * flush the buffer and batch sending the request
+	 * @private
+	 * @param eventsParams - the buffer for cache the payload
+	 */
+	private _sendFromBuffer() {
+		const size = this._buffer.length;
+		if (size &lt;= 0) return;
+		const eventsGroups = [];
+		let preCred = null;
+		let group = [];
+		for (let i = 0; i &lt; size; i += 1) {
+			const currRequestParams: RequestParams = this._buffer.shift();
+			const cred = currRequestParams.credentials;
+			const sessionInfo = currRequestParams.sessionInfo;
+			if (i === 0) {
+				group.push(currRequestParams);
+				preCred = cred;
+			} else {
+				if (
+					isEqual(sessionInfo, this._sessionInfo) &amp;&amp;
+					cred.sessionToken === preCred.sessionToken &amp;&amp;
+					cred.identityId === preCred.identityId
+				) {
+					logger.debug(&#x27;no change for cred, put event in the same group&#x27;);
+					group.push(currRequestParams);
+				} else {
+					eventsGroups.push(group);
+					group = [];
+					group.push(currRequestParams);
+					preCred = cred;
+					this._sessionInfo = sessionInfo;
+				}
+			}
+		}
+		eventsGroups.push(group);
+
+		eventsGroups.map(group =&gt; {
+			this._sendEvents(group);
+		});
+	}
+
+	/**
+	 * Generate the record payload for single event
+	 * @private
+	 * @param params - RequestParams
+	 */
+	private _generateSingleRecordPayload(
+		params: RequestParams,
+		sessionInfo
+	): RecordEventPayload {
+		const { eventData, sentAt } = params;
+		const trackPayload = &lt;RecordEventPayload&gt;{};
+		trackPayload.sentAt = sentAt;
+		trackPayload.properties =
+			eventData.properties &amp;&amp; JSON.stringify(eventData.properties);
+		trackPayload.eventId =
+			this._sessionManager.getTimerKey() + sessionInfo.sessionId;
+		trackPayload.eventType = eventData.eventType;
+		return trackPayload;
+	}
+
+	/**
+	 * Initialize the personalize client
+	 * @private
+	 * @param params - RequestParams
+	 */
+	private _init(config, credentials) {
+		logger.debug(&#x27;init clients&#x27;);
+
+		if (
+			this._personalize &amp;&amp;
+			this._config.credentials &amp;&amp;
+			this._config.credentials.sessionToken === credentials.sessionToken &amp;&amp;
+			this._config.credentials.identityId === credentials.identityId
+		) {
+			logger.debug(&#x27;no change for analytics config, directly return from init&#x27;);
+			return true;
+		}
+
+		this._config.credentials = credentials;
+		const { region } = config;
+		logger.debug(&#x27;initialize personalize with credentials&#x27;, credentials);
+		this._personalize = new PersonalizeEventsClient({
+			region,
+			credentials,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+		return true;
+	}
+
+	/**
+	 * check if current credentials exists
+	 * @private
+	 */
+	private _getCredentials() {
+		const that = this;
+		return Credentials.get()
+			.then(credentials =&gt; {
+				if (!credentials) return null;
+				logger.debug(&#x27;set credentials for analytics&#x27;, that._config.credentials);
+				return Credentials.shear(credentials);
+			})
+			.catch(err =&gt; {
+				logger.debug(&#x27;ensure credentials error&#x27;, err);
+				return null;
+			});
+	}
+}
+
+/**
+ * @deprecated use named import
+ */
+export default AmazonPersonalizeProvider;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:46,&quot;character&quot;:9,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:47,&quot;character&quot;:9,&quot;text&quot;:&quot;_personalize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:48,&quot;character&quot;:9,&quot;text&quot;:&quot;_buffer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:49,&quot;character&quot;:9,&quot;text&quot;:&quot;_timer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:51,&quot;character&quot;:9,&quot;text&quot;:&quot;_sessionManager&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:52,&quot;character&quot;:9,&quot;text&quot;:&quot;_isBrowser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:54,&quot;character&quot;:13,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:55,&quot;character&quot;:7,&quot;text&quot;:&quot;_buffer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:56,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:56,&quot;character&quot;:17,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:56,&quot;character&quot;:26,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:57,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:57,&quot;character&quot;:15,&quot;text&quot;:&quot;flushSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:58,&quot;character&quot;:8,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:58,&quot;character&quot;:16,&quot;text&quot;:&quot;flushSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:8,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:16,&quot;text&quot;:&quot;flushSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:11,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:19,&quot;text&quot;:&quot;flushSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:15,&quot;text&quot;:&quot;flushInterval&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:36,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:44,&quot;text&quot;:&quot;flushInterval&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:63,&quot;character&quot;:7,&quot;text&quot;:&quot;_sessionManager&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:64,&quot;character&quot;:20,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:64,&quot;character&quot;:28,&quot;text&quot;:&quot;trackingId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:28,&quot;text&quot;:&quot;_sessionManager&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:44,&quot;text&quot;:&quot;retrieveSessionInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:66,&quot;character&quot;:9,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:66,&quot;character&quot;:17,&quot;text&quot;:&quot;trackingId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:69,&quot;character&quot;:7,&quot;text&quot;:&quot;_isBrowser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:76,&quot;character&quot;:11,&quot;text&quot;:&quot;_timer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:77,&quot;character&quot;:22,&quot;text&quot;:&quot;_timer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:79,&quot;character&quot;:10,&quot;text&quot;:&quot;flushInterval&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:79,&quot;character&quot;:33,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:81,&quot;character&quot;:7,&quot;text&quot;:&quot;_timer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:21,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:93,&quot;character&quot;:8,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:94,&quot;character&quot;:7,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:96,&quot;character&quot;:16,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:97,&quot;character&quot;:3,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:97,&quot;character&quot;:16,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:98,&quot;character&quot;:3,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:101,&quot;character&quot;:10,&quot;text&quot;:&quot;eventType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:101,&quot;character&quot;:21,&quot;text&quot;:&quot;properties&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:101,&quot;character&quot;:36,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:101,&quot;character&quot;:43,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:103,&quot;character&quot;:6,&quot;text&quot;:&quot;eventType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:104,&quot;character&quot;:8,&quot;text&quot;:&quot;_sessionManager&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:104,&quot;character&quot;:24,&quot;text&quot;:&quot;updateSessionInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:105,&quot;character&quot;:4,&quot;text&quot;:&quot;properties&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:105,&quot;character&quot;:18,&quot;text&quot;:&quot;properties&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:105,&quot;character&quot;:29,&quot;text&quot;:&quot;userId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:105,&quot;character&quot;:38,&quot;text&quot;:&quot;properties&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:105,&quot;character&quot;:49,&quot;text&quot;:&quot;userId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:109,&quot;character&quot;:22,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:109,&quot;character&quot;:29,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:109,&quot;character&quot;:35,&quot;text&quot;:&quot;userId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:110,&quot;character&quot;:8,&quot;text&quot;:&quot;_sessionManager&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:110,&quot;character&quot;:24,&quot;text&quot;:&quot;updateSessionInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:111,&quot;character&quot;:4,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:111,&quot;character&quot;:11,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:111,&quot;character&quot;:17,&quot;text&quot;:&quot;userId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:3,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:119,&quot;character&quot;:6,&quot;text&quot;:&quot;eventType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:120,&quot;character&quot;:12,&quot;text&quot;:&quot;_isBrowser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:151,&quot;character&quot;:21,&quot;text&quot;:&quot;domId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:165,&quot;character&quot;:2,&quot;text&quot;:&quot;operation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:166,&quot;character&quot;:2,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:167,&quot;character&quot;:2,&quot;text&quot;:&quot;delay&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:168,&quot;character&quot;:2,&quot;text&quot;:&quot;times&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:170,&quot;character&quot;:15,&quot;text&quot;:&quot;ms&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:172,&quot;character&quot;:10,&quot;text&quot;:&quot;operation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:172,&quot;character&quot;:20,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:173,&quot;character&quot;:5,&quot;text&quot;:&quot;then&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:174,&quot;character&quot;:5,&quot;text&quot;:&quot;catch&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:174,&quot;character&quot;:11,&quot;text&quot;:&quot;reason&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:9,&quot;text&quot;:&quot;times&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:176,&quot;character&quot;:18,&quot;text&quot;:&quot;delay&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:180,&quot;character&quot;:9,&quot;text&quot;:&quot;operation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:181,&quot;character&quot;:9,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:182,&quot;character&quot;:9,&quot;text&quot;:&quot;delay&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:183,&quot;character&quot;:9,&quot;text&quot;:&quot;times&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:189,&quot;character&quot;:19,&quot;text&quot;:&quot;reason&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:212,&quot;character&quot;:18,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:213,&quot;character&quot;:38,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:214,&quot;character&quot;:8,&quot;text&quot;:&quot;conf&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:214,&quot;character&quot;:15,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:214,&quot;character&quot;:24,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:215,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:215,&quot;character&quot;:40,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:215,&quot;character&quot;:49,&quot;text&quot;:&quot;conf&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:216,&quot;character&quot;:20,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:216,&quot;character&quot;:28,&quot;text&quot;:&quot;trackingId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:217,&quot;character&quot;:28,&quot;text&quot;:&quot;_sessionManager&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:217,&quot;character&quot;:44,&quot;text&quot;:&quot;retrieveSessionInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:218,&quot;character&quot;:9,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:218,&quot;character&quot;:17,&quot;text&quot;:&quot;trackingId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:222,&quot;character&quot;:14,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:31,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:39,&quot;text&quot;:&quot;sessionInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:234,&quot;character&quot;:10,&quot;text&quot;:&quot;eventType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:234,&quot;character&quot;:21,&quot;text&quot;:&quot;properties&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:234,&quot;character&quot;:36,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:234,&quot;character&quot;:43,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:237,&quot;character&quot;:25,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:237,&quot;character&quot;:32,&quot;text&quot;:&quot;sentAt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:238,&quot;character&quot;:30,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:238,&quot;character&quot;:37,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:239,&quot;character&quot;:25,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:239,&quot;character&quot;:32,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:247,&quot;character&quot;:21,&quot;text&quot;:&quot;group&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:248,&quot;character&quot;:8,&quot;text&quot;:&quot;groupLen&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:248,&quot;character&quot;:19,&quot;text&quot;:&quot;group&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:248,&quot;character&quot;:25,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:249,&quot;character&quot;:6,&quot;text&quot;:&quot;groupLen&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:254,&quot;character&quot;:10,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:254,&quot;character&quot;:18,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:254,&quot;character&quot;:31,&quot;text&quot;:&quot;sessionInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:254,&quot;character&quot;:47,&quot;text&quot;:&quot;group&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:256,&quot;character&quot;:33,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:256,&quot;character&quot;:41,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:258,&quot;character&quot;:6,&quot;text&quot;:&quot;groupLen&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:260,&quot;character&quot;:23,&quot;text&quot;:&quot;groupLen&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:261,&quot;character&quot;:34,&quot;text&quot;:&quot;group&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:261,&quot;character&quot;:40,&quot;text&quot;:&quot;shift&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:264,&quot;character&quot;:5,&quot;text&quot;:&quot;sessionInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:269,&quot;character&quot;:24,&quot;text&quot;:&quot;sessionInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:269,&quot;character&quot;:36,&quot;text&quot;:&quot;trackingId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:270,&quot;character&quot;:23,&quot;text&quot;:&quot;sessionInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:270,&quot;character&quot;:35,&quot;text&quot;:&quot;sessionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:271,&quot;character&quot;:20,&quot;text&quot;:&quot;sessionInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:271,&quot;character&quot;:32,&quot;text&quot;:&quot;userId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:278,&quot;character&quot;:8,&quot;text&quot;:&quot;_personalize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:278,&quot;character&quot;:21,&quot;text&quot;:&quot;send&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:278,&quot;character&quot;:35,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:279,&quot;character&quot;:8,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:279,&quot;character&quot;:69,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:291,&quot;character&quot;:11,&quot;text&quot;:&quot;_buffer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:291,&quot;character&quot;:19,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:291,&quot;character&quot;:33,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:291,&quot;character&quot;:41,&quot;text&quot;:&quot;flushSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:292,&quot;character&quot;:8,&quot;text&quot;:&quot;_buffer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:292,&quot;character&quot;:16,&quot;text&quot;:&quot;push&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:294,&quot;character&quot;:8,&quot;text&quot;:&quot;_buffer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:294,&quot;character&quot;:16,&quot;text&quot;:&quot;push&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:306,&quot;character&quot;:8,&quot;text&quot;:&quot;size&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:306,&quot;character&quot;:20,&quot;text&quot;:&quot;_buffer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:306,&quot;character&quot;:28,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:307,&quot;character&quot;:6,&quot;text&quot;:&quot;size&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:309,&quot;character&quot;:6,&quot;text&quot;:&quot;preCred&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:311,&quot;character&quot;:22,&quot;text&quot;:&quot;size&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:312,&quot;character&quot;:49,&quot;text&quot;:&quot;_buffer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:312,&quot;character&quot;:57,&quot;text&quot;:&quot;shift&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:317,&quot;character&quot;:4,&quot;text&quot;:&quot;preCred&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:321,&quot;character&quot;:27,&quot;text&quot;:&quot;preCred&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:321,&quot;character&quot;:35,&quot;text&quot;:&quot;sessionToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:322,&quot;character&quot;:25,&quot;text&quot;:&quot;preCred&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:322,&quot;character&quot;:33,&quot;text&quot;:&quot;identityId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:330,&quot;character&quot;:5,&quot;text&quot;:&quot;preCred&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:337,&quot;character&quot;:19,&quot;text&quot;:&quot;group&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:338,&quot;character&quot;:20,&quot;text&quot;:&quot;group&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:349,&quot;character&quot;:2,&quot;text&quot;:&quot;sessionInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:357,&quot;character&quot;:8,&quot;text&quot;:&quot;_sessionManager&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:357,&quot;character&quot;:24,&quot;text&quot;:&quot;getTimerKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:357,&quot;character&quot;:40,&quot;text&quot;:&quot;sessionInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:357,&quot;character&quot;:52,&quot;text&quot;:&quot;sessionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:367,&quot;character&quot;:15,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:367,&quot;character&quot;:23,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:371,&quot;character&quot;:8,&quot;text&quot;:&quot;_personalize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:372,&quot;character&quot;:8,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:372,&quot;character&quot;:16,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:373,&quot;character&quot;:8,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:373,&quot;character&quot;:16,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:373,&quot;character&quot;:28,&quot;text&quot;:&quot;sessionToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:373,&quot;character&quot;:45,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:373,&quot;character&quot;:57,&quot;text&quot;:&quot;sessionToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:374,&quot;character&quot;:8,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:374,&quot;character&quot;:16,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:374,&quot;character&quot;:28,&quot;text&quot;:&quot;identityId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:374,&quot;character&quot;:43,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:374,&quot;character&quot;:55,&quot;text&quot;:&quot;identityId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:380,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:380,&quot;character&quot;:15,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:380,&quot;character&quot;:29,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:381,&quot;character&quot;:10,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:382,&quot;character&quot;:58,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:383,&quot;character&quot;:7,&quot;text&quot;:&quot;_personalize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:398,&quot;character&quot;:4,&quot;text&quot;:&quot;then&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:398,&quot;character&quot;:9,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:399,&quot;character&quot;:9,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:400,&quot;character&quot;:55,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:400,&quot;character&quot;:63,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:401,&quot;character&quot;:29,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:403,&quot;character&quot;:4,&quot;text&quot;:&quot;catch&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:403,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeProvider.ts&quot;,&quot;line&quot;:404,&quot;character&quot;:45,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:24 GMT</p>
+    </body>
+  </html>
+  

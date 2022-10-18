@@ -1,0 +1,194 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Storage.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/types/Storage.ts</td><td class="">99.01%</td><td class="">0%</td><td class="">202</td><td class="">200</td><td class="">2</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+/**
+ * Storage instance options
+ */
+
+import { ICredentials } from &#x27;@aws-amplify/core&#x27;;
+import {
+	StorageProvider,
+	StorageProviderApi,
+	AWSS3Provider,
+	StorageProviderWithCopy,
+	S3ProviderGetOuput,
+	S3ProviderRemoveOutput,
+	S3ProviderListOutput,
+	S3ProviderCopyOutput,
+	S3ProviderPutOutput,
+} from &#x27;../&#x27;;
+
+type Tail&lt;T extends any[]&gt; = ((...t: T) =&gt; void) extends (
+	h: any,
+	...r: infer R
+) =&gt; void
+	? R
+	: never;
+
+type Last&lt;T extends any[]&gt; = T[Exclude&lt;keyof T, keyof Tail&lt;T&gt;&gt;];
+
+// Utility type to extract the last parameter type of a function
+type LastParameter&lt;F extends (...args: any) =&gt; any&gt; = Last&lt;Parameters&lt;F&gt;&gt;;
+
+export interface StorageOptions {
+	credentials?: ICredentials;
+	region?: string;
+	level?: StorageAccessLevel;
+	bucket?: string;
+	provider?: string;
+	/**
+	 * Custom mapping of your prefixes.
+	 * For example, customPrefix: { public: &#x27;myPublicPrefix&#x27; } will make public level operations access &#x27;myPublicPrefix/&#x27;
+	 * instead of the default &#x27;public/&#x27;.
+	 */
+	customPrefix?: CustomPrefix;
+	/**
+	 * if set to true, automatically sends Storage Events to Amazon Pinpoint
+	 **/
+	track?: boolean;
+	dangerouslyConnectToHttpEndpointForTesting?: boolean;
+}
+
+export type StorageAccessLevel = &#x27;public&#x27; | &#x27;protected&#x27; | &#x27;private&#x27;;
+
+export type CustomPrefix = {
+	[key in StorageAccessLevel]?: string;
+};
+
+export type StorageCopyTarget = {
+	key: string;
+	level?: string;
+	identityId?: string;
+};
+
+export type StorageCopySource = StorageCopyTarget;
+
+export type StorageCopyDestination = Omit&lt;StorageCopyTarget, &#x27;identityId&#x27;&gt;;
+
+/**
+ * If provider is AWSS3, provider doesn&#x27;t have to be specified since it&#x27;s the default, else it has to be passed into
+ * config.
+ */
+type StorageOperationConfig&lt;
+	T extends StorageProvider | StorageProviderWithCopy,
+	U extends StorageProviderApi
+&gt; = ReturnType&lt;T[&#x27;getProviderName&#x27;]&gt; extends &#x27;AWSS3&#x27;
+	? LastParameter&lt;AWSS3Provider[U]&gt; // check if it has &#x27;copy&#x27; function because &#x27;copy&#x27; is optional
+	: T extends StorageProviderWithCopy
+	? LastParameter&lt;T[U]&gt; &amp; { provider: ReturnType&lt;T[&#x27;getProviderName&#x27;]&gt; }
+	: LastParameter&lt;T[Exclude&lt;U, &#x27;copy&#x27;&gt;]&gt; &amp; {
+			provider: ReturnType&lt;T[&#x27;getProviderName&#x27;]&gt;;
+	  };
+
+export type StorageGetConfig&lt;T&gt; = T extends StorageProvider
+	? StorageOperationConfig&lt;T, &#x27;get&#x27;&gt;
+	: StorageOperationConfigMap&lt;StorageOperationConfig&lt;AWSS3Provider, &#x27;get&#x27;&gt;, T&gt;;
+
+export type StoragePutConfig&lt;T&gt; = T extends StorageProvider
+	? StorageOperationConfig&lt;T, &#x27;put&#x27;&gt;
+	: StorageOperationConfigMap&lt;StorageOperationConfig&lt;AWSS3Provider, &#x27;put&#x27;&gt;, T&gt;;
+
+export type StorageRemoveConfig&lt;T&gt; = T extends StorageProvider
+	? StorageOperationConfig&lt;T, &#x27;remove&#x27;&gt;
+	: StorageOperationConfigMap&lt;
+			StorageOperationConfig&lt;AWSS3Provider, &#x27;remove&#x27;&gt;,
+			T
+	  &gt;;
+
+export type StorageListConfig&lt;T&gt; = T extends StorageProvider
+	? StorageOperationConfig&lt;T, &#x27;list&#x27;&gt;
+	: StorageOperationConfigMap&lt;StorageOperationConfig&lt;AWSS3Provider, &#x27;list&#x27;&gt;, T&gt;;
+
+export type StorageCopyConfig&lt;T&gt; = T extends StorageProviderWithCopy
+	? StorageOperationConfig&lt;T, &#x27;copy&#x27;&gt;
+	: StorageOperationConfigMap&lt;StorageOperationConfig&lt;AWSS3Provider, &#x27;copy&#x27;&gt;, T&gt;;
+
+/**
+ * Utility type for checking if the generic type is a provider or a Record that has the key &#x27;provider&#x27;.
+ * If it&#x27;s a provider, check if it&#x27;s the S3 Provider, use the default type else use the generic&#x27;s &#x27;get&#x27; method
+ * return type.
+ * If it&#x27;s a Record, check if provider is &#x27;AWSS3&#x27;, use the default type else use any.
+ */
+type PickProviderOutput&lt;
+	DefaultOutput,
+	T,
+	api extends StorageProviderApi
+&gt; = T extends StorageProvider
+	? T[&#x27;getProviderName&#x27;] extends &#x27;AWSS3&#x27;
+		? DefaultOutput
+		: T extends StorageProviderWithCopy
+		? ReturnType&lt;T[api]&gt;
+		: ReturnType&lt;T[Exclude&lt;api, &#x27;copy&#x27;&gt;]&gt;
+	: T extends { provider: string }
+	? T extends { provider: &#x27;AWSS3&#x27; }
+		? DefaultOutput
+		: Promise&lt;any&gt;
+	: DefaultOutput;
+
+export type StorageGetOutput&lt;
+	T extends StorageProvider | Record&lt;string, any&gt;
+&gt; = PickProviderOutput&lt;Promise&lt;S3ProviderGetOuput&lt;T&gt;&gt;, T, &#x27;get&#x27;&gt;;
+
+export type StoragePutOutput&lt;T&gt; = PickProviderOutput&lt;
+	S3ProviderPutOutput&lt;T&gt;,
+	T,
+	&#x27;put&#x27;
+&gt;;
+
+export type StorageRemoveOutput&lt;T&gt; = PickProviderOutput&lt;
+	Promise&lt;S3ProviderRemoveOutput&gt;,
+	T,
+	&#x27;remove&#x27;
+&gt;;
+
+export type StorageListOutput&lt;T&gt; = PickProviderOutput&lt;
+	Promise&lt;S3ProviderListOutput&gt;,
+	T,
+	&#x27;list&#x27;
+&gt;;
+
+export type StorageCopyOutput&lt;T&gt; = PickProviderOutput&lt;
+	Promise&lt;S3ProviderCopyOutput&gt;,
+	T,
+	&#x27;copy&#x27;
+&gt;;
+
+/**
+ * Utility type to allow custom provider to use any config keys, if provider is set to AWSS3 then it should use
+ * AWSS3Provider&#x27;s config.
+ */
+export type StorageOperationConfigMap&lt;
+	Default,
+	T extends Record&lt;string, any&gt;
+&gt; = T extends { provider: string }
+	? T extends { provider: &#x27;AWSS3&#x27; }
+		? Default
+		: T &amp; { provider: string }
+	: Default;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/types/Storage.ts&quot;,&quot;line&quot;:30,&quot;character&quot;:1,&quot;text&quot;:&quot;h&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Storage.ts&quot;,&quot;line&quot;:39,&quot;character&quot;:33,&quot;text&quot;:&quot;args&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:23 GMT</p>
+    </body>
+  </html>
+  

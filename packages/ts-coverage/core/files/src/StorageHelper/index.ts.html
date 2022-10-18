@@ -1,0 +1,106 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>index.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/StorageHelper/index.ts</td><td class="">78.72%</td><td class="">0%</td><td class="">47</td><td class="">37</td><td class="">10</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+let dataMemory = {};
+
+/** @class */
+export class MemoryStorage {
+	/**
+	 * This is used to set a specific item in storage
+	 * @param {string} key - the key for the item
+	 * @param {object} value - the value
+	 * @returns {string} value that was set
+	 */
+	static setItem(key: string, value: any) {
+		dataMemory[key] = value;
+		return dataMemory[key];
+	}
+
+	/**
+	 * This is used to get a specific key from storage
+	 * @param {string} key - the key for the item
+	 * This is used to clear the storage
+	 * @returns {string} the data item
+	 */
+	static getItem(key: string) {
+		return Object.prototype.hasOwnProperty.call(dataMemory, key)
+			? dataMemory[key]
+			: undefined;
+	}
+
+	/**
+	 * This is used to remove an item from storage
+	 * @param {string} key - the key being set
+	 * @returns {string} value - value that was deleted
+	 */
+	static removeItem(key: string) {
+		return delete dataMemory[key];
+	}
+
+	/**
+	 * This is used to clear the storage
+	 * @returns {string} nothing
+	 */
+	static clear() {
+		dataMemory = {};
+		return dataMemory;
+	}
+}
+
+export class StorageHelper {
+	private storageWindow: any;
+	/**
+	 * This is used to get a storage object
+	 * @returns {object} the storage
+	 */
+	constructor() {
+		try {
+			this.storageWindow = window.localStorage;
+			this.storageWindow.setItem(&#x27;aws.amplify.test-ls&#x27;, 1);
+			this.storageWindow.removeItem(&#x27;aws.amplify.test-ls&#x27;);
+		} catch (exception) {
+			this.storageWindow = MemoryStorage;
+		}
+	}
+
+	/**
+	 * This is used to return the storage
+	 * @returns {object} the storage
+	 */
+	getStorage(): any {
+		return this.storageWindow;
+	}
+}
+
+/**
+ * @deprecated use named import
+ */
+export default StorageHelper;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/StorageHelper/index.ts&quot;,&quot;line&quot;:23,&quot;character&quot;:29,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/index.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:9,&quot;text&quot;:&quot;storageWindow&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/index.ts&quot;,&quot;line&quot;:67,&quot;character&quot;:8,&quot;text&quot;:&quot;storageWindow&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/index.ts&quot;,&quot;line&quot;:68,&quot;character&quot;:8,&quot;text&quot;:&quot;storageWindow&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/index.ts&quot;,&quot;line&quot;:68,&quot;character&quot;:22,&quot;text&quot;:&quot;setItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/index.ts&quot;,&quot;line&quot;:69,&quot;character&quot;:8,&quot;text&quot;:&quot;storageWindow&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/index.ts&quot;,&quot;line&quot;:69,&quot;character&quot;:22,&quot;text&quot;:&quot;removeItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/index.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:8,&quot;text&quot;:&quot;storageWindow&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/index.ts&quot;,&quot;line&quot;:70,&quot;character&quot;:11,&quot;text&quot;:&quot;exception&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/index.ts&quot;,&quot;line&quot;:80,&quot;character&quot;:14,&quot;text&quot;:&quot;storageWindow&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:20 GMT</p>
+    </body>
+  </html>
+  

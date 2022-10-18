@@ -1,0 +1,362 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Geo.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Geo.ts</td><td class="">90.14%</td><td class="">0%</td><td class="">345</td><td class="">311</td><td class="">34</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import {
+	Amplify,
+	ConsoleLogger as Logger,
+	parseMobileHubConfig,
+} from &#x27;@aws-amplify/core&#x27;;
+import { AmazonLocationServiceProvider } from &#x27;./Providers/AmazonLocationServiceProvider&#x27;;
+
+import { validateCoordinates } from &#x27;./util&#x27;;
+
+import {
+	Place,
+	GeoConfig,
+	Coordinates,
+	SearchByTextOptions,
+	SearchByCoordinatesOptions,
+	GeoProvider,
+	MapStyle,
+	GeofenceId,
+	GeofenceInput,
+	GeofenceOptions,
+	SaveGeofencesResults,
+	Geofence,
+	ListGeofenceOptions,
+	ListGeofenceResults,
+	DeleteGeofencesResults,
+	searchByPlaceIdOptions,
+} from &#x27;./types&#x27;;
+
+const logger = new Logger(&#x27;Geo&#x27;);
+
+const DEFAULT_PROVIDER = &#x27;AmazonLocationService&#x27;;
+export class GeoClass {
+	static MODULE = &#x27;Geo&#x27;;
+	/**
+	 * @private
+	 */
+	private _config: GeoConfig;
+	private _pluggables: GeoProvider[];
+
+	constructor() {
+		this._config = {};
+		this._pluggables = [];
+		logger.debug(&#x27;Geo Options&#x27;, this._config);
+	}
+
+	/**
+	 * get the name of the module category
+	 * @returns {string} name of the module category
+	 */
+	public getModuleName() {
+		return GeoClass.MODULE;
+	}
+
+	/**
+	 * add plugin into Geo category
+	 * @param {Object} pluggable - an instance of the plugin
+	 */
+	public addPluggable(pluggable: GeoProvider) {
+		if (pluggable &amp;&amp; pluggable.getCategory() === &#x27;Geo&#x27;) {
+			this._pluggables.push(pluggable);
+			const config = pluggable.configure(
+				this._config[pluggable.getProviderName()]
+			);
+
+			return config;
+		}
+	}
+
+	/**
+	 * Get the plugin object
+	 * @param providerName - the name of the plugin
+	 */
+	public getPluggable(providerName: string) {
+		const pluggable = this._pluggables.find(
+			pluggable =&gt; pluggable.getProviderName() === providerName
+		);
+		if (pluggable === undefined) {
+			logger.debug(&#x27;No plugin found with providerName&#x27;, providerName);
+			throw new Error(&#x27;No plugin found in Geo for the provider&#x27;);
+		} else return pluggable;
+	}
+
+	/**
+	 * Remove the plugin object
+	 * @param providerName - the name of the plugin
+	 */
+	public removePluggable(providerName: string) {
+		this._pluggables = this._pluggables.filter(
+			pluggable =&gt; pluggable.getProviderName() !== providerName
+		);
+		return;
+	}
+
+	/**
+	 * Configure Geo
+	 * @param {Object} config - Configuration object for Geo
+	 * @return {Object} - Current configuration
+	 */
+	configure(config?) {
+		logger.debug(&#x27;configure Geo&#x27;);
+
+		if (!config) return this._config;
+
+		const amplifyConfig = parseMobileHubConfig(config);
+		this._config = Object.assign({}, this._config, amplifyConfig.Geo, config);
+
+		this._pluggables.forEach(pluggable =&gt; {
+			pluggable.configure(this._config[pluggable.getProviderName()]);
+		});
+
+		if (this._pluggables.length === 0) {
+			this.addPluggable(new AmazonLocationServiceProvider());
+		}
+		return this._config;
+	}
+
+	/**
+	 * Get the map resources that are currently available through the provider
+	 * @param {string} provider
+	 * @returns - Array of available map resources
+	 */
+	public getAvailableMaps(provider = DEFAULT_PROVIDER): MapStyle[] {
+		const prov = this.getPluggable(provider);
+
+		return prov.getAvailableMaps();
+	}
+
+	/**
+	 * Get the map resource set as default in amplify config
+	 * @param {string} provider
+	 * @returns - Map resource set as the default in amplify config
+	 */
+	public getDefaultMap(provider = DEFAULT_PROVIDER): MapStyle {
+		const prov = this.getPluggable(provider);
+
+		return prov.getDefaultMap();
+	}
+
+	/**
+	 * Search by text input with optional parameters
+	 * @param  {string} text - The text string that is to be searched for
+	 * @param  {SearchByTextOptions} options? - Optional parameters to the search
+	 * @returns {Promise&lt;Place[]&gt;} - Promise resolves to a list of Places that match search parameters
+	 */
+	public async searchByText(
+		text: string,
+		options?: SearchByTextOptions
+	): Promise&lt;Place[]&gt; {
+		const { providerName = DEFAULT_PROVIDER } = options || {};
+		const prov = this.getPluggable(providerName);
+
+		try {
+			return await prov.searchByText(text, options);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Search for search term suggestions based on input text
+	 * @param  {string} text - The text string that is to be search for
+	 * @param  {SearchByTextOptions} options? - Optional parameters to the search
+	 * @returns {Promise&lt;SearchForSuggestionsResults&gt;} - Resolves to an array of search suggestion strings
+	 */
+	public async searchForSuggestions(
+		text: string,
+		options?: SearchByTextOptions
+	) {
+		const { providerName = DEFAULT_PROVIDER } = options || {};
+		const prov = this.getPluggable(providerName);
+
+		try {
+			return await prov.searchForSuggestions(text, options);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Search for location by unique ID
+	 * @param  {string} placeId - Unique ID of the location that is to be searched for
+	 * @param  {searchByPlaceIdOptions} options? - Optional parameters to the search
+	 * @returns {Promise&lt;Place&gt;} - Resolves to a place with the given placeId
+	 */
+	public async searchByPlaceId(
+		placeId: string,
+		options?: searchByPlaceIdOptions
+	) {
+		const providerName = DEFAULT_PROVIDER;
+		const prov = this.getPluggable(providerName);
+
+		try {
+			return await prov.searchByPlaceId(placeId, options);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Reverse geocoding search via a coordinate point on the map
+	 * @param coordinates - Coordinates array for the search input
+	 * @param options - Options parameters for the search
+	 * @returns {Promise&lt;Place&gt;} - Promise that resolves to a place matching search coordinates
+	 */
+	public async searchByCoordinates(
+		coordinates: Coordinates,
+		options?: SearchByCoordinatesOptions
+	): Promise&lt;Place&gt; {
+		const { providerName = DEFAULT_PROVIDER } = options || {};
+		const prov = this.getPluggable(providerName);
+
+		const [lng, lat] = coordinates;
+		try {
+			validateCoordinates(lng, lat);
+			return await prov.searchByCoordinates(coordinates, options);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Create geofences
+	 * @param geofences - Single or array of geofence objects to create
+	 * @param options? - Optional parameters for creating geofences
+	 * @returns {Promise&lt;SaveGeofencesResults&gt;} - Promise that resolves to an object with:
+	 *   successes: list of geofences successfully created
+	 *   errors: list of geofences that failed to create
+	 */
+	public async saveGeofences(
+		geofences: GeofenceInput | GeofenceInput[],
+		options?: GeofenceOptions
+	): Promise&lt;SaveGeofencesResults&gt; {
+		const { providerName = DEFAULT_PROVIDER } = options || {};
+		const prov = this.getPluggable(providerName);
+
+		// If single geofence input, make it an array for batch call
+		let geofenceInputArray;
+		if (!Array.isArray(geofences)) {
+			geofenceInputArray = [geofences];
+		} else {
+			geofenceInputArray = geofences;
+		}
+
+		try {
+			return await prov.saveGeofences(geofenceInputArray, options);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Get a single geofence by geofenceId
+	 * @param geofenceId: GeofenceId - The string id of the geofence to get
+	 * @param options?: GeofenceOptions - Optional parameters for getting a geofence
+	 * @returns Promise&lt;Geofence&gt; - Promise that resolves to a geofence object
+	 */
+	public async getGeofence(
+		geofenceId: GeofenceId,
+		options?: GeofenceOptions
+	): Promise&lt;Geofence&gt; {
+		const { providerName = DEFAULT_PROVIDER } = options || {};
+		const prov = this.getPluggable(providerName);
+
+		try {
+			return await prov.getGeofence(geofenceId, options);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+	}
+
+	/**
+	 * List geofences
+	 * @param  options?: ListGeofenceOptions
+	 * @returns {Promise&lt;ListGeofencesResults&gt;} - Promise that resolves to an object with:
+	 *   entries: list of geofences - 100 geofences are listed per page
+	 *   nextToken: token for next page of geofences
+	 */
+	public async listGeofences(
+		options?: ListGeofenceOptions
+	): Promise&lt;ListGeofenceResults&gt; {
+		const { providerName = DEFAULT_PROVIDER } = options || {};
+		const prov = this.getPluggable(providerName);
+
+		try {
+			return await prov.listGeofences(options);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Delete geofences
+	 * @param geofenceIds: string|string[]
+	 * @param options?: GeofenceOptions
+	 * @returns {Promise&lt;DeleteGeofencesResults&gt;} - Promise that resolves to an object with:
+	 *  successes: list of geofences successfully deleted
+	 *  errors: list of geofences that failed to delete
+	 */
+	public async deleteGeofences(
+		geofenceIds: string | string[],
+		options?: GeofenceOptions
+	): Promise&lt;DeleteGeofencesResults&gt; {
+		const { providerName = DEFAULT_PROVIDER } = options || {};
+		const prov = this.getPluggable(providerName);
+
+		// If single geofence input, make it an array for batch call
+		let geofenceIdsInputArray;
+		if (!Array.isArray(geofenceIds)) {
+			geofenceIdsInputArray = [geofenceIds];
+		} else {
+			geofenceIdsInputArray = geofenceIds;
+		}
+
+		//  Delete geofences
+		try {
+			return await prov.deleteGeofences(geofenceIdsInputArray, options);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+	}
+}
+
+export const Geo = new GeoClass();
+Amplify.register(Geo);
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:110,&quot;character&quot;:11,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:113,&quot;character&quot;:7,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:115,&quot;character&quot;:45,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:68,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:166,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:167,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:165,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:187,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:188,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:186,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:208,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:209,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:207,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:230,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:252,&quot;character&quot;:6,&quot;text&quot;:&quot;geofenceInputArray&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:254,&quot;character&quot;:3,&quot;text&quot;:&quot;geofenceInputArray&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:256,&quot;character&quot;:3,&quot;text&quot;:&quot;geofenceInputArray&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:262,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:263,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:261,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:284,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:282,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:304,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:305,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:303,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:325,&quot;character&quot;:6,&quot;text&quot;:&quot;geofenceIdsInputArray&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:327,&quot;character&quot;:3,&quot;text&quot;:&quot;geofenceIdsInputArray&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:329,&quot;character&quot;:3,&quot;text&quot;:&quot;geofenceIdsInputArray&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:336,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:337,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Geo.ts&quot;,&quot;line&quot;:335,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:22 GMT</p>
+    </body>
+  </html>
+  

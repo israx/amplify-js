@@ -1,0 +1,328 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>outbox.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/sync/outbox.ts</td><td class="">91.14%</td><td class="">0%</td><td class="">440</td><td class="">401</td><td class="">39</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import { MutationEvent } from &#x27;./index&#x27;;
+import { ModelPredicateCreator } from &#x27;../predicates&#x27;;
+import {
+	ExclusiveStorage as Storage,
+	StorageFacade,
+	Storage as StorageClass,
+} from &#x27;../storage/storage&#x27;;
+import { ModelInstanceCreator } from &#x27;../datastore/datastore&#x27;;
+import {
+	InternalSchema,
+	PersistentModel,
+	PersistentModelConstructor,
+	QueryOne,
+	SchemaModel,
+} from &#x27;../types&#x27;;
+import { USER, SYNC, valuesEqual } from &#x27;../util&#x27;;
+import { getIdentifierValue, TransformerMutationType } from &#x27;./utils&#x27;;
+
+// TODO: Persist deleted ids
+// https://github.com/aws-amplify/amplify-js/blob/datastore-docs/packages/datastore/docs/sync-engine.md#outbox
+class MutationEventOutbox {
+	private inProgressMutationEventId: string;
+
+	constructor(
+		private readonly schema: InternalSchema,
+		private readonly MutationEvent: PersistentModelConstructor&lt;MutationEvent&gt;,
+		private readonly modelInstanceCreator: ModelInstanceCreator,
+		private readonly ownSymbol: Symbol
+	) {}
+
+	public async enqueue(
+		storage: Storage,
+		mutationEvent: MutationEvent
+	): Promise&lt;void&gt; {
+		storage.runExclusive(async s =&gt; {
+			const mutationEventModelDefinition =
+				this.schema.namespaces[SYNC].models[&#x27;MutationEvent&#x27;];
+
+			// `id` is the key for the record in the mutationEvent;
+			// `modelId` is the key for the actual record that was mutated
+			const predicate = ModelPredicateCreator.createFromExisting&lt;MutationEvent&gt;(
+				mutationEventModelDefinition,
+				c =&gt;
+					c
+						.modelId(&#x27;eq&#x27;, mutationEvent.modelId)
+						.id(&#x27;ne&#x27;, this.inProgressMutationEventId)
+			);
+
+			// Check if there are any other records with same id
+			const [first] = await s.query(this.MutationEvent, predicate);
+
+			// No other record with same modelId, so enqueue
+			if (first === undefined) {
+				await s.save(mutationEvent, undefined, this.ownSymbol);
+				return;
+			}
+
+			// There was an enqueued mutation for the modelId, so continue
+			const { operation: incomingMutationType } = mutationEvent;
+
+			if (first.operation === TransformerMutationType.CREATE) {
+				if (incomingMutationType === TransformerMutationType.DELETE) {
+					await s.delete(this.MutationEvent, predicate);
+				} else {
+					// first gets updated with the incoming mutation&#x27;s data, condition intentionally skipped
+
+					// we need to merge the fields for a create and update mutation to prevent
+					// data loss, since update mutations only include changed fields
+					const merged = this.mergeUserFields(first, mutationEvent);
+					await s.save(
+						this.MutationEvent.copyOf(first, draft =&gt; {
+							draft.data = merged.data;
+						}),
+						undefined,
+						this.ownSymbol
+					);
+				}
+			} else {
+				const { condition: incomingConditionJSON } = mutationEvent;
+				const incomingCondition = JSON.parse(incomingConditionJSON);
+				let merged: MutationEvent;
+
+				// If no condition
+				if (Object.keys(incomingCondition).length === 0) {
+					merged = this.mergeUserFields(first, mutationEvent);
+
+					// delete all for model
+					await s.delete(this.MutationEvent, predicate);
+				}
+
+				merged = merged || mutationEvent;
+
+				// Enqueue new one
+				await s.save(merged, undefined, this.ownSymbol);
+			}
+		});
+	}
+
+	public async dequeue(
+		storage: StorageClass,
+		record?: PersistentModel,
+		recordOp?: TransformerMutationType
+	): Promise&lt;MutationEvent&gt; {
+		const head = await this.peek(storage);
+
+		if (record) {
+			await this.syncOutboxVersionsOnDequeue(storage, record, head, recordOp);
+		}
+
+		await storage.delete(head);
+		this.inProgressMutationEventId = undefined;
+
+		return head;
+	}
+
+	/**
+	 * Doing a peek() implies that the mutation goes &quot;inProgress&quot;
+	 *
+	 * @param storage
+	 */
+	public async peek(storage: StorageFacade): Promise&lt;MutationEvent&gt; {
+		const head = await storage.queryOne(this.MutationEvent, QueryOne.FIRST);
+
+		this.inProgressMutationEventId = head ? head.id : undefined;
+
+		return head;
+	}
+
+	public async getForModel&lt;T extends PersistentModel&gt;(
+		storage: StorageFacade,
+		model: T,
+		userModelDefinition: SchemaModel
+	): Promise&lt;MutationEvent[]&gt; {
+		const mutationEventModelDefinition =
+			this.schema.namespaces[SYNC].models.MutationEvent;
+
+		const modelId = getIdentifierValue(userModelDefinition, model);
+
+		const mutationEvents = await storage.query(
+			this.MutationEvent,
+			ModelPredicateCreator.createFromExisting(
+				mutationEventModelDefinition,
+				c =&gt; c.modelId(&#x27;eq&#x27;, modelId)
+			)
+		);
+
+		return mutationEvents;
+	}
+
+	public async getModelIds(storage: StorageFacade): Promise&lt;Set&lt;string&gt;&gt; {
+		const mutationEvents = await storage.query(this.MutationEvent);
+
+		const result = new Set&lt;string&gt;();
+
+		mutationEvents.forEach(({ modelId }) =&gt; result.add(modelId));
+
+		return result;
+	}
+
+	// applies _version from the AppSync mutation response to other items
+	// in the mutation queue with the same id
+	// see https://github.com/aws-amplify/amplify-js/pull/7354 for more details
+	private async syncOutboxVersionsOnDequeue(
+		storage: StorageClass,
+		record: PersistentModel,
+		head: PersistentModel,
+		recordOp: string
+	): Promise&lt;void&gt; {
+		if (head.operation !== recordOp) {
+			return;
+		}
+
+		const { _version, _lastChangedAt, _deleted, ..._incomingData } = record;
+		const incomingData = this.removeTimestampFields(head.model, _incomingData);
+
+		const data = JSON.parse(head.data);
+
+		if (!data) {
+			return;
+		}
+
+		const {
+			_version: __version,
+			_lastChangedAt: __lastChangedAt,
+			_deleted: __deleted,
+			..._outgoingData
+		} = data;
+		const outgoingData = this.removeTimestampFields(head.model, _outgoingData);
+
+		// Don&#x27;t sync the version when the data in the response does not match the data
+		// in the request, i.e., when there&#x27;s a handled conflict
+		if (!valuesEqual(incomingData, outgoingData, true)) {
+			return;
+		}
+
+		const mutationEventModelDefinition =
+			this.schema.namespaces[SYNC].models[&#x27;MutationEvent&#x27;];
+
+		const userModelDefinition =
+			this.schema.namespaces[&#x27;user&#x27;].models[head.model];
+
+		const recordId = getIdentifierValue(userModelDefinition, record);
+
+		const predicate = ModelPredicateCreator.createFromExisting&lt;MutationEvent&gt;(
+			mutationEventModelDefinition,
+			c =&gt; c.modelId(&#x27;eq&#x27;, recordId).id(&#x27;ne&#x27;, this.inProgressMutationEventId)
+		);
+
+		const outdatedMutations = await storage.query(
+			this.MutationEvent,
+			predicate
+		);
+
+		if (!outdatedMutations.length) {
+			return;
+		}
+
+		const reconciledMutations = outdatedMutations.map(m =&gt; {
+			const oldData = JSON.parse(m.data);
+
+			const newData = { ...oldData, _version, _lastChangedAt };
+
+			return this.MutationEvent.copyOf(m, draft =&gt; {
+				draft.data = JSON.stringify(newData);
+			});
+		});
+
+		await storage.delete(this.MutationEvent, predicate);
+
+		await Promise.all(
+			reconciledMutations.map(
+				async m =&gt; await storage.save(m, undefined, this.ownSymbol)
+			)
+		);
+	}
+
+	private mergeUserFields(
+		previous: MutationEvent,
+		current: MutationEvent
+	): MutationEvent {
+		const { _version, _lastChangedAt, _deleted, ...previousData } = JSON.parse(
+			previous.data
+		);
+
+		const {
+			_version: __version,
+			_lastChangedAt: __lastChangedAt,
+			_deleted: __deleted,
+			...currentData
+		} = JSON.parse(current.data);
+
+		const data = JSON.stringify({
+			_version,
+			_lastChangedAt,
+			_deleted,
+			...previousData,
+			...currentData,
+		});
+
+		return this.modelInstanceCreator(this.MutationEvent, {
+			...current,
+			data,
+		});
+	}
+
+	/* 
+	if a model is using custom timestamp fields
+	the custom field names will be stored in the model attributes
+
+	e.g.
+	&quot;attributes&quot;: [
+    {
+			&quot;type&quot;: &quot;model&quot;,
+			&quot;properties&quot;: {
+				&quot;timestamps&quot;: {
+					&quot;createdAt&quot;: &quot;createdOn&quot;,
+					&quot;updatedAt&quot;: &quot;updatedOn&quot;
+				}
+			}
+    }
+	]
+	*/
+	private removeTimestampFields(
+		model: string,
+		record: PersistentModel
+	): PersistentModel {
+		const CREATED_AT_DEFAULT_KEY = &#x27;createdAt&#x27;;
+		const UPDATED_AT_DEFAULT_KEY = &#x27;updatedAt&#x27;;
+
+		let createdTimestampKey = CREATED_AT_DEFAULT_KEY;
+		let updatedTimestampKey = UPDATED_AT_DEFAULT_KEY;
+
+		const modelAttributes = this.schema.namespaces[USER].models[
+			model
+		].attributes?.find(attr =&gt; attr.type === &#x27;model&#x27;);
+		const timestampFieldsMap = modelAttributes?.properties?.timestamps;
+
+		if (timestampFieldsMap) {
+			createdTimestampKey = timestampFieldsMap[CREATED_AT_DEFAULT_KEY];
+			updatedTimestampKey = timestampFieldsMap[UPDATED_AT_DEFAULT_KEY];
+		}
+
+		delete (record as Record&lt;string, any&gt;)[createdTimestampKey];
+		delete (record as Record&lt;string, any&gt;)[updatedTimestampKey];
+
+		return record;
+	}
+}
+
+export { MutationEventOutbox };
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:79,&quot;character&quot;:10,&quot;text&quot;:&quot;incomingCondition&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:168,&quot;character&quot;:11,&quot;text&quot;:&quot;operation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:172,&quot;character&quot;:10,&quot;text&quot;:&quot;_version&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:172,&quot;character&quot;:20,&quot;text&quot;:&quot;_lastChangedAt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:172,&quot;character&quot;:36,&quot;text&quot;:&quot;_deleted&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:173,&quot;character&quot;:55,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:8,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:31,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:177,&quot;character&quot;:7,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:182,&quot;character&quot;:13,&quot;text&quot;:&quot;__version&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:183,&quot;character&quot;:19,&quot;text&quot;:&quot;__lastChangedAt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:184,&quot;character&quot;:13,&quot;text&quot;:&quot;__deleted&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:185,&quot;character&quot;:6,&quot;text&quot;:&quot;_outgoingData&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:187,&quot;character&quot;:55,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:199,&quot;character&quot;:46,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:218,&quot;character&quot;:9,&quot;text&quot;:&quot;oldData&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:220,&quot;character&quot;:9,&quot;text&quot;:&quot;newData&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:220,&quot;character&quot;:24,&quot;text&quot;:&quot;oldData&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:220,&quot;character&quot;:33,&quot;text&quot;:&quot;_version&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:220,&quot;character&quot;:43,&quot;text&quot;:&quot;_lastChangedAt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:223,&quot;character&quot;:32,&quot;text&quot;:&quot;newData&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:240,&quot;character&quot;:10,&quot;text&quot;:&quot;_version&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:240,&quot;character&quot;:20,&quot;text&quot;:&quot;_lastChangedAt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:240,&quot;character&quot;:36,&quot;text&quot;:&quot;_deleted&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:240,&quot;character&quot;:49,&quot;text&quot;:&quot;previousData&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:245,&quot;character&quot;:13,&quot;text&quot;:&quot;__version&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:246,&quot;character&quot;:19,&quot;text&quot;:&quot;__lastChangedAt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:247,&quot;character&quot;:13,&quot;text&quot;:&quot;__deleted&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:248,&quot;character&quot;:6,&quot;text&quot;:&quot;currentData&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:252,&quot;character&quot;:3,&quot;text&quot;:&quot;_version&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:253,&quot;character&quot;:3,&quot;text&quot;:&quot;_lastChangedAt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:254,&quot;character&quot;:3,&quot;text&quot;:&quot;_deleted&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:255,&quot;character&quot;:6,&quot;text&quot;:&quot;previousData&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:256,&quot;character&quot;:6,&quot;text&quot;:&quot;currentData&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:295,&quot;character&quot;:8,&quot;text&quot;:&quot;timestampFieldsMap&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:295,&quot;character&quot;:58,&quot;text&quot;:&quot;timestamps&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:297,&quot;character&quot;:6,&quot;text&quot;:&quot;timestampFieldsMap&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:298,&quot;character&quot;:25,&quot;text&quot;:&quot;timestampFieldsMap&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/outbox.ts&quot;,&quot;line&quot;:299,&quot;character&quot;:25,&quot;text&quot;:&quot;timestampFieldsMap&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:29 GMT</p>
+    </body>
+  </html>
+  

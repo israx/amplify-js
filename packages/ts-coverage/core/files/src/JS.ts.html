@@ -1,0 +1,308 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>JS.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/JS.ts</td><td class="">71.73%</td><td class="">0%</td><td class="">336</td><td class="">241</td><td class="">95</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+const MIME_MAP = [
+	{ type: &#x27;text/plain&#x27;, ext: &#x27;txt&#x27; },
+	{ type: &#x27;text/html&#x27;, ext: &#x27;html&#x27; },
+	{ type: &#x27;text/javascript&#x27;, ext: &#x27;js&#x27; },
+	{ type: &#x27;text/css&#x27;, ext: &#x27;css&#x27; },
+	{ type: &#x27;text/csv&#x27;, ext: &#x27;csv&#x27; },
+	{ type: &#x27;text/yaml&#x27;, ext: &#x27;yml&#x27; },
+	{ type: &#x27;text/yaml&#x27;, ext: &#x27;yaml&#x27; },
+	{ type: &#x27;text/calendar&#x27;, ext: &#x27;ics&#x27; },
+	{ type: &#x27;text/calendar&#x27;, ext: &#x27;ical&#x27; },
+
+	{ type: &#x27;image/apng&#x27;, ext: &#x27;apng&#x27; },
+	{ type: &#x27;image/bmp&#x27;, ext: &#x27;bmp&#x27; },
+	{ type: &#x27;image/gif&#x27;, ext: &#x27;gif&#x27; },
+	{ type: &#x27;image/x-icon&#x27;, ext: &#x27;ico&#x27; },
+	{ type: &#x27;image/x-icon&#x27;, ext: &#x27;cur&#x27; },
+	{ type: &#x27;image/jpeg&#x27;, ext: &#x27;jpg&#x27; },
+	{ type: &#x27;image/jpeg&#x27;, ext: &#x27;jpeg&#x27; },
+	{ type: &#x27;image/jpeg&#x27;, ext: &#x27;jfif&#x27; },
+	{ type: &#x27;image/jpeg&#x27;, ext: &#x27;pjp&#x27; },
+	{ type: &#x27;image/jpeg&#x27;, ext: &#x27;pjpeg&#x27; },
+	{ type: &#x27;image/png&#x27;, ext: &#x27;png&#x27; },
+	{ type: &#x27;image/svg+xml&#x27;, ext: &#x27;svg&#x27; },
+	{ type: &#x27;image/tiff&#x27;, ext: &#x27;tif&#x27; },
+	{ type: &#x27;image/tiff&#x27;, ext: &#x27;tiff&#x27; },
+	{ type: &#x27;image/webp&#x27;, ext: &#x27;webp&#x27; },
+
+	{ type: &#x27;application/json&#x27;, ext: &#x27;json&#x27; },
+	{ type: &#x27;application/xml&#x27;, ext: &#x27;xml&#x27; },
+	{ type: &#x27;application/x-sh&#x27;, ext: &#x27;sh&#x27; },
+	{ type: &#x27;application/zip&#x27;, ext: &#x27;zip&#x27; },
+	{ type: &#x27;application/x-rar-compressed&#x27;, ext: &#x27;rar&#x27; },
+	{ type: &#x27;application/x-tar&#x27;, ext: &#x27;tar&#x27; },
+	{ type: &#x27;application/x-bzip&#x27;, ext: &#x27;bz&#x27; },
+	{ type: &#x27;application/x-bzip2&#x27;, ext: &#x27;bz2&#x27; },
+	{ type: &#x27;application/pdf&#x27;, ext: &#x27;pdf&#x27; },
+	{ type: &#x27;application/java-archive&#x27;, ext: &#x27;jar&#x27; },
+	{ type: &#x27;application/msword&#x27;, ext: &#x27;doc&#x27; },
+	{ type: &#x27;application/vnd.ms-excel&#x27;, ext: &#x27;xls&#x27; },
+	{ type: &#x27;application/vnd.ms-excel&#x27;, ext: &#x27;xlsx&#x27; },
+
+	{ type: &#x27;message/rfc822&#x27;, ext: &#x27;eml&#x27; },
+];
+
+export const isEmpty = (obj = {}) =&gt; Object.keys(obj).length === 0;
+
+export const sortByField = (list, field, dir) =&gt; {
+	if (!list || !list.sort) {
+		return false;
+	}
+
+	const dirX = dir &amp;&amp; dir === &#x27;desc&#x27; ? -1 : 1;
+	list.sort(function(a, b) {
+		const a_val = a[field];
+		const b_val = b[field];
+
+		if (typeof b_val === &#x27;undefined&#x27;) {
+			return typeof a_val === &#x27;undefined&#x27; ? 0 : 1 * dirX;
+		}
+
+		if (typeof a_val === &#x27;undefined&#x27;) {
+			return -1 * dirX;
+		}
+
+		if (a_val &lt; b_val) {
+			return -1 * dirX;
+		}
+		if (a_val &gt; b_val) {
+			return 1 * dirX;
+		}
+
+		return 0;
+	});
+
+	return true;
+};
+
+export const objectLessAttributes = (obj, less) =&gt; {
+	const ret = Object.assign({}, obj);
+	if (less) {
+		if (typeof less === &#x27;string&#x27;) {
+			delete ret[less];
+		} else {
+			less.forEach(attr =&gt; {
+				delete ret[attr];
+			});
+		}
+	}
+
+	return ret;
+};
+
+export const filenameToContentType = (
+	filename,
+	defVal = &#x27;application/octet-stream&#x27;
+) =&gt; {
+	const name = filename.toLowerCase();
+
+	const filtered = MIME_MAP.filter(mime =&gt; name.endsWith(&#x27;.&#x27; + mime.ext));
+	return filtered.length &gt; 0 ? filtered[0].type : defVal;
+};
+
+export const isTextFile = contentType =&gt; {
+	const type = contentType.toLowerCase();
+	if (type.startsWith(&#x27;text/&#x27;)) {
+		return true;
+	}
+	return (
+		&#x27;application/json&#x27; === type ||
+		&#x27;application/xml&#x27; === type ||
+		&#x27;application/sh&#x27; === type
+	);
+};
+
+export const generateRandomString = () =&gt; {
+	let result = &#x27;&#x27;;
+	const chars =
+		&#x27;0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ&#x27;;
+	for (let i = 32; i &gt; 0; i -= 1) {
+		result += chars[Math.floor(Math.random() * chars.length)];
+	}
+	return result;
+};
+
+export const makeQuerablePromise = promise =&gt; {
+	if (promise.isResolved) return promise;
+
+	let isPending = true;
+	let isRejected = false;
+	let isFullfilled = false;
+
+	const result = promise.then(
+		data =&gt; {
+			isFullfilled = true;
+			isPending = false;
+			return data;
+		},
+		e =&gt; {
+			isRejected = true;
+			isPending = false;
+			throw e;
+		}
+	);
+
+	result.isFullfilled = () =&gt; isFullfilled;
+	result.isPending = () =&gt; isPending;
+	result.isRejected = () =&gt; isRejected;
+
+	return result;
+};
+
+export const isWebWorker = () =&gt; {
+	if (typeof self === &#x27;undefined&#x27;) {
+		return false;
+	}
+	const selfContext = self as { WorkerGlobalScope? };
+	return typeof selfContext.WorkerGlobalScope !== &#x27;undefined&#x27; &amp;&amp;
+		self instanceof selfContext.WorkerGlobalScope;
+};
+
+export const browserOrNode = () =&gt; {
+	const isBrowser =
+		typeof window !== &#x27;undefined&#x27; &amp;&amp; typeof window.document !== &#x27;undefined&#x27;;
+	const isNode =
+		typeof process !== &#x27;undefined&#x27; &amp;&amp;
+		process.versions != null &amp;&amp;
+		process.versions.node != null;
+
+	return {
+		isBrowser,
+		isNode,
+	};
+};
+
+/**
+ * transfer the first letter of the keys to lowercase
+ * @param {Object} obj - the object need to be transferred
+ * @param {Array} whiteListForItself - whitelist itself from being transferred
+ * @param {Array} whiteListForChildren - whitelist its children keys from being transferred
+ */
+export const transferKeyToLowerCase = (
+	obj,
+	whiteListForItself = [],
+	whiteListForChildren = []
+) =&gt; {
+	if (!isStrictObject(obj)) return obj;
+	const ret = {};
+
+	for (const key in obj) {
+		if (obj.hasOwnProperty(key)) {
+			const transferedKey = whiteListForItself.includes(key)
+				? key
+				: key[0].toLowerCase() + key.slice(1);
+
+			ret[transferedKey] = whiteListForChildren.includes(key)
+				? obj[key]
+				: transferKeyToLowerCase(
+						obj[key],
+						whiteListForItself,
+						whiteListForChildren
+				  );
+		}
+	}
+
+	return ret;
+};
+
+/**
+ * transfer the first letter of the keys to lowercase
+ * @param {Object} obj - the object need to be transferred
+ * @param {Array} whiteListForItself - whitelist itself from being transferred
+ * @param {Array} whiteListForChildren - whitelist its children keys from being transferred
+ */
+export const transferKeyToUpperCase = (
+	obj,
+	whiteListForItself = [],
+	whiteListForChildren = []
+) =&gt; {
+	if (!isStrictObject(obj)) return obj;
+	const ret = {};
+
+	for (const key in obj) {
+		if (obj.hasOwnProperty(key)) {
+			const transferredKey = whiteListForItself.includes(key)
+				? key
+				: key[0].toUpperCase() + key.slice(1);
+
+			ret[transferredKey] = whiteListForChildren.includes(key)
+				? obj[key]
+				: transferKeyToUpperCase(
+						obj[key],
+						whiteListForItself,
+						whiteListForChildren
+				  );
+		}
+	}
+	return ret;
+};
+
+/**
+ * Return true if the object is a strict object
+ * which means it&#x27;s not Array, Function, Number, String, Boolean or Null
+ * @param obj the Object
+ */
+export const isStrictObject = obj =&gt; {
+	return (
+		obj instanceof Object &amp;&amp;
+		!(obj instanceof Array) &amp;&amp;
+		!(obj instanceof Function) &amp;&amp;
+		!(obj instanceof Number) &amp;&amp;
+		!(obj instanceof String) &amp;&amp;
+		!(obj instanceof Boolean)
+	);
+};
+
+/**
+ * @deprecated use per-function imports
+ */
+export class JS {
+	static isEmpty = isEmpty;
+	static sortByField = sortByField;
+	static objectLessAttributes = objectLessAttributes;
+	static filenameToContentType = filenameToContentType;
+	static isTextFile = isTextFile;
+	static generateRandomString = generateRandomString;
+	static makeQuerablePromise = makeQuerablePromise;
+	static isWebWorker = isWebWorker;
+	static browserOrNode = browserOrNode;
+	static transferKeyToLowerCase = transferKeyToLowerCase;
+	static transferKeyToUpperCase = transferKeyToUpperCase;
+	static isStrictObject = isStrictObject;
+}
+
+/**
+ * @deprecated use per-function imports
+ */
+export default JS;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:28,&quot;text&quot;:&quot;list&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:34,&quot;text&quot;:&quot;field&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:41,&quot;text&quot;:&quot;dir&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:6,&quot;text&quot;:&quot;list&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:15,&quot;text&quot;:&quot;list&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:20,&quot;text&quot;:&quot;sort&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:64,&quot;character&quot;:14,&quot;text&quot;:&quot;dir&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:64,&quot;character&quot;:21,&quot;text&quot;:&quot;dir&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:1,&quot;text&quot;:&quot;list&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:6,&quot;text&quot;:&quot;sort&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:20,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:23,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:66,&quot;character&quot;:8,&quot;text&quot;:&quot;a_val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:66,&quot;character&quot;:16,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:66,&quot;character&quot;:18,&quot;text&quot;:&quot;field&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:67,&quot;character&quot;:8,&quot;text&quot;:&quot;b_val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:67,&quot;character&quot;:16,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:67,&quot;character&quot;:18,&quot;text&quot;:&quot;field&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:69,&quot;character&quot;:13,&quot;text&quot;:&quot;b_val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:70,&quot;character&quot;:17,&quot;text&quot;:&quot;a_val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:13,&quot;text&quot;:&quot;a_val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:77,&quot;character&quot;:6,&quot;text&quot;:&quot;a_val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:77,&quot;character&quot;:14,&quot;text&quot;:&quot;b_val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:80,&quot;character&quot;:6,&quot;text&quot;:&quot;a_val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:80,&quot;character&quot;:14,&quot;text&quot;:&quot;b_val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:90,&quot;character&quot;:37,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:90,&quot;character&quot;:42,&quot;text&quot;:&quot;less&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:7,&quot;text&quot;:&quot;ret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:31,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:5,&quot;text&quot;:&quot;less&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:93,&quot;character&quot;:13,&quot;text&quot;:&quot;less&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:94,&quot;character&quot;:10,&quot;text&quot;:&quot;ret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:96,&quot;character&quot;:3,&quot;text&quot;:&quot;less&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:96,&quot;character&quot;:8,&quot;text&quot;:&quot;forEach&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:96,&quot;character&quot;:16,&quot;text&quot;:&quot;attr&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:97,&quot;character&quot;:11,&quot;text&quot;:&quot;ret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:97,&quot;character&quot;:15,&quot;text&quot;:&quot;attr&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:102,&quot;character&quot;:8,&quot;text&quot;:&quot;ret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:106,&quot;character&quot;:1,&quot;text&quot;:&quot;filename&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:109,&quot;character&quot;:7,&quot;text&quot;:&quot;name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:109,&quot;character&quot;:14,&quot;text&quot;:&quot;filename&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:109,&quot;character&quot;:23,&quot;text&quot;:&quot;toLowerCase&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:111,&quot;character&quot;:42,&quot;text&quot;:&quot;name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:111,&quot;character&quot;:47,&quot;text&quot;:&quot;endsWith&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:115,&quot;character&quot;:26,&quot;text&quot;:&quot;contentType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:7,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:14,&quot;text&quot;:&quot;contentType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:26,&quot;text&quot;:&quot;toLowerCase&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:117,&quot;character&quot;:5,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:117,&quot;character&quot;:10,&quot;text&quot;:&quot;startsWith&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:121,&quot;character&quot;:25,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:122,&quot;character&quot;:24,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:123,&quot;character&quot;:23,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:137,&quot;character&quot;:35,&quot;text&quot;:&quot;promise&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:138,&quot;character&quot;:5,&quot;text&quot;:&quot;promise&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:138,&quot;character&quot;:13,&quot;text&quot;:&quot;isResolved&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:138,&quot;character&quot;:32,&quot;text&quot;:&quot;promise&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:144,&quot;character&quot;:7,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:144,&quot;character&quot;:16,&quot;text&quot;:&quot;promise&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:144,&quot;character&quot;:24,&quot;text&quot;:&quot;then&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:145,&quot;character&quot;:2,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:10,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:150,&quot;character&quot;:2,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:153,&quot;character&quot;:9,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:157,&quot;character&quot;:1,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:157,&quot;character&quot;:8,&quot;text&quot;:&quot;isFullfilled&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:158,&quot;character&quot;:1,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:158,&quot;character&quot;:8,&quot;text&quot;:&quot;isPending&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:159,&quot;character&quot;:1,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:159,&quot;character&quot;:8,&quot;text&quot;:&quot;isRejected&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:161,&quot;character&quot;:8,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:168,&quot;character&quot;:31,&quot;text&quot;:&quot;WorkerGlobalScope&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:169,&quot;character&quot;:27,&quot;text&quot;:&quot;WorkerGlobalScope&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:170,&quot;character&quot;:30,&quot;text&quot;:&quot;WorkerGlobalScope&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:194,&quot;character&quot;:1,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:198,&quot;character&quot;:21,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:198,&quot;character&quot;:34,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:201,&quot;character&quot;:19,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:202,&quot;character&quot;:6,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:208,&quot;character&quot;:6,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:210,&quot;character&quot;:6,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:227,&quot;character&quot;:1,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:21,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:34,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:234,&quot;character&quot;:19,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:235,&quot;character&quot;:6,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:241,&quot;character&quot;:6,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:243,&quot;character&quot;:6,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:257,&quot;character&quot;:30,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:259,&quot;character&quot;:2,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:260,&quot;character&quot;:4,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:261,&quot;character&quot;:4,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:262,&quot;character&quot;:4,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:263,&quot;character&quot;:4,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/JS.ts&quot;,&quot;line&quot;:264,&quot;character&quot;:4,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:20 GMT</p>
+    </body>
+  </html>
+  

@@ -1,0 +1,469 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>GraphQLAPI.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/GraphQLAPI.ts</td><td class="">70.82%</td><td class="">0%</td><td class="">473</td><td class="">335</td><td class="">138</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import {
+	DocumentNode,
+	OperationDefinitionNode,
+	print,
+	parse,
+	GraphQLError,
+	OperationTypeNode,
+} from &#x27;graphql&#x27;;
+import Observable from &#x27;zen-observable-ts&#x27;;
+import {
+	Amplify,
+	ConsoleLogger as Logger,
+	Credentials,
+	getAmplifyUserAgent,
+	INTERNAL_AWS_APPSYNC_REALTIME_PUBSUB_PROVIDER,
+} from &#x27;@aws-amplify/core&#x27;;
+import { PubSub } from &#x27;@aws-amplify/pubsub&#x27;;
+import Auth from &#x27;@aws-amplify/auth&#x27;;
+import Cache from &#x27;@aws-amplify/cache&#x27;;
+import {
+	GraphQLAuthError,
+	GraphQLOptions,
+	GraphQLResult,
+	GraphQLOperation,
+} from &#x27;./types&#x27;;
+import { RestClient } from &#x27;@aws-amplify/api-rest&#x27;;
+const USER_AGENT_HEADER = &#x27;x-amz-user-agent&#x27;;
+
+const logger = new Logger(&#x27;GraphQLAPI&#x27;);
+
+export const graphqlOperation = (
+	query,
+	variables = {},
+	authToken?: string,
+	userAgentSuffix?: string
+) =&gt; ({
+	query,
+	variables,
+	authToken,
+	userAgentSuffix,
+});
+
+/**
+ * Export Cloud Logic APIs
+ */
+export class GraphQLAPIClass {
+	/**
+	 * @private
+	 */
+	private _options;
+	private _api = null;
+
+	Auth = Auth;
+	Cache = Cache;
+	Credentials = Credentials;
+
+	/**
+	 * Initialize GraphQL API with AWS configuration
+	 * @param {Object} options - Configuration object for API
+	 */
+	constructor(options) {
+		this._options = options;
+		logger.debug(&#x27;API Options&#x27;, this._options);
+	}
+
+	public getModuleName() {
+		return &#x27;GraphQLAPI&#x27;;
+	}
+
+	/**
+	 * Configure API
+	 * @param {Object} config - Configuration of the API
+	 * @return {Object} - The current configuration
+	 */
+	configure(options) {
+		const { API = {}, ...otherOptions } = options || {};
+		let opt = { ...otherOptions, ...API };
+		logger.debug(&#x27;configure GraphQL API&#x27;, { opt });
+
+		if (opt[&#x27;aws_project_region&#x27;]) {
+			opt = Object.assign({}, opt, {
+				region: opt[&#x27;aws_project_region&#x27;],
+				header: {},
+			});
+		}
+
+		if (
+			typeof opt.graphql_headers !== &#x27;undefined&#x27; &amp;&amp;
+			typeof opt.graphql_headers !== &#x27;function&#x27;
+		) {
+			logger.warn(&#x27;graphql_headers should be a function&#x27;);
+			opt.graphql_headers = undefined;
+		}
+
+		this._options = Object.assign({}, this._options, opt);
+
+		this.createInstance();
+
+		return this._options;
+	}
+
+	/**
+	 * Create an instance of API for the library
+	 * @return - A promise of true if Success
+	 */
+	createInstance() {
+		logger.debug(&#x27;create Rest instance&#x27;);
+		if (this._options) {
+			this._api = new RestClient(this._options);
+			// Share instance Credentials with client for SSR
+			this._api.Credentials = this.Credentials;
+
+			return true;
+		} else {
+			return Promise.reject(&#x27;API not configured&#x27;);
+		}
+	}
+
+	private async _headerBasedAuth(
+		defaultAuthenticationType?,
+		additionalHeaders: { [key: string]: string } = {}
+	) {
+		const { aws_appsync_authenticationType, aws_appsync_apiKey: apiKey } =
+			this._options;
+		const authenticationType =
+			defaultAuthenticationType || aws_appsync_authenticationType || &#x27;AWS_IAM&#x27;;
+		let headers = {};
+
+		switch (authenticationType) {
+			case &#x27;API_KEY&#x27;:
+				if (!apiKey) {
+					throw new Error(GraphQLAuthError.NO_API_KEY);
+				}
+				headers = {
+					Authorization: null,
+					&#x27;X-Api-Key&#x27;: apiKey,
+				};
+				break;
+			case &#x27;AWS_IAM&#x27;:
+				const credentialsOK = await this._ensureCredentials();
+				if (!credentialsOK) {
+					throw new Error(GraphQLAuthError.NO_CREDENTIALS);
+				}
+				break;
+			case &#x27;OPENID_CONNECT&#x27;:
+				try {
+					let token;
+					// backwards compatibility
+					const federatedInfo = await Cache.getItem(&#x27;federatedInfo&#x27;);
+					if (federatedInfo) {
+						token = federatedInfo.token;
+					} else {
+						const currentUser = await Auth.currentAuthenticatedUser();
+						if (currentUser) {
+							token = currentUser.token;
+						}
+					}
+					if (!token) {
+						throw new Error(GraphQLAuthError.NO_FEDERATED_JWT);
+					}
+					headers = {
+						Authorization: token,
+					};
+				} catch (e) {
+					throw new Error(GraphQLAuthError.NO_CURRENT_USER);
+				}
+				break;
+			case &#x27;AMAZON_COGNITO_USER_POOLS&#x27;:
+				try {
+					const session = await this.Auth.currentSession();
+					headers = {
+						Authorization: session.getAccessToken().getJwtToken(),
+					};
+				} catch (e) {
+					throw new Error(GraphQLAuthError.NO_CURRENT_USER);
+				}
+				break;
+			case &#x27;AWS_LAMBDA&#x27;:
+				if (!additionalHeaders.Authorization) {
+					throw new Error(GraphQLAuthError.NO_AUTH_TOKEN);
+				}
+				headers = {
+					Authorization: additionalHeaders.Authorization,
+				};
+				break;
+			default:
+				headers = {
+					Authorization: null,
+				};
+				break;
+		}
+
+		return headers;
+	}
+
+	/**
+	 * to get the operation type
+	 * @param operation
+	 */
+	getGraphqlOperationType(operation: GraphQLOperation): OperationTypeNode {
+		const doc = parse(operation);
+		const definitions =
+			doc.definitions as ReadonlyArray&lt;OperationDefinitionNode&gt;;
+		const [{ operation: operationType }] = definitions;
+
+		return operationType;
+	}
+
+	/**
+	 * Executes a GraphQL operation
+	 *
+	 * @param options - GraphQL Options
+	 * @param [additionalHeaders] - headers to merge in after any `graphql_headers` set in the config
+	 * @returns An Observable if the query is a subscription query, else a promise of the graphql result.
+	 */
+	graphql&lt;T = any&gt;(
+		{
+			query: paramQuery,
+			variables = {},
+			authMode,
+			authToken,
+			userAgentSuffix,
+		}: GraphQLOptions,
+		additionalHeaders?: { [key: string]: string }
+	): Observable&lt;GraphQLResult&lt;T&gt;&gt; | Promise&lt;GraphQLResult&lt;T&gt;&gt; {
+		const query =
+			typeof paramQuery === &#x27;string&#x27;
+				? parse(paramQuery)
+				: parse(print(paramQuery));
+
+		const [operationDef = {}] = query.definitions.filter(
+			def =&gt; def.kind === &#x27;OperationDefinition&#x27;
+		);
+		const { operation: operationType } =
+			operationDef as OperationDefinitionNode;
+
+		const headers = additionalHeaders || {};
+
+		// if an authorization header is set, have the explicit authToken take precedence
+		if (authToken) {
+			headers.Authorization = authToken;
+		}
+
+		switch (operationType) {
+			case &#x27;query&#x27;:
+			case &#x27;mutation&#x27;:
+				this.createInstanceIfNotCreated();
+				const cancellableToken = this._api.getCancellableToken();
+				const initParams = { cancellableToken };
+				const responsePromise = this._graphql&lt;T&gt;(
+					{ query, variables, authMode, userAgentSuffix },
+					headers,
+					initParams
+				);
+				this._api.updateRequestToBeCancellable(
+					responsePromise,
+					cancellableToken
+				);
+				return responsePromise;
+			case &#x27;subscription&#x27;:
+				return this._graphqlSubscribe({ query, variables, authMode }, headers);
+			default:
+				throw new Error(`invalid operation type: ${operationType}`);
+		}
+	}
+
+	private async _graphql&lt;T = any&gt;(
+		{ query, variables, authMode, userAgentSuffix }: GraphQLOptions,
+		additionalHeaders = {},
+		initParams = {}
+	): Promise&lt;GraphQLResult&lt;T&gt;&gt; {
+		this.createInstanceIfNotCreated();
+		const {
+			aws_appsync_region: region,
+			aws_appsync_graphqlEndpoint: appSyncGraphqlEndpoint,
+			graphql_headers = () =&gt; ({}),
+			graphql_endpoint: customGraphqlEndpoint,
+			graphql_endpoint_iam_region: customEndpointRegion,
+		} = this._options;
+
+		const headers = {
+			...(!customGraphqlEndpoint &amp;&amp;
+				(await this._headerBasedAuth(authMode, additionalHeaders))),
+			...(customGraphqlEndpoint &amp;&amp;
+				(customEndpointRegion
+					? await this._headerBasedAuth(authMode, additionalHeaders)
+					: { Authorization: null })),
+			...(await graphql_headers({ query, variables })),
+			...additionalHeaders,
+			...(!customGraphqlEndpoint &amp;&amp; {
+				[USER_AGENT_HEADER]: getAmplifyUserAgent(userAgentSuffix),
+			}),
+		};
+
+		const body = {
+			query: print(query as DocumentNode),
+			variables,
+		};
+
+		const init = Object.assign(
+			{
+				headers,
+				body,
+				signerServiceInfo: {
+					service: !customGraphqlEndpoint ? &#x27;appsync&#x27; : &#x27;execute-api&#x27;,
+					region: !customGraphqlEndpoint ? region : customEndpointRegion,
+				},
+			},
+			initParams
+		);
+
+		const endpoint = customGraphqlEndpoint || appSyncGraphqlEndpoint;
+
+		if (!endpoint) {
+			const error = new GraphQLError(&#x27;No graphql endpoint provided.&#x27;);
+
+			throw {
+				data: {},
+				errors: [error],
+			};
+		}
+
+		let response;
+		try {
+			response = await this._api.post(endpoint, init);
+		} catch (err) {
+			// If the exception is because user intentionally
+			// cancelled the request, do not modify the exception
+			// so that clients can identify the exception correctly.
+			if (this._api.isCancel(err)) {
+				throw err;
+			}
+			response = {
+				data: {},
+				errors: [new GraphQLError(err.message, null, null, null, null, err)],
+			};
+		}
+
+		const { errors } = response;
+
+		if (errors &amp;&amp; errors.length) {
+			throw response;
+		}
+
+		return response;
+	}
+
+	async createInstanceIfNotCreated() {
+		if (!this._api) {
+			await this.createInstance();
+		}
+	}
+
+	/**
+	 * Checks to see if an error thrown is from an api request cancellation
+	 * @param {any} error - Any error
+	 * @return {boolean} - A boolean indicating if the error was from an api request cancellation
+	 */
+	isCancel(error) {
+		return this._api.isCancel(error);
+	}
+
+	/**
+	 * Cancels an inflight request. Only applicable for graphql queries and mutations
+	 * @param {any} request - request to cancel
+	 * @return {boolean} - A boolean indicating if the request was cancelled
+	 */
+	cancel(request: Promise&lt;any&gt;, message?: string) {
+		return this._api.cancel(request, message);
+	}
+
+	/**
+	 * Check if the request has a corresponding cancel token in the WeakMap.
+	 * @params request - The request promise
+	 * @return if the request has a corresponding cancel token.
+	 */
+	hasCancelToken(request: Promise&lt;any&gt;) {
+		return this._api.hasCancelToken(request);
+	}
+
+	private _graphqlSubscribe(
+		{
+			query,
+			variables,
+			authMode: defaultAuthenticationType,
+			authToken,
+		}: GraphQLOptions,
+		additionalHeaders = {}
+	): Observable&lt;any&gt; {
+		const {
+			aws_appsync_region: region,
+			aws_appsync_graphqlEndpoint: appSyncGraphqlEndpoint,
+			aws_appsync_authenticationType,
+			aws_appsync_apiKey: apiKey,
+			graphql_headers = () =&gt; ({}),
+		} = this._options;
+		const authenticationType =
+			defaultAuthenticationType || aws_appsync_authenticationType || &#x27;AWS_IAM&#x27;;
+
+		if (PubSub &amp;&amp; typeof PubSub.subscribe === &#x27;function&#x27;) {
+			return PubSub.subscribe(&#x27;&#x27;, {
+				provider: INTERNAL_AWS_APPSYNC_REALTIME_PUBSUB_PROVIDER,
+				appSyncGraphqlEndpoint,
+				authenticationType,
+				apiKey,
+				query: print(query as DocumentNode),
+				region,
+				variables,
+				graphql_headers,
+				additionalHeaders,
+				authToken,
+			});
+		} else {
+			logger.debug(&#x27;No pubsub module applied for subscription&#x27;);
+			throw new Error(&#x27;No pubsub module applied for subscription&#x27;);
+		}
+	}
+
+	/**
+	 * @private
+	 */
+	_ensureCredentials() {
+		return this.Credentials.get()
+			.then(credentials =&gt; {
+				if (!credentials) return false;
+				const cred = this.Credentials.shear(credentials);
+				logger.debug(&#x27;set credentials for api&#x27;, cred);
+
+				return true;
+			})
+			.catch(err =&gt; {
+				logger.warn(&#x27;ensure credentials error&#x27;, err);
+				return false;
+			});
+	}
+}
+
+export const GraphQLAPI = new GraphQLAPIClass(null);
+Amplify.register(GraphQLAPI);
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:1,&quot;text&quot;:&quot;query&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:48,&quot;character&quot;:1,&quot;text&quot;:&quot;query&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:61,&quot;character&quot;:9,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:9,&quot;text&quot;:&quot;_api&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:72,&quot;character&quot;:13,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:7,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:18,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:74,&quot;character&quot;:35,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:86,&quot;character&quot;:11,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:87,&quot;character&quot;:10,&quot;text&quot;:&quot;API&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:87,&quot;character&quot;:23,&quot;text&quot;:&quot;otherOptions&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:88,&quot;character&quot;:6,&quot;text&quot;:&quot;opt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:88,&quot;character&quot;:17,&quot;text&quot;:&quot;otherOptions&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:88,&quot;character&quot;:34,&quot;text&quot;:&quot;API&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:89,&quot;character&quot;:42,&quot;text&quot;:&quot;opt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:6,&quot;text&quot;:&quot;opt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:3,&quot;text&quot;:&quot;opt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:27,&quot;text&quot;:&quot;opt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:93,&quot;character&quot;:4,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:93,&quot;character&quot;:12,&quot;text&quot;:&quot;opt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:99,&quot;character&quot;:10,&quot;text&quot;:&quot;opt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:99,&quot;character&quot;:14,&quot;text&quot;:&quot;graphql_headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:100,&quot;character&quot;:10,&quot;text&quot;:&quot;opt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:100,&quot;character&quot;:14,&quot;text&quot;:&quot;graphql_headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:103,&quot;character&quot;:3,&quot;text&quot;:&quot;opt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:103,&quot;character&quot;:7,&quot;text&quot;:&quot;graphql_headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:106,&quot;character&quot;:7,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:106,&quot;character&quot;:41,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:106,&quot;character&quot;:51,&quot;text&quot;:&quot;opt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:110,&quot;character&quot;:14,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:119,&quot;character&quot;:11,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:120,&quot;character&quot;:8,&quot;text&quot;:&quot;_api&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:120,&quot;character&quot;:35,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:122,&quot;character&quot;:8,&quot;text&quot;:&quot;_api&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:122,&quot;character&quot;:13,&quot;text&quot;:&quot;Credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:2,&quot;text&quot;:&quot;defaultAuthenticationType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:134,&quot;character&quot;:10,&quot;text&quot;:&quot;aws_appsync_authenticationType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:134,&quot;character&quot;:62,&quot;text&quot;:&quot;apiKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:135,&quot;character&quot;:8,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:136,&quot;character&quot;:8,&quot;text&quot;:&quot;authenticationType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:137,&quot;character&quot;:3,&quot;text&quot;:&quot;defaultAuthenticationType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:137,&quot;character&quot;:32,&quot;text&quot;:&quot;aws_appsync_authenticationType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:140,&quot;character&quot;:10,&quot;text&quot;:&quot;authenticationType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:142,&quot;character&quot;:9,&quot;text&quot;:&quot;apiKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:147,&quot;character&quot;:18,&quot;text&quot;:&quot;apiKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:151,&quot;character&quot;:10,&quot;text&quot;:&quot;credentialsOK&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:152,&quot;character&quot;:9,&quot;text&quot;:&quot;credentialsOK&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:158,&quot;character&quot;:9,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:160,&quot;character&quot;:11,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:161,&quot;character&quot;:9,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:162,&quot;character&quot;:6,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:162,&quot;character&quot;:14,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:162,&quot;character&quot;:28,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:164,&quot;character&quot;:12,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:165,&quot;character&quot;:10,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:166,&quot;character&quot;:7,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:166,&quot;character&quot;:15,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:166,&quot;character&quot;:27,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:169,&quot;character&quot;:10,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:173,&quot;character&quot;:6,&quot;text&quot;:&quot;Authorization&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:173,&quot;character&quot;:21,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:13,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:185,&quot;character&quot;:13,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:259,&quot;character&quot;:10,&quot;text&quot;:&quot;cancellableToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:259,&quot;character&quot;:34,&quot;text&quot;:&quot;_api&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:259,&quot;character&quot;:39,&quot;text&quot;:&quot;getCancellableToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:260,&quot;character&quot;:25,&quot;text&quot;:&quot;cancellableToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:266,&quot;character&quot;:9,&quot;text&quot;:&quot;_api&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:266,&quot;character&quot;:14,&quot;text&quot;:&quot;updateRequestToBeCancellable&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:268,&quot;character&quot;:5,&quot;text&quot;:&quot;cancellableToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:285,&quot;character&quot;:23,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:286,&quot;character&quot;:32,&quot;text&quot;:&quot;appSyncGraphqlEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:287,&quot;character&quot;:3,&quot;text&quot;:&quot;graphql_headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:288,&quot;character&quot;:21,&quot;text&quot;:&quot;customGraphqlEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:289,&quot;character&quot;:32,&quot;text&quot;:&quot;customEndpointRegion&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:290,&quot;character&quot;:11,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:292,&quot;character&quot;:8,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:293,&quot;character&quot;:8,&quot;text&quot;:&quot;customGraphqlEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:295,&quot;character&quot;:7,&quot;text&quot;:&quot;customGraphqlEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:296,&quot;character&quot;:5,&quot;text&quot;:&quot;customEndpointRegion&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:299,&quot;character&quot;:13,&quot;text&quot;:&quot;graphql_headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:301,&quot;character&quot;:8,&quot;text&quot;:&quot;customGraphqlEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:313,&quot;character&quot;:4,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:316,&quot;character&quot;:15,&quot;text&quot;:&quot;customGraphqlEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:317,&quot;character&quot;:5,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:317,&quot;character&quot;:14,&quot;text&quot;:&quot;customGraphqlEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:317,&quot;character&quot;:38,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:317,&quot;character&quot;:47,&quot;text&quot;:&quot;customEndpointRegion&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:323,&quot;character&quot;:8,&quot;text&quot;:&quot;endpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:323,&quot;character&quot;:19,&quot;text&quot;:&quot;customGraphqlEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:323,&quot;character&quot;:44,&quot;text&quot;:&quot;appSyncGraphqlEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:325,&quot;character&quot;:7,&quot;text&quot;:&quot;endpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:334,&quot;character&quot;:6,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:336,&quot;character&quot;:3,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:336,&quot;character&quot;:25,&quot;text&quot;:&quot;_api&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:336,&quot;character&quot;:30,&quot;text&quot;:&quot;post&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:336,&quot;character&quot;:35,&quot;text&quot;:&quot;endpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:341,&quot;character&quot;:12,&quot;text&quot;:&quot;_api&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:341,&quot;character&quot;:17,&quot;text&quot;:&quot;isCancel&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:341,&quot;character&quot;:26,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:342,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:344,&quot;character&quot;:3,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:346,&quot;character&quot;:30,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:346,&quot;character&quot;:34,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:337,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:350,&quot;character&quot;:10,&quot;text&quot;:&quot;errors&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:352,&quot;character&quot;:6,&quot;text&quot;:&quot;errors&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:352,&quot;character&quot;:16,&quot;text&quot;:&quot;errors&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:352,&quot;character&quot;:23,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:353,&quot;character&quot;:9,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:360,&quot;character&quot;:12,&quot;text&quot;:&quot;_api&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:370,&quot;character&quot;:10,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:371,&quot;character&quot;:14,&quot;text&quot;:&quot;_api&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:371,&quot;character&quot;:19,&quot;text&quot;:&quot;isCancel&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:371,&quot;character&quot;:28,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:380,&quot;character&quot;:14,&quot;text&quot;:&quot;_api&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:380,&quot;character&quot;:19,&quot;text&quot;:&quot;cancel&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:389,&quot;character&quot;:14,&quot;text&quot;:&quot;_api&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:389,&quot;character&quot;:19,&quot;text&quot;:&quot;hasCancelToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:402,&quot;character&quot;:23,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:403,&quot;character&quot;:32,&quot;text&quot;:&quot;appSyncGraphqlEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:404,&quot;character&quot;:3,&quot;text&quot;:&quot;aws_appsync_authenticationType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:405,&quot;character&quot;:23,&quot;text&quot;:&quot;apiKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:406,&quot;character&quot;:3,&quot;text&quot;:&quot;graphql_headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:407,&quot;character&quot;:11,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:408,&quot;character&quot;:8,&quot;text&quot;:&quot;authenticationType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:414,&quot;character&quot;:4,&quot;text&quot;:&quot;appSyncGraphqlEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:415,&quot;character&quot;:4,&quot;text&quot;:&quot;authenticationType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:416,&quot;character&quot;:4,&quot;text&quot;:&quot;apiKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:418,&quot;character&quot;:4,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:420,&quot;character&quot;:4,&quot;text&quot;:&quot;graphql_headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:435,&quot;character&quot;:4,&quot;text&quot;:&quot;then&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:435,&quot;character&quot;:9,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:436,&quot;character&quot;:9,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:437,&quot;character&quot;:40,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:442,&quot;character&quot;:4,&quot;text&quot;:&quot;catch&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:442,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/GraphQLAPI.ts&quot;,&quot;line&quot;:443,&quot;character&quot;:44,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:26 GMT</p>
+    </body>
+  </html>
+  

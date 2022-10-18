@@ -1,0 +1,267 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Predictions.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Predictions.ts</td><td class="">94.64%</td><td class="">0%</td><td class="">336</td><td class="">318</td><td class="">18</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import {
+	PredictionsOptions,
+	TranslateTextInput,
+	TranslateTextOutput,
+	TextToSpeechInput,
+	ProviderOptions,
+	TextToSpeechOutput,
+	SpeechToTextInput,
+	SpeechToTextOutput,
+	IdentifyTextInput,
+	IdentifyTextOutput,
+	IdentifyLabelsOutput,
+	IdentifyLabelsInput,
+	IdentifyEntitiesInput,
+	IdentifyEntitiesOutput,
+	InterpretTextOutput,
+	InterpretTextInput,
+} from &#x27;./types&#x27;;
+import {
+	AbstractConvertPredictionsProvider,
+	AbstractIdentifyPredictionsProvider,
+	AbstractInterpretPredictionsProvider,
+	AbstractPredictionsProvider,
+} from &#x27;./types/Providers&#x27;;
+import { Amplify, ConsoleLogger as Logger } from &#x27;@aws-amplify/core&#x27;;
+
+const logger = new Logger(&#x27;Predictions&#x27;);
+
+export class PredictionsClass {
+	private _options: PredictionsOptions;
+
+	private _convertPluggables: AbstractConvertPredictionsProvider[];
+	private _identifyPluggables: AbstractIdentifyPredictionsProvider[];
+	private _interpretPluggables: AbstractInterpretPredictionsProvider[];
+
+	/**
+	 * Initialize Predictions with AWS configurations
+	 * @param {PredictionsOptions} options - Configuration object for Predictions
+	 */
+	constructor(options: PredictionsOptions) {
+		this._options = options;
+		this._convertPluggables = [];
+		this._identifyPluggables = [];
+		this._interpretPluggables = [];
+	}
+
+	public getModuleName() {
+		return &#x27;Predictions&#x27;;
+	}
+
+	/**
+	 * add plugin/pluggable into Predictions category
+	 * @param {Object} pluggable - an instance of the plugin/pluggable
+	 **/
+	public addPluggable(pluggable: AbstractPredictionsProvider) {
+		if (this.getPluggable(pluggable.getProviderName())) {
+			throw new Error(
+				`Pluggable with name ${pluggable.getProviderName()} has already been added.`
+			);
+		}
+		let pluggableAdded: boolean = false;
+		if (this.implementsConvertPluggable(pluggable)) {
+			this._convertPluggables.push(pluggable);
+			pluggableAdded = true;
+		}
+		if (this.implementsIdentifyPluggable(pluggable)) {
+			this._identifyPluggables.push(pluggable);
+			pluggableAdded = true;
+		}
+		if (this.implementsInterpretPluggable(pluggable)) {
+			this._interpretPluggables.push(pluggable);
+			pluggableAdded = true;
+		}
+		if (pluggableAdded) {
+			this.configurePluggable(pluggable);
+		}
+	}
+
+	/**
+	 * Get the plugin object
+	 * @param providerName - the name of the plugin
+	 */
+	public getPluggable(providerName: string): AbstractPredictionsProvider {
+		const pluggable = this.getAllProviders().find(
+			pluggable =&gt; pluggable.getProviderName() === providerName
+		);
+		if (pluggable === undefined) {
+			logger.debug(&#x27;No plugin found with providerName=&gt;&#x27;, providerName);
+			return null;
+		} else return pluggable;
+	}
+
+	/**
+	 * Remove the plugin object
+	 * @param providerName - the name of the plugin
+	 */
+	public removePluggable(providerName: string) {
+		this._convertPluggables = this._convertPluggables.filter(
+			pluggable =&gt; pluggable.getProviderName() !== providerName
+		);
+		this._identifyPluggables = this._identifyPluggables.filter(
+			pluggable =&gt; pluggable.getProviderName() !== providerName
+		);
+		this._interpretPluggables = this._interpretPluggables.filter(
+			pluggable =&gt; pluggable.getProviderName() !== providerName
+		);
+		return;
+	}
+
+	/**
+	 * To make both top level providers and category level providers work with same interface and configuration
+	 * this method duplicates Predictions config into parent level config (for top level provider) and
+	 * category level config (such as convert, identify etc) and pass both to each provider.
+	 */
+	configure(options: PredictionsOptions) {
+		let predictionsConfig = options ? options.predictions || options : {};
+		predictionsConfig = { ...predictionsConfig, ...options };
+		this._options = Object.assign({}, this._options, predictionsConfig);
+		logger.debug(&#x27;configure Predictions&#x27;, this._options);
+		this.getAllProviders().forEach(pluggable =&gt;
+			this.configurePluggable(pluggable)
+		);
+	}
+
+	public interpret(
+		input: InterpretTextInput,
+		options?: ProviderOptions
+	): Promise&lt;InterpretTextOutput&gt;;
+	public interpret(
+		input: InterpretTextInput,
+		options?: ProviderOptions
+	): Promise&lt;InterpretTextOutput&gt; {
+		const pluggableToExecute = this.getPluggableToExecute(
+			this._interpretPluggables,
+			options
+		);
+		return pluggableToExecute.interpret(input);
+	}
+
+	public convert(
+		input: TranslateTextInput,
+		options?: ProviderOptions
+	): Promise&lt;TranslateTextOutput&gt;;
+	public convert(
+		input: TextToSpeechInput,
+		options?: ProviderOptions
+	): Promise&lt;TextToSpeechOutput&gt;;
+	public convert(
+		input: SpeechToTextInput,
+		options?: ProviderOptions
+	): Promise&lt;SpeechToTextOutput&gt;;
+	public convert(
+		input: TranslateTextInput | TextToSpeechInput | SpeechToTextInput,
+		options?: ProviderOptions
+	): Promise&lt;TranslateTextOutput | TextToSpeechOutput | SpeechToTextOutput&gt; {
+		const pluggableToExecute = this.getPluggableToExecute(
+			this._convertPluggables,
+			options
+		);
+		return pluggableToExecute.convert(input);
+	}
+
+	public identify(
+		input: IdentifyTextInput,
+		options?: ProviderOptions
+	): Promise&lt;IdentifyTextOutput&gt;;
+	public identify(
+		input: IdentifyLabelsInput,
+		options?: ProviderOptions
+	): Promise&lt;IdentifyLabelsOutput&gt;;
+	public identify(
+		input: IdentifyEntitiesInput,
+		options?: ProviderOptions
+	): Promise&lt;IdentifyEntitiesOutput&gt;;
+	public identify(
+		input: IdentifyTextInput | IdentifyLabelsInput | IdentifyEntitiesInput,
+		options: ProviderOptions
+	): Promise&lt;
+		IdentifyTextOutput | IdentifyLabelsOutput | IdentifyEntitiesOutput
+	&gt; {
+		const pluggableToExecute = this.getPluggableToExecute(
+			this._identifyPluggables,
+			options
+		);
+		return pluggableToExecute.identify(input);
+	}
+
+	// tslint:disable-next-line: max-line-length
+	private getPluggableToExecute&lt;T extends AbstractPredictionsProvider&gt;(
+		pluggables: T[],
+		providerOptions: ProviderOptions
+	): T {
+		// Give preference to provider name first since it is more specific to this call, even if
+		// there is only one provider configured to error out if the name provided is not the one matched.
+		if (providerOptions &amp;&amp; providerOptions.providerName) {
+			return [...pluggables].find(
+				pluggable =&gt;
+					pluggable.getProviderName() === providerOptions.providerName
+			);
+		} else {
+			if (pluggables.length === 1) {
+				return pluggables[0];
+			} else {
+				throw new Error(
+					&#x27;More than one or no providers are configured, &#x27; +
+						&#x27;Either specify a provider name or configure exactly one provider&#x27;
+				);
+			}
+		}
+	}
+
+	private getAllProviders() {
+		return [
+			...this._convertPluggables,
+			...this._identifyPluggables,
+			...this._interpretPluggables,
+		];
+	}
+
+	private configurePluggable(pluggable: AbstractPredictionsProvider) {
+		const categoryConfig = Object.assign(
+			{},
+			this._options[&#x27;predictions&#x27;], // Parent predictions config for the top level provider
+			this._options[pluggable.getCategory().toLowerCase()] // Actual category level config
+		);
+		pluggable.configure(categoryConfig);
+	}
+
+	private implementsConvertPluggable(
+		obj: any
+	): obj is AbstractConvertPredictionsProvider {
+		return obj &amp;&amp; typeof obj.convert === &#x27;function&#x27;;
+	}
+
+	private implementsIdentifyPluggable(
+		obj: any
+	): obj is AbstractIdentifyPredictionsProvider {
+		return obj &amp;&amp; typeof obj.identify === &#x27;function&#x27;;
+	}
+
+	private implementsInterpretPluggable(
+		obj: any
+	): obj is AbstractInterpretPredictionsProvider {
+		return obj &amp;&amp; typeof obj.interpret === &#x27;function&#x27;;
+	}
+}
+
+export const Predictions = new PredictionsClass({});
+Amplify.register(Predictions);
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:115,&quot;character&quot;:6,&quot;text&quot;:&quot;predictionsConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:115,&quot;character&quot;:44,&quot;text&quot;:&quot;predictions&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:2,&quot;text&quot;:&quot;predictionsConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:27,&quot;text&quot;:&quot;predictionsConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:117,&quot;character&quot;:51,&quot;text&quot;:&quot;predictionsConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:220,&quot;character&quot;:8,&quot;text&quot;:&quot;categoryConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:229,&quot;character&quot;:2,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:9,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:23,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:27,&quot;text&quot;:&quot;convert&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:235,&quot;character&quot;:2,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:237,&quot;character&quot;:9,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:237,&quot;character&quot;:23,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:237,&quot;character&quot;:27,&quot;text&quot;:&quot;identify&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:241,&quot;character&quot;:2,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:243,&quot;character&quot;:9,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:243,&quot;character&quot;:23,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Predictions.ts&quot;,&quot;line&quot;:243,&quot;character&quot;:27,&quot;text&quot;:&quot;interpret&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:25 GMT</p>
+    </body>
+  </html>
+  

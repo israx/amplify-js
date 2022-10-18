@@ -1,0 +1,958 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>index.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Providers/AWSAppSyncRealTimeProvider/index.ts</td><td class="">92.11%</td><td class="">0%</td><td class="">1204</td><td class="">1109</td><td class="">95</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import Observable, { ZenObservable } from &#x27;zen-observable-ts&#x27;;
+import { GraphQLError } from &#x27;graphql&#x27;;
+import * as url from &#x27;url&#x27;;
+import { v4 as uuid } from &#x27;uuid&#x27;;
+import { Buffer } from &#x27;buffer&#x27;;
+import { ProviderOptions } from &#x27;../../types/Provider&#x27;;
+import {
+	Logger,
+	Credentials,
+	Signer,
+	Hub,
+	Constants,
+	USER_AGENT_HEADER,
+	jitteredExponentialRetry,
+	NonRetryableError,
+	ICredentials,
+} from &#x27;@aws-amplify/core&#x27;;
+import Cache from &#x27;@aws-amplify/cache&#x27;;
+import Auth, { GRAPHQL_AUTH_MODE } from &#x27;@aws-amplify/auth&#x27;;
+import { AbstractPubSubProvider } from &#x27;../PubSubProvider&#x27;;
+import { CONTROL_MSG } from &#x27;../../types/PubSub&#x27;;
+
+import {
+	AMPLIFY_SYMBOL,
+	AWS_APPSYNC_REALTIME_HEADERS,
+	CONNECTION_INIT_TIMEOUT,
+	DEFAULT_KEEP_ALIVE_TIMEOUT,
+	DEFAULT_KEEP_ALIVE_ALERT_TIMEOUT,
+	MAX_DELAY_MS,
+	MESSAGE_TYPES,
+	NON_RETRYABLE_CODES,
+	SOCKET_STATUS,
+	START_ACK_TIMEOUT,
+	SUBSCRIPTION_STATUS,
+	CONNECTION_STATE_CHANGE,
+} from &#x27;../constants&#x27;;
+import {
+	ConnectionStateMonitor,
+	CONNECTION_CHANGE,
+} from &#x27;../../utils/ConnectionStateMonitor&#x27;;
+
+const logger = new Logger(&#x27;AWSAppSyncRealTimeProvider&#x27;);
+
+const dispatchApiEvent = (event: string, data: any, message: string) =&gt; {
+	Hub.dispatch(&#x27;api&#x27;, { event, data, message }, &#x27;PubSub&#x27;, AMPLIFY_SYMBOL);
+};
+
+export type ObserverQuery = {
+	observer: ZenObservable.SubscriptionObserver&lt;any&gt;;
+	query: string;
+	variables: object;
+	subscriptionState: SUBSCRIPTION_STATUS;
+	subscriptionReadyCallback?: Function;
+	subscriptionFailedCallback?: Function;
+	startAckTimeoutId?: ReturnType&lt;typeof setTimeout&gt;;
+};
+
+const standardDomainPattern =
+	/^https:\/\/\w{26}\.appsync\-api\.\w{2}(?:(?:\-\w{2,})+)\-\d\.amazonaws.com\/graphql$/i;
+
+const customDomainPath = &#x27;/realtime&#x27;;
+
+type GraphqlAuthModes = keyof typeof GRAPHQL_AUTH_MODE;
+
+export interface AWSAppSyncRealTimeProviderOptions extends ProviderOptions {
+	appSyncGraphqlEndpoint?: string;
+	authenticationType?: GraphqlAuthModes;
+	query?: string;
+	variables?: object;
+	apiKey?: string;
+	region?: string;
+	graphql_headers?: () =&gt; {} | (() =&gt; Promise&lt;{}&gt;);
+	additionalHeaders?: { [key: string]: string };
+}
+
+type AWSAppSyncRealTimeAuthInput =
+	Partial&lt;AWSAppSyncRealTimeProviderOptions&gt; &amp; {
+		canonicalUri: string;
+		payload: string;
+	};
+
+export class AWSAppSyncRealTimeProvider extends AbstractPubSubProvider {
+	private awsRealTimeSocket?: WebSocket;
+	private socketStatus: SOCKET_STATUS = SOCKET_STATUS.CLOSED;
+	private keepAliveTimeoutId?: ReturnType&lt;typeof setTimeout&gt;;
+	private keepAliveTimeout = DEFAULT_KEEP_ALIVE_TIMEOUT;
+	private keepAliveAlertTimeoutId?: ReturnType&lt;typeof setTimeout&gt;;
+	private subscriptionObserverMap: Map&lt;string, ObserverQuery&gt; = new Map();
+	private promiseArray: Array&lt;{ res: Function; rej: Function }&gt; = [];
+	private readonly connectionStateMonitor = new ConnectionStateMonitor();
+
+	constructor(options: ProviderOptions = {}) {
+		super(options);
+		// Monitor the connection state and pass changes along to Hub
+		this.connectionStateMonitor.connectionStateObservable.subscribe(
+			ConnectionState =&gt; {
+				dispatchApiEvent(
+					CONNECTION_STATE_CHANGE,
+					{
+						provider: this,
+						connectionState: ConnectionState,
+					},
+					`Connection state is ${ConnectionState}`
+				);
+			}
+		);
+	}
+
+	getNewWebSocket(url, protocol) {
+		return new WebSocket(url, protocol);
+	}
+
+	getProviderName() {
+		return &#x27;AWSAppSyncRealTimeProvider&#x27;;
+	}
+
+	newClient(): Promise&lt;any&gt; {
+		throw new Error(&#x27;Not used here&#x27;);
+	}
+
+	public async publish(_topics: string[] | string, _msg: any, _options?: any) {
+		throw new Error(&#x27;Operation not supported&#x27;);
+	}
+
+	// Check if url matches standard domain pattern
+	private isCustomDomain(url: string): boolean {
+		return url.match(standardDomainPattern) === null;
+	}
+
+	subscribe(
+		_topics: string[] | string,
+		options?: AWSAppSyncRealTimeProviderOptions
+	): Observable&lt;any&gt; {
+		const appSyncGraphqlEndpoint = options?.appSyncGraphqlEndpoint;
+
+		return new Observable(observer =&gt; {
+			if (!options || !appSyncGraphqlEndpoint) {
+				observer.error({
+					errors: [
+						{
+							...new GraphQLError(
+								`Subscribe only available for AWS AppSync endpoint`
+							),
+						},
+					],
+				});
+				observer.complete();
+			} else {
+				const subscriptionId = uuid();
+				this._startSubscriptionWithAWSAppSyncRealTime({
+					options,
+					observer,
+					subscriptionId,
+				}).catch&lt;any&gt;(err =&gt; {
+					observer.error({
+						errors: [
+							{
+								...new GraphQLError(
+									`${CONTROL_MSG.REALTIME_SUBSCRIPTION_INIT_ERROR}: ${err}`
+								),
+							},
+						],
+					});
+					this.connectionStateMonitor.record(CONNECTION_CHANGE.CLOSED);
+					observer.complete();
+				});
+
+				return async () =&gt; {
+					// Cleanup after unsubscribing or observer.complete was called after _startSubscriptionWithAWSAppSyncRealTime
+					try {
+						// Waiting that subscription has been connected before trying to unsubscribe
+						await this._waitForSubscriptionToBeConnected(subscriptionId);
+
+						const { subscriptionState } =
+							this.subscriptionObserverMap.get(subscriptionId) || {};
+
+						if (!subscriptionState) {
+							// subscription already unsubscribed
+							return;
+						}
+
+						if (subscriptionState === SUBSCRIPTION_STATUS.CONNECTED) {
+							this._sendUnsubscriptionMessage(subscriptionId);
+						} else {
+							throw new Error(&#x27;Subscription never connected&#x27;);
+						}
+					} catch (err) {
+						logger.debug(`Error while unsubscribing ${err}`);
+					} finally {
+						this._removeSubscriptionObserver(subscriptionId);
+					}
+				};
+			}
+		});
+	}
+
+	protected get isSSLEnabled() {
+		return !this.options
+			.aws_appsync_dangerously_connect_to_http_endpoint_for_testing;
+	}
+
+	private async _startSubscriptionWithAWSAppSyncRealTime({
+		options,
+		observer,
+		subscriptionId,
+	}: {
+		options: AWSAppSyncRealTimeProviderOptions;
+		observer: ZenObservable.SubscriptionObserver&lt;any&gt;;
+		subscriptionId: string;
+	}) {
+		const {
+			appSyncGraphqlEndpoint,
+			authenticationType,
+			query,
+			variables,
+			apiKey,
+			region,
+			graphql_headers = () =&gt; ({}),
+			additionalHeaders = {},
+		} = options;
+
+		const subscriptionState: SUBSCRIPTION_STATUS = SUBSCRIPTION_STATUS.PENDING;
+		const data = {
+			query,
+			variables,
+		};
+		// Having a subscription id map will make it simple to forward messages received
+		this.subscriptionObserverMap.set(subscriptionId, {
+			observer,
+			query: query ?? &#x27;&#x27;,
+			variables: variables ?? {},
+			subscriptionState,
+			startAckTimeoutId: undefined,
+		});
+
+		// Preparing payload for subscription message
+
+		const dataString = JSON.stringify(data);
+		const headerObj = {
+			...(await this._awsRealTimeHeaderBasedAuth({
+				apiKey,
+				appSyncGraphqlEndpoint,
+				authenticationType,
+				payload: dataString,
+				canonicalUri: &#x27;&#x27;,
+				region,
+				additionalHeaders,
+			})),
+			...(await graphql_headers()),
+			...additionalHeaders,
+			[USER_AGENT_HEADER]: Constants.userAgent,
+		};
+
+		const subscriptionMessage = {
+			id: subscriptionId,
+			payload: {
+				data: dataString,
+				extensions: {
+					authorization: {
+						...headerObj,
+					},
+				},
+			},
+			type: MESSAGE_TYPES.GQL_START,
+		};
+
+		const stringToAWSRealTime = JSON.stringify(subscriptionMessage);
+
+		try {
+			this.connectionStateMonitor.record(CONNECTION_CHANGE.OPENING_CONNECTION);
+			await this._initializeWebSocketConnection({
+				apiKey,
+				appSyncGraphqlEndpoint,
+				authenticationType,
+				region,
+				additionalHeaders,
+			});
+		} catch (err) {
+			logger.debug({ err });
+			const message = err[&#x27;message&#x27;] ?? &#x27;&#x27;;
+			this.connectionStateMonitor.record(CONNECTION_CHANGE.CLOSED);
+			observer.error({
+				errors: [
+					{
+						...new GraphQLError(`${CONTROL_MSG.CONNECTION_FAILED}: ${message}`),
+					},
+				],
+			});
+			observer.complete();
+			const { subscriptionFailedCallback } =
+				this.subscriptionObserverMap.get(subscriptionId) || {};
+
+			// Notify concurrent unsubscription
+			if (typeof subscriptionFailedCallback === &#x27;function&#x27;) {
+				subscriptionFailedCallback();
+			}
+			return;
+		}
+
+		// Potential race condition can occur when unsubscribe is called during _initializeWebSocketConnection.
+		// E.g.unsubscribe gets invoked prior to finishing WebSocket handshake or START_ACK.
+		// Both subscriptionFailedCallback and subscriptionReadyCallback are used to synchronized this.
+
+		const { subscriptionFailedCallback, subscriptionReadyCallback } =
+			this.subscriptionObserverMap.get(subscriptionId) ?? {};
+
+		// This must be done before sending the message in order to be listening immediately
+		this.subscriptionObserverMap.set(subscriptionId, {
+			observer,
+			subscriptionState,
+			query: query ?? &#x27;&#x27;,
+			variables: variables ?? {},
+			subscriptionReadyCallback,
+			subscriptionFailedCallback,
+			startAckTimeoutId: setTimeout(() =&gt; {
+				this._timeoutStartSubscriptionAck.call(this, subscriptionId);
+			}, START_ACK_TIMEOUT),
+		});
+		if (this.awsRealTimeSocket) {
+			this.awsRealTimeSocket.send(stringToAWSRealTime);
+		}
+	}
+
+	// Waiting that subscription has been connected before trying to unsubscribe
+	private async _waitForSubscriptionToBeConnected(subscriptionId: string) {
+		const subscriptionObserver =
+			this.subscriptionObserverMap.get(subscriptionId);
+		if (subscriptionObserver) {
+			const { subscriptionState } = subscriptionObserver;
+			// This in case unsubscribe is invoked before sending start subscription message
+			if (subscriptionState === SUBSCRIPTION_STATUS.PENDING) {
+				return new Promise((res, rej) =&gt; {
+					const { observer, subscriptionState, variables, query } =
+						subscriptionObserver;
+					this.subscriptionObserverMap.set(subscriptionId, {
+						observer,
+						subscriptionState,
+						variables,
+						query,
+						subscriptionReadyCallback: res,
+						subscriptionFailedCallback: rej,
+					});
+				});
+			}
+		}
+	}
+
+	private _sendUnsubscriptionMessage(subscriptionId: string) {
+		try {
+			if (
+				this.awsRealTimeSocket &amp;&amp;
+				this.awsRealTimeSocket.readyState === WebSocket.OPEN &amp;&amp;
+				this.socketStatus === SOCKET_STATUS.READY
+			) {
+				// Preparing unsubscribe message to stop receiving messages for that subscription
+				const unsubscribeMessage = {
+					id: subscriptionId,
+					type: MESSAGE_TYPES.GQL_STOP,
+				};
+				const stringToAWSRealTime = JSON.stringify(unsubscribeMessage);
+				this.awsRealTimeSocket.send(stringToAWSRealTime);
+			}
+		} catch (err) {
+			// If GQL_STOP is not sent because of disconnection issue, then there is nothing the client can do
+			logger.debug({ err });
+		}
+	}
+
+	private _removeSubscriptionObserver(subscriptionId: string) {
+		this.subscriptionObserverMap.delete(subscriptionId);
+
+		// Verifying 1000ms after removing subscription in case there are new subscription unmount/mount
+		setTimeout(this._closeSocketIfRequired.bind(this), 1000);
+	}
+
+	private _closeSocketIfRequired() {
+		if (this.subscriptionObserverMap.size &gt; 0) {
+			// Active subscriptions on the WebSocket
+			return;
+		}
+
+		if (!this.awsRealTimeSocket) {
+			this.socketStatus = SOCKET_STATUS.CLOSED;
+			return;
+		}
+
+		this.connectionStateMonitor.record(CONNECTION_CHANGE.CLOSING_CONNECTION);
+
+		if (this.awsRealTimeSocket.bufferedAmount &gt; 0) {
+			// Still data on the WebSocket
+			setTimeout(this._closeSocketIfRequired.bind(this), 1000);
+		} else {
+			logger.debug(&#x27;closing WebSocket...&#x27;);
+			if (this.keepAliveTimeoutId) {
+				clearTimeout(this.keepAliveTimeoutId);
+			}
+			if (this.keepAliveAlertTimeoutId) {
+				clearTimeout(this.keepAliveAlertTimeoutId);
+			}
+			const tempSocket = this.awsRealTimeSocket;
+			// Cleaning callbacks to avoid race condition, socket still exists
+			tempSocket.onclose = null;
+			tempSocket.onerror = null;
+			tempSocket.close(1000);
+			this.awsRealTimeSocket = undefined;
+			this.socketStatus = SOCKET_STATUS.CLOSED;
+			this.connectionStateMonitor.record(CONNECTION_CHANGE.CLOSED);
+		}
+	}
+
+	private _handleIncomingSubscriptionMessage(message: MessageEvent) {
+		logger.debug(
+			`subscription message from AWS AppSync RealTime: ${message.data}`
+		);
+		const { id = &#x27;&#x27;, payload, type } = JSON.parse(message.data);
+		const {
+			observer = null,
+			query = &#x27;&#x27;,
+			variables = {},
+			startAckTimeoutId,
+			subscriptionReadyCallback,
+			subscriptionFailedCallback,
+		} = this.subscriptionObserverMap.get(id) || {};
+
+		logger.debug({ id, observer, query, variables });
+
+		if (type === MESSAGE_TYPES.GQL_DATA &amp;&amp; payload &amp;&amp; payload.data) {
+			if (observer) {
+				observer.next(payload);
+			} else {
+				logger.debug(`observer not found for id: ${id}`);
+			}
+			return;
+		}
+
+		if (type === MESSAGE_TYPES.GQL_START_ACK) {
+			logger.debug(
+				`subscription ready for ${JSON.stringify({ query, variables })}`
+			);
+			if (typeof subscriptionReadyCallback === &#x27;function&#x27;) {
+				subscriptionReadyCallback();
+			}
+			if (startAckTimeoutId) clearTimeout(startAckTimeoutId);
+			dispatchApiEvent(
+				CONTROL_MSG.SUBSCRIPTION_ACK,
+				{ query, variables },
+				&#x27;Connection established for subscription&#x27;
+			);
+			const subscriptionState = SUBSCRIPTION_STATUS.CONNECTED;
+			if (observer) {
+				this.subscriptionObserverMap.set(id, {
+					observer,
+					query,
+					variables,
+					startAckTimeoutId: undefined,
+					subscriptionState,
+					subscriptionReadyCallback,
+					subscriptionFailedCallback,
+				});
+			}
+			this.connectionStateMonitor.record(
+				CONNECTION_CHANGE.CONNECTION_ESTABLISHED
+			);
+
+			return;
+		}
+
+		if (type === MESSAGE_TYPES.GQL_CONNECTION_KEEP_ALIVE) {
+			if (this.keepAliveTimeoutId) clearTimeout(this.keepAliveTimeoutId);
+			if (this.keepAliveAlertTimeoutId)
+				clearTimeout(this.keepAliveAlertTimeoutId);
+			this.keepAliveTimeoutId = setTimeout(
+				() =&gt; this._errorDisconnect(CONTROL_MSG.TIMEOUT_DISCONNECT),
+				this.keepAliveTimeout
+			);
+			this.keepAliveAlertTimeoutId = setTimeout(() =&gt; {
+				this.connectionStateMonitor.record(CONNECTION_CHANGE.KEEP_ALIVE_MISSED);
+			}, DEFAULT_KEEP_ALIVE_ALERT_TIMEOUT);
+			this.connectionStateMonitor.record(CONNECTION_CHANGE.KEEP_ALIVE);
+			return;
+		}
+
+		if (type === MESSAGE_TYPES.GQL_ERROR) {
+			const subscriptionState = SUBSCRIPTION_STATUS.FAILED;
+			if (observer) {
+				this.subscriptionObserverMap.set(id, {
+					observer,
+					query,
+					variables,
+					startAckTimeoutId,
+					subscriptionReadyCallback,
+					subscriptionFailedCallback,
+					subscriptionState,
+				});
+
+				observer.error({
+					errors: [
+						{
+							...new GraphQLError(
+								`${CONTROL_MSG.CONNECTION_FAILED}: ${JSON.stringify(payload)}`
+							),
+						},
+					],
+				});
+				if (startAckTimeoutId) clearTimeout(startAckTimeoutId);
+
+				observer.complete();
+				if (typeof subscriptionFailedCallback === &#x27;function&#x27;) {
+					subscriptionFailedCallback();
+				}
+			}
+		}
+	}
+
+	private _errorDisconnect(msg: string) {
+		logger.debug(`Disconnect error: ${msg}`);
+		this.subscriptionObserverMap.forEach(({ observer }) =&gt; {
+			if (observer &amp;&amp; !observer.closed) {
+				observer.error({
+					errors: [{ ...new GraphQLError(msg) }],
+				});
+			}
+		});
+		this.subscriptionObserverMap.clear();
+		if (this.awsRealTimeSocket) {
+			this.connectionStateMonitor.record(CONNECTION_CHANGE.CLOSED);
+			this.awsRealTimeSocket.close();
+		}
+
+		this.socketStatus = SOCKET_STATUS.CLOSED;
+	}
+
+	private _timeoutStartSubscriptionAck(subscriptionId: string) {
+		const subscriptionObserver =
+			this.subscriptionObserverMap.get(subscriptionId);
+		if (subscriptionObserver) {
+			const { observer, query, variables } = subscriptionObserver;
+			if (!observer) {
+				return;
+			}
+			this.subscriptionObserverMap.set(subscriptionId, {
+				observer,
+				query,
+				variables,
+				subscriptionState: SUBSCRIPTION_STATUS.FAILED,
+			});
+
+			if (observer &amp;&amp; !observer.closed) {
+				observer.error({
+					errors: [
+						{
+							...new GraphQLError(
+								`Subscription timeout ${JSON.stringify({
+									query,
+									variables,
+								})}`
+							),
+						},
+					],
+				});
+				// Cleanup will be automatically executed
+				observer.complete();
+			}
+			logger.debug(
+				&#x27;timeoutStartSubscription&#x27;,
+				JSON.stringify({ query, variables })
+			);
+		}
+	}
+
+	private _initializeWebSocketConnection({
+		appSyncGraphqlEndpoint,
+		authenticationType,
+		apiKey,
+		region,
+		additionalHeaders,
+	}: AWSAppSyncRealTimeProviderOptions) {
+		if (this.socketStatus === SOCKET_STATUS.READY) {
+			return;
+		}
+		return new Promise(async (res, rej) =&gt; {
+			this.promiseArray.push({ res, rej });
+
+			if (this.socketStatus === SOCKET_STATUS.CLOSED) {
+				try {
+					this.socketStatus = SOCKET_STATUS.CONNECTING;
+
+					const payloadString = &#x27;{}&#x27;;
+					const headerString = JSON.stringify(
+						await this._awsRealTimeHeaderBasedAuth({
+							authenticationType,
+							payload: payloadString,
+							canonicalUri: &#x27;/connect&#x27;,
+							apiKey,
+							appSyncGraphqlEndpoint,
+							region,
+							additionalHeaders,
+						})
+					);
+					const headerQs = Buffer.from(headerString).toString(&#x27;base64&#x27;);
+
+					const payloadQs = Buffer.from(payloadString).toString(&#x27;base64&#x27;);
+
+					let discoverableEndpoint = appSyncGraphqlEndpoint ?? &#x27;&#x27;;
+
+					if (this.isCustomDomain(discoverableEndpoint)) {
+						discoverableEndpoint =
+							discoverableEndpoint.concat(customDomainPath);
+					} else {
+						discoverableEndpoint = discoverableEndpoint
+							.replace(&#x27;appsync-api&#x27;, &#x27;appsync-realtime-api&#x27;)
+							.replace(&#x27;gogi-beta&#x27;, &#x27;grt-beta&#x27;);
+					}
+
+					// Creating websocket url with required query strings
+					const protocol = this.isSSLEnabled ? &#x27;wss://&#x27; : &#x27;ws://&#x27;;
+					discoverableEndpoint = discoverableEndpoint
+						.replace(&#x27;https://&#x27;, protocol)
+						.replace(&#x27;http://&#x27;, protocol);
+
+					const awsRealTimeUrl = `${discoverableEndpoint}?header=${headerQs}&amp;payload=${payloadQs}`;
+
+					await this._initializeRetryableHandshake(awsRealTimeUrl);
+
+					this.promiseArray.forEach(({ res }) =&gt; {
+						logger.debug(&#x27;Notifying connection successful&#x27;);
+						res();
+					});
+					this.socketStatus = SOCKET_STATUS.READY;
+					this.promiseArray = [];
+				} catch (err) {
+					this.promiseArray.forEach(({ rej }) =&gt; rej(err));
+					this.promiseArray = [];
+					if (
+						this.awsRealTimeSocket &amp;&amp;
+						this.awsRealTimeSocket.readyState === WebSocket.OPEN
+					) {
+						this.awsRealTimeSocket.close(3001);
+					}
+					this.awsRealTimeSocket = undefined;
+					this.socketStatus = SOCKET_STATUS.CLOSED;
+				}
+			}
+		});
+	}
+
+	private async _initializeRetryableHandshake(awsRealTimeUrl: string) {
+		logger.debug(`Initializaling retryable Handshake`);
+		await jitteredExponentialRetry(
+			this._initializeHandshake.bind(this),
+			[awsRealTimeUrl],
+			MAX_DELAY_MS
+		);
+	}
+
+	private async _initializeHandshake(awsRealTimeUrl: string) {
+		logger.debug(`Initializing handshake ${awsRealTimeUrl}`);
+		// Because connecting the socket is async, is waiting until connection is open
+		// Step 1: connect websocket
+		try {
+			await (() =&gt; {
+				return new Promise&lt;void&gt;((res, rej) =&gt; {
+					const newSocket = this.getNewWebSocket(awsRealTimeUrl, &#x27;graphql-ws&#x27;);
+					newSocket.onerror = () =&gt; {
+						logger.debug(`WebSocket connection error`);
+					};
+					newSocket.onclose = () =&gt; {
+						this.connectionStateMonitor.record(
+							CONNECTION_CHANGE.CONNECTION_FAILED
+						);
+						rej(new Error(&#x27;Connection handshake error&#x27;));
+					};
+					newSocket.onopen = () =&gt; {
+						this.awsRealTimeSocket = newSocket;
+						return res();
+					};
+				});
+			})();
+
+			// Step 2: wait for ack from AWS AppSyncReaTime after sending init
+			await (() =&gt; {
+				return new Promise((res, rej) =&gt; {
+					if (this.awsRealTimeSocket) {
+						let ackOk = false;
+						this.awsRealTimeSocket.onerror = error =&gt; {
+							logger.debug(`WebSocket error ${JSON.stringify(error)}`);
+						};
+						this.awsRealTimeSocket.onclose = event =&gt; {
+							logger.debug(`WebSocket closed ${event.reason}`);
+							rej(new Error(JSON.stringify(event)));
+						};
+
+						this.awsRealTimeSocket.onmessage = (message: MessageEvent) =&gt; {
+							logger.debug(
+								`subscription message from AWS AppSyncRealTime: ${message.data} `
+							);
+							const data = JSON.parse(message.data);
+							const {
+								type,
+								payload: {
+									connectionTimeoutMs = DEFAULT_KEEP_ALIVE_TIMEOUT,
+								} = {},
+							} = data;
+							if (type === MESSAGE_TYPES.GQL_CONNECTION_ACK) {
+								ackOk = true;
+								if (this.awsRealTimeSocket) {
+									this.keepAliveTimeout = connectionTimeoutMs;
+									this.awsRealTimeSocket.onmessage =
+										this._handleIncomingSubscriptionMessage.bind(this);
+									this.awsRealTimeSocket.onerror = err =&gt; {
+										logger.debug(err);
+										this._errorDisconnect(CONTROL_MSG.CONNECTION_CLOSED);
+									};
+									this.awsRealTimeSocket.onclose = event =&gt; {
+										logger.debug(`WebSocket closed ${event.reason}`);
+										this._errorDisconnect(CONTROL_MSG.CONNECTION_CLOSED);
+									};
+								}
+								res(&#x27;Cool, connected to AWS AppSyncRealTime&#x27;);
+								return;
+							}
+
+							if (type === MESSAGE_TYPES.GQL_CONNECTION_ERROR) {
+								const {
+									payload: {
+										errors: [{ errorType = &#x27;&#x27;, errorCode = 0 } = {}] = [],
+									} = {},
+								} = data;
+
+								rej({ errorType, errorCode });
+							}
+						};
+
+						const gqlInit = {
+							type: MESSAGE_TYPES.GQL_CONNECTION_INIT,
+						};
+						this.awsRealTimeSocket.send(JSON.stringify(gqlInit));
+
+						const checkAckOk = (ackOk: boolean) =&gt; {
+							if (!ackOk) {
+								this.connectionStateMonitor.record(
+									CONNECTION_CHANGE.CONNECTION_FAILED
+								);
+								rej(
+									new Error(
+										`Connection timeout: ack from AWSAppSyncRealTime was not received after ${CONNECTION_INIT_TIMEOUT} ms`
+									)
+								);
+							}
+						};
+
+						setTimeout(() =&gt; checkAckOk(ackOk), CONNECTION_INIT_TIMEOUT);
+					}
+				});
+			})();
+		} catch (err) {
+			const { errorType, errorCode } = err as {
+				errorType: string;
+				errorCode: number;
+			};
+
+			if (NON_RETRYABLE_CODES.includes(errorCode)) {
+				throw new NonRetryableError(errorType);
+			} else if (errorType) {
+				throw new Error(errorType);
+			} else {
+				throw err;
+			}
+		}
+	}
+
+	private async _awsRealTimeHeaderBasedAuth({
+		authenticationType,
+		payload,
+		canonicalUri,
+		appSyncGraphqlEndpoint,
+		apiKey,
+		region,
+		additionalHeaders,
+	}: AWSAppSyncRealTimeProviderOptions): Promise&lt;any&gt; {
+		const headerHandler: {
+			[key in GraphqlAuthModes]: (AWSAppSyncRealTimeAuthInput) =&gt; {};
+		} = {
+			API_KEY: this._awsRealTimeApiKeyHeader.bind(this),
+			AWS_IAM: this._awsRealTimeIAMHeader.bind(this),
+			OPENID_CONNECT: this._awsRealTimeOPENIDHeader.bind(this),
+			AMAZON_COGNITO_USER_POOLS: this._awsRealTimeCUPHeader.bind(this),
+			AWS_LAMBDA: this._customAuthHeader,
+		};
+
+		if (!authenticationType || !headerHandler[authenticationType]) {
+			logger.debug(`Authentication type ${authenticationType} not supported`);
+			return &#x27;&#x27;;
+		} else {
+			const handler = headerHandler[authenticationType];
+
+			const { host } = url.parse(appSyncGraphqlEndpoint ?? &#x27;&#x27;);
+
+			logger.debug(`Authenticating with ${authenticationType}`);
+
+			const result = await handler({
+				payload,
+				canonicalUri,
+				appSyncGraphqlEndpoint,
+				apiKey,
+				region,
+				host,
+				additionalHeaders,
+			});
+
+			return result;
+		}
+	}
+
+	private async _awsRealTimeCUPHeader({ host }: AWSAppSyncRealTimeAuthInput) {
+		const session = await Auth.currentSession();
+		return {
+			Authorization: session.getAccessToken().getJwtToken(),
+			host,
+		};
+	}
+
+	private async _awsRealTimeOPENIDHeader({
+		host,
+	}: AWSAppSyncRealTimeAuthInput) {
+		let token;
+		// backwards compatibility
+		const federatedInfo = await Cache.getItem(&#x27;federatedInfo&#x27;);
+		if (federatedInfo) {
+			token = federatedInfo.token;
+		} else {
+			const currentUser = await Auth.currentAuthenticatedUser();
+			if (currentUser) {
+				token = currentUser.token;
+			}
+		}
+		if (!token) {
+			throw new Error(&#x27;No federated jwt&#x27;);
+		}
+		return {
+			Authorization: token,
+			host,
+		};
+	}
+
+	private async _awsRealTimeApiKeyHeader({
+		apiKey,
+		host,
+	}: AWSAppSyncRealTimeAuthInput) {
+		const dt = new Date();
+		const dtStr = dt.toISOString().replace(/[:\-]|\.\d{3}/g, &#x27;&#x27;);
+
+		return {
+			host,
+			&#x27;x-amz-date&#x27;: dtStr,
+			&#x27;x-api-key&#x27;: apiKey,
+		};
+	}
+
+	private async _awsRealTimeIAMHeader({
+		payload,
+		canonicalUri,
+		appSyncGraphqlEndpoint,
+		region,
+	}: AWSAppSyncRealTimeAuthInput) {
+		const endpointInfo = {
+			region,
+			service: &#x27;appsync&#x27;,
+		};
+
+		const credentialsOK = await this._ensureCredentials();
+		if (!credentialsOK) {
+			throw new Error(&#x27;No credentials&#x27;);
+		}
+		const creds = await Credentials.get().then((credentials: any) =&gt; {
+			const { secretAccessKey, accessKeyId, sessionToken } =
+				credentials as ICredentials;
+
+			return {
+				secret_key: secretAccessKey,
+				access_key: accessKeyId,
+				session_token: sessionToken,
+			};
+		});
+
+		const request = {
+			url: `${appSyncGraphqlEndpoint}${canonicalUri}`,
+			data: payload,
+			method: &#x27;POST&#x27;,
+			headers: { ...AWS_APPSYNC_REALTIME_HEADERS },
+		};
+
+		const signed_params = Signer.sign(request, creds, endpointInfo);
+		return signed_params.headers;
+	}
+
+	private _customAuthHeader({
+		host,
+		additionalHeaders,
+	}: AWSAppSyncRealTimeAuthInput) {
+		if (!additionalHeaders || !additionalHeaders[&#x27;Authorization&#x27;]) {
+			throw new Error(&#x27;No auth token specified&#x27;);
+		}
+
+		return {
+			Authorization: additionalHeaders.Authorization,
+			host,
+		};
+	}
+
+	/**
+	 * @private
+	 */
+	_ensureCredentials() {
+		return Credentials.get()
+			.then((credentials: any) =&gt; {
+				if (!credentials) return false;
+				const cred = Credentials.shear(credentials);
+				logger.debug(&#x27;set credentials for AWSAppSyncRealTimeProvider&#x27;, cred);
+
+				return true;
+			})
+			.catch((err: any) =&gt; {
+				logger.warn(&#x27;ensure credentials error&#x27;, err);
+				return false;
+			});
+	}
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:55,&quot;character&quot;:41,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:56,&quot;character&quot;:30,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:120,&quot;character&quot;:17,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:120,&quot;character&quot;:22,&quot;text&quot;:&quot;protocol&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:132,&quot;character&quot;:50,&quot;text&quot;:&quot;_msg&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:132,&quot;character&quot;:61,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:165,&quot;character&quot;:18,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:170,&quot;character&quot;:61,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:199,&quot;character&quot;:48,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:198,&quot;character&quot;:14,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:210,&quot;character&quot;:4,&quot;text&quot;:&quot;aws_appsync_dangerously_connect_to_http_endpoint_for_testing&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:250,&quot;character&quot;:8,&quot;text&quot;:&quot;headerObj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:270,&quot;character&quot;:5,&quot;text&quot;:&quot;authorization&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:271,&quot;character&quot;:9,&quot;text&quot;:&quot;headerObj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:290,&quot;character&quot;:18,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:291,&quot;character&quot;:9,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:291,&quot;character&quot;:19,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:296,&quot;character&quot;:63,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:289,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:376,&quot;character&quot;:18,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:374,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:424,&quot;character&quot;:62,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:426,&quot;character&quot;:10,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:426,&quot;character&quot;:19,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:426,&quot;character&quot;:28,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:426,&quot;character&quot;:56,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:436,&quot;character&quot;:17,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:438,&quot;character&quot;:6,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:438,&quot;character&quot;:41,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:438,&quot;character&quot;:52,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:438,&quot;character&quot;:60,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:440,&quot;character&quot;:18,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:442,&quot;character&quot;:47,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:447,&quot;character&quot;:6,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:479,&quot;character&quot;:6,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:494,&quot;character&quot;:6,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:511,&quot;character&quot;:60,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:643,&quot;character&quot;:48,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:642,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:706,&quot;character&quot;:66,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:708,&quot;character&quot;:13,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:708,&quot;character&quot;:39,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:710,&quot;character&quot;:8,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:712,&quot;character&quot;:9,&quot;text&quot;:&quot;connectionTimeoutMs&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:715,&quot;character&quot;:11,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:734,&quot;character&quot;:11,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:737,&quot;character&quot;:21,&quot;text&quot;:&quot;errorType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:737,&quot;character&quot;:37,&quot;text&quot;:&quot;errorCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:741,&quot;character&quot;:14,&quot;text&quot;:&quot;errorType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:741,&quot;character&quot;:25,&quot;text&quot;:&quot;errorCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:778,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:767,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:785,&quot;character&quot;:2,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:786,&quot;character&quot;:2,&quot;text&quot;:&quot;canonicalUri&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:793,&quot;character&quot;:31,&quot;text&quot;:&quot;AWSAppSyncRealTimeAuthInput&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:813,&quot;character&quot;:4,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:814,&quot;character&quot;:4,&quot;text&quot;:&quot;canonicalUri&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:826,&quot;character&quot;:39,&quot;text&quot;:&quot;host&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:830,&quot;character&quot;:3,&quot;text&quot;:&quot;host&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:835,&quot;character&quot;:2,&quot;text&quot;:&quot;host&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:837,&quot;character&quot;:6,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:839,&quot;character&quot;:8,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:840,&quot;character&quot;:6,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:841,&quot;character&quot;:3,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:841,&quot;character&quot;:11,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:841,&quot;character&quot;:25,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:843,&quot;character&quot;:9,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:844,&quot;character&quot;:7,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:845,&quot;character&quot;:4,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:845,&quot;character&quot;:12,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:845,&quot;character&quot;:24,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:848,&quot;character&quot;:7,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:852,&quot;character&quot;:3,&quot;text&quot;:&quot;Authorization&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:852,&quot;character&quot;:18,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:853,&quot;character&quot;:3,&quot;text&quot;:&quot;host&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:859,&quot;character&quot;:2,&quot;text&quot;:&quot;host&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:865,&quot;character&quot;:3,&quot;text&quot;:&quot;host&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:882,&quot;character&quot;:8,&quot;text&quot;:&quot;credentialsOK&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:883,&quot;character&quot;:7,&quot;text&quot;:&quot;credentialsOK&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:886,&quot;character&quot;:8,&quot;text&quot;:&quot;creds&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:886,&quot;character&quot;:40,&quot;text&quot;:&quot;then&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:886,&quot;character&quot;:46,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:904,&quot;character&quot;:8,&quot;text&quot;:&quot;signed_params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:904,&quot;character&quot;:45,&quot;text&quot;:&quot;creds&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:905,&quot;character&quot;:9,&quot;text&quot;:&quot;signed_params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:905,&quot;character&quot;:23,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:909,&quot;character&quot;:2,&quot;text&quot;:&quot;host&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:918,&quot;character&quot;:3,&quot;text&quot;:&quot;host&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:927,&quot;character&quot;:4,&quot;text&quot;:&quot;then&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:927,&quot;character&quot;:10,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:928,&quot;character&quot;:9,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:929,&quot;character&quot;:35,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:934,&quot;character&quot;:4,&quot;text&quot;:&quot;catch&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:934,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncRealTimeProvider/index.ts&quot;,&quot;line&quot;:935,&quot;character&quot;:44,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:25 GMT</p>
+    </body>
+  </html>
+  

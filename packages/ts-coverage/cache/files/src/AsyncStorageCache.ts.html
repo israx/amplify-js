@@ -1,0 +1,512 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>AsyncStorageCache.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/AsyncStorageCache.ts</td><td class="">74.29%</td><td class="">0%</td><td class="">564</td><td class="">419</td><td class="">145</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import { StorageCache } from &#x27;./StorageCache&#x27;;
+import { defaultConfig, getCurrTime } from &#x27;./Utils&#x27;;
+import AsyncStorage from &#x27;@react-native-async-storage/async-storage&#x27;;
+import { ICache } from &#x27;./types&#x27;;
+import { ConsoleLogger as Logger } from &#x27;@aws-amplify/core&#x27;;
+
+const logger = new Logger(&#x27;AsyncStorageCache&#x27;);
+
+/*
+ * Customized cache which based on the AsyncStorage with LRU implemented
+ */
+export class AsyncStorageCache extends StorageCache implements ICache {
+	/**
+	 * initialize the cache
+	 *
+	 * @param {Object} config - the configuration of the cache
+	 */
+	constructor(config?) {
+		const cache_config = config
+			? Object.assign({}, defaultConfig, config)
+			: defaultConfig;
+		super(cache_config);
+		this.getItem = this.getItem.bind(this);
+		this.setItem = this.setItem.bind(this);
+		this.removeItem = this.removeItem.bind(this);
+		logger.debug(&#x27;Using AsyncStorageCache&#x27;);
+	}
+
+	/**
+	 * decrease current size of the cache
+	 * @private
+	 * @param amount - the amount of the cache size which needs to be decreased
+	 */
+	async _decreaseCurSizeInBytes(amount) {
+		const curSize = await this.getCacheCurSize();
+		await AsyncStorage.setItem(
+			this.cacheCurSizeKey,
+			(curSize - amount).toString()
+		);
+	}
+
+	/**
+	 * increase current size of the cache
+	 * @private
+	 * @param amount - the amount of the cache szie which need to be increased
+	 */
+	async _increaseCurSizeInBytes(amount) {
+		const curSize = await this.getCacheCurSize();
+		await AsyncStorage.setItem(
+			this.cacheCurSizeKey,
+			(curSize + amount).toString()
+		);
+	}
+
+	/**
+	 * update the visited time if item has been visited
+	 * @private
+	 * @param item - the item which need to be refreshed
+	 * @param prefixedKey - the key of the item
+	 *
+	 * @return the refreshed item
+	 */
+	async _refreshItem(item, prefixedKey) {
+		item.visitedTime = getCurrTime();
+		await AsyncStorage.setItem(prefixedKey, JSON.stringify(item));
+		return item;
+	}
+
+	/**
+	 * check wether item is expired
+	 * @private
+	 * @param key - the key of the item
+	 *
+	 * @return true if the item is expired.
+	 */
+	async _isExpired(key) {
+		const text = await AsyncStorage.getItem(key);
+		const item = JSON.parse(text);
+		if (getCurrTime() &gt;= item.expires) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * delete item from cache
+	 * @private
+	 * @param prefixedKey - the key of the item
+	 * @param size - optional, the byte size of the item
+	 */
+	async _removeItem(prefixedKey, size?) {
+		const itemSize = size
+			? size
+			: JSON.parse(await AsyncStorage.getItem(prefixedKey)).byteSize;
+		// first try to update the current size of the cache
+		await this._decreaseCurSizeInBytes(itemSize);
+
+		// try to remove the item from cache
+		try {
+			await AsyncStorage.removeItem(prefixedKey);
+		} catch (removeItemError) {
+			// if some error happened, we need to rollback the current size
+			await this._increaseCurSizeInBytes(itemSize);
+			logger.error(`Failed to remove item: ${removeItemError}`);
+		}
+	}
+
+	/**
+	 * put item into cache
+	 * @private
+	 * @param prefixedKey - the key of the item
+	 * @param itemData - the value of the item
+	 * @param itemSizeInBytes - the byte size of the item
+	 */
+	async _setItem(prefixedKey, item) {
+		// first try to update the current size of the cache.
+		await this._increaseCurSizeInBytes(item.byteSize);
+
+		// try to add the item into cache
+		try {
+			await AsyncStorage.setItem(prefixedKey, JSON.stringify(item));
+		} catch (setItemErr) {
+			// if some error happened, we need to rollback the current size
+			await this._decreaseCurSizeInBytes(item.byteSize);
+			logger.error(`Failed to set item ${setItemErr}`);
+		}
+	}
+
+	/**
+	 * total space needed when poping out items
+	 * @private
+	 * @param itemSize
+	 *
+	 * @return total space needed
+	 */
+	async _sizeToPop(itemSize) {
+		const spaceItemNeed =
+			(await this.getCacheCurSize()) + itemSize - this.config.capacityInBytes;
+		const cacheThresholdSpace =
+			(1 - this.config.warningThreshold) * this.config.capacityInBytes;
+		return spaceItemNeed &gt; cacheThresholdSpace
+			? spaceItemNeed
+			: cacheThresholdSpace;
+	}
+
+	/**
+	 * see whether cache is full
+	 * @private
+	 * @param itemSize
+	 *
+	 * @return true if cache is full
+	 */
+	async _isCacheFull(itemSize) {
+		return (
+			itemSize + (await this.getCacheCurSize()) &gt; this.config.capacityInBytes
+		);
+	}
+
+	/**
+	 * scan the storage and find out all the keys owned by this cache
+	 * also clean the expired keys while scanning
+	 * @private
+	 * @return array of keys
+	 */
+	async _findValidKeys() {
+		const keys = [];
+		let keyInCache = [];
+
+		keyInCache = await AsyncStorage.getAllKeys();
+
+		for (let i = 0; i &lt; keyInCache.length; i += 1) {
+			const key = keyInCache[i];
+			if (
+				key.indexOf(this.config.keyPrefix) === 0 &amp;&amp;
+				key !== this.cacheCurSizeKey
+			) {
+				if (await this._isExpired(key)) {
+					await this._removeItem(key);
+				} else {
+					keys.push(key);
+				}
+			}
+		}
+		return keys;
+	}
+
+	/**
+	 * get all the items we have, sort them by their priority,
+	 * if priority is same, sort them by their last visited time
+	 * pop out items from the low priority (5 is the lowest)
+	 * @private
+	 * @param keys - all the keys in this cache
+	 * @param sizeToPop - the total size of the items which needed to be poped out
+	 */
+	async _popOutItems(keys, sizeToPop) {
+		const items = [];
+		let remainedSize = sizeToPop;
+		for (let i = 0; i &lt; keys.length; i += 1) {
+			const val = await AsyncStorage.getItem(keys[i]);
+			if (val != null) {
+				const item = JSON.parse(val);
+				items.push(item);
+			}
+		}
+
+		// first compare priority
+		// then compare visited time
+		items.sort((a, b) =&gt; {
+			if (a.priority &gt; b.priority) {
+				return -1;
+			} else if (a.priority &lt; b.priority) {
+				return 1;
+			} else {
+				if (a.visitedTime &lt; b.visitedTime) {
+					return -1;
+				} else return 1;
+			}
+		});
+
+		for (let i = 0; i &lt; items.length; i += 1) {
+			// pop out items until we have enough room for new item
+			await this._removeItem(items[i].key, items[i].byteSize);
+			remainedSize -= items[i].byteSize;
+			if (remainedSize &lt;= 0) {
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Set item into cache. You can put number, string, boolean or object.
+	 * The cache will first check whether has the same key.
+	 * If it has, it will delete the old item and then put the new item in
+	 * The cache will pop out items if it is full
+	 * You can specify the cache item options. The cache will abort and output a warning:
+	 * If the key is invalid
+	 * If the size of the item exceeds itemMaxSize.
+	 * If the value is undefined
+	 * If incorrect cache item configuration
+	 * If error happened with browser storage
+	 *
+	 * @param {String} key - the key of the item
+	 * @param {Object} value - the value of the item
+	 * @param {Object} [options] - optional, the specified meta-data
+	 * @return {Prmoise}
+	 */
+	async setItem(key, value, options) {
+		logger.debug(
+			`Set item: key is ${key}, value is ${value} with options: ${options}`
+		);
+		const prefixedKey = this.config.keyPrefix + key;
+		// invalid keys
+		if (
+			prefixedKey === this.config.keyPrefix ||
+			prefixedKey === this.cacheCurSizeKey
+		) {
+			logger.warn(`Invalid key: should not be empty or &#x27;CurSize&#x27;`);
+			return;
+		}
+
+		if (typeof value === &#x27;undefined&#x27;) {
+			logger.warn(`The value of item should not be undefined!`);
+			return;
+		}
+
+		const cacheItemOptions = {
+			priority:
+				options &amp;&amp; options.priority !== undefined
+					? options.priority
+					: this.config.defaultPriority,
+			expires:
+				options &amp;&amp; options.expires !== undefined
+					? options.expires
+					: this.config.defaultTTL + getCurrTime(),
+		};
+
+		if (cacheItemOptions.priority &lt; 1 || cacheItemOptions.priority &gt; 5) {
+			logger.warn(
+				`Invalid parameter: priority due to out or range. It should be within 1 and 5.`
+			);
+			return;
+		}
+
+		const item = this.fillCacheItem(prefixedKey, value, cacheItemOptions);
+
+		// check wether this item is too big;
+		if (item.byteSize &gt; this.config.itemMaxSize) {
+			logger.warn(
+				`Item with key: ${key} you are trying to put into is too big!`
+			);
+			return;
+		}
+
+		try {
+			// first look into the storage, if it exists, delete it.
+			const val = await AsyncStorage.getItem(prefixedKey);
+			if (val) {
+				await this._removeItem(prefixedKey, JSON.parse(val).byteSize);
+			}
+
+			// check whether the cache is full
+			if (await this._isCacheFull(item.byteSize)) {
+				const validKeys = await this._findValidKeys();
+				if (await this._isCacheFull(item.byteSize)) {
+					const sizeToPop = await this._sizeToPop(item.byteSize);
+					await this._popOutItems(validKeys, sizeToPop);
+				}
+			}
+
+			// put item in the cache
+			await this._setItem(prefixedKey, item);
+		} catch (e) {
+			logger.warn(`setItem failed! ${e}`);
+		}
+	}
+
+	/**
+	 * Get item from cache. It will return null if item doesn’t exist or it has been expired.
+	 * If you specified callback function in the options,
+	 * then the function will be executed if no such item in the cache
+	 * and finally put the return value into cache.
+	 * Please make sure the callback function will return the value you want to put into the cache.
+	 * The cache will abort output a warning:
+	 * If the key is invalid
+	 * If error happened with AsyncStorage
+	 *
+	 * @param {String} key - the key of the item
+	 * @param {Object} [options] - the options of callback function
+	 * @return {Promise} - return a promise resolves to be the value of the item
+	 */
+	async getItem(key, options) {
+		logger.debug(`Get item: key is ${key} with options ${options}`);
+		let ret = null;
+		const prefixedKey = this.config.keyPrefix + key;
+
+		if (
+			prefixedKey === this.config.keyPrefix ||
+			prefixedKey === this.cacheCurSizeKey
+		) {
+			logger.warn(`Invalid key: should not be empty or &#x27;CurSize&#x27;`);
+			return null;
+		}
+
+		try {
+			ret = await AsyncStorage.getItem(prefixedKey);
+			if (ret != null) {
+				if (await this._isExpired(prefixedKey)) {
+					// if expired, remove that item and return null
+					await this._removeItem(prefixedKey, JSON.parse(ret).byteSize);
+				} else {
+					// if not expired, great, return the value and refresh it
+					let item = JSON.parse(ret);
+					item = await this._refreshItem(item, prefixedKey);
+					return item.data;
+				}
+			}
+
+			if (options &amp;&amp; options.callback !== undefined) {
+				const val = options.callback();
+				if (val !== null) {
+					this.setItem(key, val, options);
+				}
+				return val;
+			}
+			return null;
+		} catch (e) {
+			logger.warn(`getItem failed! ${e}`);
+			return null;
+		}
+	}
+
+	/**
+	 * remove item from the cache
+	 * The cache will abort output a warning:
+	 * If error happened with AsyncStorage
+	 * @param {String} key - the key of the item
+	 * @return {Promise}
+	 */
+	async removeItem(key) {
+		logger.debug(`Remove item: key is ${key}`);
+		const prefixedKey = this.config.keyPrefix + key;
+
+		if (
+			prefixedKey === this.config.keyPrefix ||
+			prefixedKey === this.cacheCurSizeKey
+		) {
+			return;
+		}
+
+		try {
+			const val = await AsyncStorage.getItem(prefixedKey);
+			if (val) {
+				await this._removeItem(prefixedKey, JSON.parse(val).byteSize);
+			}
+		} catch (e) {
+			logger.warn(`removeItem failed! ${e}`);
+		}
+	}
+
+	/**
+	 * clear the entire cache
+	 * The cache will abort output a warning:
+	 * If error happened with AsyncStorage
+	 * @return {Promise}
+	 */
+	async clear() {
+		logger.debug(`Clear Cache`);
+		try {
+			const keys = await AsyncStorage.getAllKeys();
+
+			const keysToRemove = [];
+			for (let i = 0; i &lt; keys.length; i += 1) {
+				if (keys[i].indexOf(this.config.keyPrefix) === 0) {
+					keysToRemove.push(keys[i]);
+				}
+			}
+
+			// can be improved
+			for (let i = 0; i &lt; keysToRemove.length; i += 1) {
+				await AsyncStorage.removeItem(keysToRemove[i]);
+			}
+		} catch (e) {
+			logger.warn(`clear failed! ${e}`);
+		}
+	}
+
+	/**
+	 * return the current size of the cache
+	 * @return {Promise}
+	 */
+	async getCacheCurSize() {
+		let ret = await AsyncStorage.getItem(this.cacheCurSizeKey);
+		if (!ret) {
+			await AsyncStorage.setItem(this.cacheCurSizeKey, &#x27;0&#x27;);
+			ret = &#x27;0&#x27;;
+		}
+		return Number(ret);
+	}
+
+	/**
+	 * Return all the keys in the cache.
+	 * Will return an empty array if error happend.
+	 * @return {Promise}
+	 */
+	async getAllKeys() {
+		try {
+			const keys = await AsyncStorage.getAllKeys();
+
+			const retKeys = [];
+			for (let i = 0; i &lt; keys.length; i += 1) {
+				if (
+					keys[i].indexOf(this.config.keyPrefix) === 0 &amp;&amp;
+					keys[i] !== this.cacheCurSizeKey
+				) {
+					retKeys.push(keys[i].substring(this.config.keyPrefix.length));
+				}
+			}
+			return retKeys;
+		} catch (e) {
+			logger.warn(`getALlkeys failed! ${e}`);
+			return [];
+		}
+	}
+
+	/**
+	 * Return a new instance of cache with customized configuration.
+	 * @param {Object} config - the customized configuration
+	 * @return {Object} - the new instance of Cache
+	 */
+	createInstance(config): ICache {
+		if (config.keyPrefix === defaultConfig.keyPrefix) {
+			logger.error(&#x27;invalid keyPrefix, setting keyPrefix with timeStamp&#x27;);
+			config.keyPrefix = getCurrTime.toString();
+		}
+		return new AsyncStorageCache(config);
+	}
+}
+
+const instance: ICache = new AsyncStorageCache();
+export { AsyncStorage, instance as Cache };
+export default instance;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:30,&quot;character&quot;:13,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:31,&quot;character&quot;:8,&quot;text&quot;:&quot;cache_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:31,&quot;character&quot;:23,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:32,&quot;character&quot;:38,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:46,&quot;character&quot;:31,&quot;text&quot;:&quot;amount&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:50,&quot;character&quot;:14,&quot;text&quot;:&quot;amount&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:31,&quot;text&quot;:&quot;amount&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:63,&quot;character&quot;:14,&quot;text&quot;:&quot;amount&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:75,&quot;character&quot;:20,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:75,&quot;character&quot;:26,&quot;text&quot;:&quot;prefixedKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:76,&quot;character&quot;:2,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:76,&quot;character&quot;:7,&quot;text&quot;:&quot;visitedTime&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:77,&quot;character&quot;:57,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:78,&quot;character&quot;:9,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:88,&quot;character&quot;:18,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:90,&quot;character&quot;:8,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:23,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:28,&quot;text&quot;:&quot;expires&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:103,&quot;character&quot;:19,&quot;text&quot;:&quot;prefixedKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:103,&quot;character&quot;:32,&quot;text&quot;:&quot;size&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:104,&quot;character&quot;:8,&quot;text&quot;:&quot;itemSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:104,&quot;character&quot;:19,&quot;text&quot;:&quot;size&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:105,&quot;character&quot;:5,&quot;text&quot;:&quot;size&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:106,&quot;character&quot;:57,&quot;text&quot;:&quot;byteSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:108,&quot;character&quot;:37,&quot;text&quot;:&quot;itemSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:115,&quot;character&quot;:38,&quot;text&quot;:&quot;itemSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:42,&quot;text&quot;:&quot;removeItemError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:113,&quot;character&quot;:11,&quot;text&quot;:&quot;removeItemError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:127,&quot;character&quot;:16,&quot;text&quot;:&quot;prefixedKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:127,&quot;character&quot;:29,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:129,&quot;character&quot;:37,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:129,&quot;character&quot;:42,&quot;text&quot;:&quot;byteSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:133,&quot;character&quot;:58,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:136,&quot;character&quot;:38,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:136,&quot;character&quot;:43,&quot;text&quot;:&quot;byteSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:137,&quot;character&quot;:38,&quot;text&quot;:&quot;setItemErr&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:134,&quot;character&quot;:11,&quot;text&quot;:&quot;setItemErr&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:18,&quot;text&quot;:&quot;itemSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:150,&quot;character&quot;:36,&quot;text&quot;:&quot;itemSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:165,&quot;character&quot;:20,&quot;text&quot;:&quot;itemSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:167,&quot;character&quot;:3,&quot;text&quot;:&quot;itemSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:184,&quot;character&quot;:9,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:186,&quot;character&quot;:4,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:186,&quot;character&quot;:8,&quot;text&quot;:&quot;indexOf&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:187,&quot;character&quot;:4,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:189,&quot;character&quot;:30,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:190,&quot;character&quot;:28,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:192,&quot;character&quot;:15,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:207,&quot;character&quot;:20,&quot;text&quot;:&quot;keys&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:207,&quot;character&quot;:26,&quot;text&quot;:&quot;sizeToPop&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:209,&quot;character&quot;:6,&quot;text&quot;:&quot;remainedSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:209,&quot;character&quot;:21,&quot;text&quot;:&quot;sizeToPop&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:210,&quot;character&quot;:22,&quot;text&quot;:&quot;keys&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:210,&quot;character&quot;:27,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:42,&quot;text&quot;:&quot;keys&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:213,&quot;character&quot;:10,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:214,&quot;character&quot;:15,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:220,&quot;character&quot;:14,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:220,&quot;character&quot;:17,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:221,&quot;character&quot;:7,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:221,&quot;character&quot;:9,&quot;text&quot;:&quot;priority&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:221,&quot;character&quot;:20,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:221,&quot;character&quot;:22,&quot;text&quot;:&quot;priority&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:223,&quot;character&quot;:14,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:223,&quot;character&quot;:16,&quot;text&quot;:&quot;priority&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:223,&quot;character&quot;:27,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:223,&quot;character&quot;:29,&quot;text&quot;:&quot;priority&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:226,&quot;character&quot;:8,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:226,&quot;character&quot;:10,&quot;text&quot;:&quot;visitedTime&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:226,&quot;character&quot;:24,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:226,&quot;character&quot;:26,&quot;text&quot;:&quot;visitedTime&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:234,&quot;character&quot;:35,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:234,&quot;character&quot;:49,&quot;text&quot;:&quot;byteSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:235,&quot;character&quot;:3,&quot;text&quot;:&quot;remainedSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:235,&quot;character&quot;:28,&quot;text&quot;:&quot;byteSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:236,&quot;character&quot;:7,&quot;text&quot;:&quot;remainedSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:259,&quot;character&quot;:15,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:259,&quot;character&quot;:20,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:259,&quot;character&quot;:27,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:261,&quot;character&quot;:23,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:261,&quot;character&quot;:40,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:261,&quot;character&quot;:63,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:263,&quot;character&quot;:46,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:13,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:279,&quot;character&quot;:3,&quot;text&quot;:&quot;priority&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:280,&quot;character&quot;:4,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:280,&quot;character&quot;:15,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:280,&quot;character&quot;:23,&quot;text&quot;:&quot;priority&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:281,&quot;character&quot;:7,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:281,&quot;character&quot;:15,&quot;text&quot;:&quot;priority&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:3,&quot;text&quot;:&quot;expires&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:284,&quot;character&quot;:4,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:284,&quot;character&quot;:15,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:284,&quot;character&quot;:23,&quot;text&quot;:&quot;expires&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:285,&quot;character&quot;:7,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:285,&quot;character&quot;:15,&quot;text&quot;:&quot;expires&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:289,&quot;character&quot;:23,&quot;text&quot;:&quot;priority&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:289,&quot;character&quot;:56,&quot;text&quot;:&quot;priority&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:301,&quot;character&quot;:22,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:310,&quot;character&quot;:56,&quot;text&quot;:&quot;byteSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:325,&quot;character&quot;:34,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:324,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:343,&quot;character&quot;:15,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:343,&quot;character&quot;:20,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:344,&quot;character&quot;:35,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:344,&quot;character&quot;:55,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:345,&quot;character&quot;:6,&quot;text&quot;:&quot;ret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:346,&quot;character&quot;:46,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:357,&quot;character&quot;:3,&quot;text&quot;:&quot;ret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:358,&quot;character&quot;:7,&quot;text&quot;:&quot;ret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:361,&quot;character&quot;:57,&quot;text&quot;:&quot;byteSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:364,&quot;character&quot;:9,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:365,&quot;character&quot;:5,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:365,&quot;character&quot;:36,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:366,&quot;character&quot;:12,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:366,&quot;character&quot;:17,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:370,&quot;character&quot;:7,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:370,&quot;character&quot;:18,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:370,&quot;character&quot;:26,&quot;text&quot;:&quot;callback&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:371,&quot;character&quot;:10,&quot;text&quot;:&quot;val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:371,&quot;character&quot;:16,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:371,&quot;character&quot;:24,&quot;text&quot;:&quot;callback&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:372,&quot;character&quot;:8,&quot;text&quot;:&quot;val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:373,&quot;character&quot;:18,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:373,&quot;character&quot;:23,&quot;text&quot;:&quot;val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:373,&quot;character&quot;:28,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:375,&quot;character&quot;:11,&quot;text&quot;:&quot;val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:379,&quot;character&quot;:34,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:378,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:391,&quot;character&quot;:18,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:392,&quot;character&quot;:38,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:393,&quot;character&quot;:46,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:405,&quot;character&quot;:56,&quot;text&quot;:&quot;byteSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:408,&quot;character&quot;:37,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:407,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:435,&quot;character&quot;:32,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:434,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:472,&quot;character&quot;:37,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:471,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:482,&quot;character&quot;:16,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:483,&quot;character&quot;:6,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:483,&quot;character&quot;:13,&quot;text&quot;:&quot;keyPrefix&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:485,&quot;character&quot;:3,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:485,&quot;character&quot;:10,&quot;text&quot;:&quot;keyPrefix&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/AsyncStorageCache.ts&quot;,&quot;line&quot;:487,&quot;character&quot;:31,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:22 GMT</p>
+    </body>
+  </html>
+  

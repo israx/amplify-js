@@ -1,0 +1,86 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>matches.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/vendor/dom-utils/matches.ts</td><td class="">46.48%</td><td class="">0%</td><td class="">71</td><td class="">33</td><td class="">38</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/**
+ * Copyright (c) 2017, Philip Walton &lt;philip@philipwalton.com&gt;
+ */
+
+import { JS } from &#x27;@aws-amplify/core&#x27;;
+
+const proto =
+	JS.browserOrNode().isBrowser &amp;&amp; window[&#x27;Element&#x27;]
+		? window[&#x27;Element&#x27;].prototype
+		: null;
+
+const nativeMatches = proto
+	? proto.matches ||
+	  // @ts-ignore
+	  proto.matchesSelector ||
+	  // @ts-ignore
+	  proto.webkitMatchesSelector ||
+	  // @ts-ignore
+	  proto.mozMatchesSelector ||
+	  // @ts-ignore
+	  proto.msMatchesSelector ||
+	  // @ts-ignore
+	  proto.oMatchesSelector
+	: null;
+
+/**
+ * Tests if a DOM elements matches any of the test DOM elements or selectors.
+ * @param {Element} element The DOM element to test.
+ * @param {Element|string|Array&lt;Element|string&gt;} test A DOM element, a CSS
+ *     selector, or an array of DOM elements or CSS selectors to match against.
+ * @return {boolean} True of any part of the test matches.
+ */
+export function matches(element, test) {
+	// Validate input.
+	if (element &amp;&amp; element.nodeType === 1 &amp;&amp; test) {
+		// if test is a string or DOM element test it.
+		if (typeof test === &#x27;string&#x27; || test.nodeType === 1) {
+			return (
+				element === test || matchesSelector(element, /** @type {string} */ test)
+			);
+		} else if (&#x27;length&#x27; in test) {
+			// if it has a length property iterate over the items
+			// and return true if any match.
+			for (let i = 0, item; (item = test[i]); i++) {
+				if (element === item || matchesSelector(element, item)) return true;
+			}
+		}
+	}
+	// Still here? Return false
+	return false;
+}
+
+/**
+ * Tests whether a DOM element matches a selector. This polyfills the native
+ * Element.prototype.matches method across browsers.
+ * @param {!Element} element The DOM element to test.
+ * @param {string} selector The CSS selector to test element against.
+ * @return {boolean} True if the selector matches.
+ */
+function matchesSelector(element, selector) {
+	if (typeof selector !== &#x27;string&#x27;) return false;
+	if (nativeMatches) return nativeMatches.call(element, selector);
+	const nodes = element.parentNode.querySelectorAll(selector);
+	for (let i = 0, node; (node = nodes[i]); i++) {
+		if (node === element) return true;
+	}
+	return false;
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:11,&quot;character&quot;:6,&quot;text&quot;:&quot;nativeMatches&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:32,&quot;character&quot;:24,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:32,&quot;character&quot;:33,&quot;text&quot;:&quot;test&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:34,&quot;character&quot;:5,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:34,&quot;character&quot;:16,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:34,&quot;character&quot;:24,&quot;text&quot;:&quot;nodeType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:34,&quot;character&quot;:42,&quot;text&quot;:&quot;test&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:36,&quot;character&quot;:13,&quot;text&quot;:&quot;test&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:36,&quot;character&quot;:34,&quot;text&quot;:&quot;test&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:36,&quot;character&quot;:39,&quot;text&quot;:&quot;nodeType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:38,&quot;character&quot;:4,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:38,&quot;character&quot;:16,&quot;text&quot;:&quot;test&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:38,&quot;character&quot;:40,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:38,&quot;character&quot;:71,&quot;text&quot;:&quot;test&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:40,&quot;character&quot;:25,&quot;text&quot;:&quot;test&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:19,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:26,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:33,&quot;text&quot;:&quot;test&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:44,&quot;character&quot;:8,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:44,&quot;character&quot;:20,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:44,&quot;character&quot;:44,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:44,&quot;character&quot;:53,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:25,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:34,&quot;text&quot;:&quot;selector&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:12,&quot;text&quot;:&quot;selector&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:61,&quot;character&quot;:5,&quot;text&quot;:&quot;nativeMatches&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:61,&quot;character&quot;:27,&quot;text&quot;:&quot;nativeMatches&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:61,&quot;character&quot;:41,&quot;text&quot;:&quot;call&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:61,&quot;character&quot;:46,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:7,&quot;text&quot;:&quot;nodes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:15,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:23,&quot;text&quot;:&quot;parentNode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:34,&quot;text&quot;:&quot;querySelectorAll&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:63,&quot;character&quot;:17,&quot;text&quot;:&quot;node&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:63,&quot;character&quot;:24,&quot;text&quot;:&quot;node&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:63,&quot;character&quot;:31,&quot;text&quot;:&quot;nodes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:64,&quot;character&quot;:6,&quot;text&quot;:&quot;node&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/matches.ts&quot;,&quot;line&quot;:64,&quot;character&quot;:15,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:24 GMT</p>
+    </body>
+  </html>
+  

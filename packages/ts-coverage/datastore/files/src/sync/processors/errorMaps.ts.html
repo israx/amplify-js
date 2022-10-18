@@ -1,0 +1,111 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>errorMaps.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/sync/processors/errorMaps.ts</td><td class="">88.10%</td><td class="">0%</td><td class="">126</td><td class="">111</td><td class="">15</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import { ErrorType } from &#x27;../../types&#x27;;
+
+export type ErrorMap = Partial&lt;{
+	[key in ErrorType]: (error: Error) =&gt; boolean;
+}&gt;;
+
+const connectionTimeout = error =&gt;
+	/^Connection failed: Connection Timeout/.test(error.message);
+
+const serverError = error =&gt;
+	/^Error: Request failed with status code 5\d\d/.test(error.message);
+
+export const mutationErrorMap: ErrorMap = {
+	BadModel: () =&gt; false,
+	BadRecord: error =&gt; {
+		const { message } = error;
+		return (
+			/^Cannot return \w+ for [\w-_]+ type/.test(message) ||
+			/^Variable &#x27;.+&#x27; has coerced Null value for NonNull type/.test(message)
+		); // newly required field, out of date client
+	},
+	ConfigError: () =&gt; false,
+	Transient: error =&gt; connectionTimeout(error) || serverError(error),
+	Unauthorized: error =&gt;
+		/^Request failed with status code 401/.test(error.message),
+};
+
+export const subscriptionErrorMap: ErrorMap = {
+	BadModel: () =&gt; false,
+	BadRecord: () =&gt; false,
+	ConfigError: () =&gt; false,
+	Transient: observableError =&gt; {
+		const error = unwrapObservableError(observableError);
+		return connectionTimeout(error) || serverError(error);
+	},
+	Unauthorized: observableError =&gt; {
+		const error = unwrapObservableError(observableError);
+		return /Connection failed.+Unauthorized/.test(error.message);
+	},
+};
+
+export const syncErrorMap: ErrorMap = {
+	BadModel: () =&gt; false,
+	BadRecord: error =&gt; /^Cannot return \w+ for [\w-_]+ type/.test(error.message),
+	ConfigError: () =&gt; false,
+	Transient: error =&gt; connectionTimeout(error) || serverError(error),
+	Unauthorized: () =&gt; false,
+};
+
+/**
+ * Get the first error reason of an observable.
+ * Allows for error maps to be easily applied to observable errors
+ *
+ * @param observableError an error from ZenObservable subscribe error callback
+ */
+function unwrapObservableError(observableError: any) {
+	const {
+		error: { errors: [error] } = {
+			errors: [],
+		},
+	} = observableError;
+
+	return error;
+}
+
+export function getMutationErrorType(error: Error): ErrorType {
+	return mapErrorToType(mutationErrorMap, error);
+}
+
+export function getSubscriptionErrorType(error: Error): ErrorType {
+	return mapErrorToType(subscriptionErrorMap, error);
+}
+
+export function getSyncErrorType(error: Error): ErrorType {
+	return mapErrorToType(syncErrorMap, error);
+}
+
+/**
+ * Categorizes an error with a broad error type, intended to make
+ * customer error handling code simpler.
+ * @param errorMap Error names and a list of patterns that indicate them (each pattern as a regex or function)
+ * @param error The underying error to categorize.
+ */
+export function mapErrorToType(errorMap: ErrorMap, error: Error): ErrorType {
+	const errorTypes = [...Object.keys(errorMap)] as ErrorType[];
+	for (const errorType of errorTypes) {
+		const matcher = errorMap[errorType];
+		if (matcher(error)) {
+			return errorType;
+		}
+	}
+	return &#x27;Unknown&#x27;;
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/sync/processors/errorMaps.ts&quot;,&quot;line&quot;:6,&quot;character&quot;:26,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/errorMaps.ts&quot;,&quot;line&quot;:7,&quot;character&quot;:47,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/errorMaps.ts&quot;,&quot;line&quot;:7,&quot;character&quot;:53,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/errorMaps.ts&quot;,&quot;line&quot;:9,&quot;character&quot;:20,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/errorMaps.ts&quot;,&quot;line&quot;:10,&quot;character&quot;:54,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/errorMaps.ts&quot;,&quot;line&quot;:10,&quot;character&quot;:60,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/errorMaps.ts&quot;,&quot;line&quot;:32,&quot;character&quot;:8,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/errorMaps.ts&quot;,&quot;line&quot;:33,&quot;character&quot;:27,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/errorMaps.ts&quot;,&quot;line&quot;:33,&quot;character&quot;:49,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/errorMaps.ts&quot;,&quot;line&quot;:36,&quot;character&quot;:8,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/errorMaps.ts&quot;,&quot;line&quot;:37,&quot;character&quot;:48,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/errorMaps.ts&quot;,&quot;line&quot;:37,&quot;character&quot;:54,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/errorMaps.ts&quot;,&quot;line&quot;:55,&quot;character&quot;:31,&quot;text&quot;:&quot;observableError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/errorMaps.ts&quot;,&quot;line&quot;:57,&quot;character&quot;:20,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/errorMaps.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:8,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:29 GMT</p>
+    </body>
+  </html>
+  

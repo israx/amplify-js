@@ -1,0 +1,84 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>parse-url.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/vendor/dom-utils/parse-url.ts</td><td class="">84.44%</td><td class="">0%</td><td class="">90</td><td class="">76</td><td class="">14</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/**
+ * Copyright (c) 2017, Philip Walton &lt;philip@philipwalton.com&gt;
+ */
+
+import { JS } from &#x27;@aws-amplify/core&#x27;;
+
+const HTTP_PORT = &#x27;80&#x27;;
+const HTTPS_PORT = &#x27;443&#x27;;
+const DEFAULT_PORT = RegExp(&#x27;:(&#x27; + HTTP_PORT + &#x27;|&#x27; + HTTPS_PORT + &#x27;)$&#x27;);
+
+const a = JS.browserOrNode().isBrowser ? document.createElement(&#x27;a&#x27;) : null;
+const cache = {};
+
+/**
+ * Parses the given url and returns an object mimicing a `Location` object.
+ * @param {string} url The url to parse.
+ * @return {!Object} An object with the same properties as a `Location`.
+ */
+export function parseUrl(u) {
+	let url = u;
+	// All falsy values (as well as &quot;.&quot;) should map to the current URL.
+	url = !url || url === &#x27;.&#x27; ? location.href : url;
+
+	if (cache[url]) return cache[url];
+
+	a.href = url;
+
+	// When parsing file relative paths (e.g. `../index.html`), IE will correctly
+	// resolve the `href` property but will keep the `..` in the `path` property.
+	// It will also not include the `host` or `hostname` properties. Furthermore,
+	// IE will sometimes return no protocol or just a colon, especially for things
+	// like relative protocol URLs (e.g. &quot;//google.com&quot;).
+	// To workaround all of these issues, we reparse with the full URL from the
+	// `href` property.
+	if (url.charAt(0) === &#x27;.&#x27; || url.charAt(0) === &#x27;/&#x27;) return parseUrl(a.href);
+
+	// Don&#x27;t include default ports.
+	let port = a.port === HTTP_PORT || a.port === HTTPS_PORT ? &#x27;&#x27; : a.port;
+
+	// PhantomJS sets the port to &quot;0&quot; when using the file: protocol.
+	port = port === &#x27;0&#x27; ? &#x27;&#x27; : port;
+
+	// Sometimes IE incorrectly includes a port for default ports
+	// (e.g. `:80` or `:443`) even when no port is specified in the URL.
+	// http://bit.ly/1rQNoMg
+	const host = a.host.replace(DEFAULT_PORT, &#x27;&#x27;);
+
+	// Not all browser support `origin` so we have to build it.
+	const origin = a[&#x27;origin&#x27;] ? a[&#x27;origin&#x27;] : a.protocol + &#x27;//&#x27; + host;
+
+	// Sometimes IE doesn&#x27;t include the leading slash for pathname.
+	// http://bit.ly/1rQNoMg
+	const pathname = a.pathname.charAt(0) === &#x27;/&#x27; ? a.pathname : &#x27;/&#x27; + a.pathname;
+
+	return (cache[url] = {
+		hash: a.hash,
+		host,
+		hostname: a.hostname,
+		href: a.href,
+		origin,
+		pathname,
+		port,
+		protocol: a.protocol,
+		search: a.search,
+	});
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/vendor/dom-utils/parse-url.ts&quot;,&quot;line&quot;:18,&quot;character&quot;:25,&quot;text&quot;:&quot;u&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/parse-url.ts&quot;,&quot;line&quot;:19,&quot;character&quot;:5,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/parse-url.ts&quot;,&quot;line&quot;:19,&quot;character&quot;:11,&quot;text&quot;:&quot;u&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/parse-url.ts&quot;,&quot;line&quot;:21,&quot;character&quot;:1,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/parse-url.ts&quot;,&quot;line&quot;:21,&quot;character&quot;:8,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/parse-url.ts&quot;,&quot;line&quot;:21,&quot;character&quot;:15,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/parse-url.ts&quot;,&quot;line&quot;:21,&quot;character&quot;:45,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/parse-url.ts&quot;,&quot;line&quot;:23,&quot;character&quot;:11,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/parse-url.ts&quot;,&quot;line&quot;:23,&quot;character&quot;:30,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/parse-url.ts&quot;,&quot;line&quot;:34,&quot;character&quot;:5,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/parse-url.ts&quot;,&quot;line&quot;:34,&quot;character&quot;:9,&quot;text&quot;:&quot;charAt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/parse-url.ts&quot;,&quot;line&quot;:34,&quot;character&quot;:30,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/parse-url.ts&quot;,&quot;line&quot;:34,&quot;character&quot;:34,&quot;text&quot;:&quot;charAt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/parse-url.ts&quot;,&quot;line&quot;:54,&quot;character&quot;:15,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:24 GMT</p>
+    </body>
+  </html>
+  

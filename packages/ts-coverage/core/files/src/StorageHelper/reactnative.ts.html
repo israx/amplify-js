@@ -1,0 +1,135 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>reactnative.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/StorageHelper/reactnative.ts</td><td class="">81.00%</td><td class="">0%</td><td class="">100</td><td class="">81</td><td class="">19</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import AsyncStorage from &#x27;@react-native-async-storage/async-storage&#x27;;
+
+const MEMORY_KEY_PREFIX = &#x27;@MemoryStorage:&#x27;;
+let dataMemory = {};
+
+/** @class */
+class MemoryStorage {
+	static syncPromise = null;
+	/**
+	 * This is used to set a specific item in storage
+	 * @param {string} key - the key for the item
+	 * @param {object} value - the value
+	 * @returns {string} value that was set
+	 */
+	static setItem(key, value) {
+		if (value) {
+			AsyncStorage.setItem(MEMORY_KEY_PREFIX + key, value);
+			dataMemory[key] = value;
+			return dataMemory[key];
+		}
+	}
+
+	/**
+	 * This is used to get a specific key from storage
+	 * @param {string} key - the key for the item
+	 * This is used to clear the storage
+	 * @returns {string} the data item
+	 */
+	static getItem(key) {
+		return Object.prototype.hasOwnProperty.call(dataMemory, key)
+			? dataMemory[key]
+			: undefined;
+	}
+
+	/**
+	 * This is used to remove an item from storage
+	 * @param {string} key - the key being set
+	 * @returns {string} value - value that was deleted
+	 */
+	static removeItem(key) {
+		AsyncStorage.removeItem(MEMORY_KEY_PREFIX + key);
+		return delete dataMemory[key];
+	}
+
+	/**
+	 * This is used to clear the storage
+	 * @returns {string} nothing
+	 */
+	static clear() {
+		dataMemory = {};
+		return dataMemory;
+	}
+
+	/**
+	 * Will sync the MemoryStorage data from AsyncStorage to storageWindow MemoryStorage
+	 * @returns {void}
+	 */
+	static sync() {
+		if (!MemoryStorage.syncPromise) {
+			MemoryStorage.syncPromise = new Promise((res, rej) =&gt; {
+				AsyncStorage.getAllKeys((errKeys, keys) =&gt; {
+					if (errKeys) rej(errKeys);
+					const memoryKeys = keys.filter(key =&gt;
+						key.startsWith(MEMORY_KEY_PREFIX)
+					);
+					AsyncStorage.multiGet(memoryKeys, (err, stores) =&gt; {
+						if (err) rej(err);
+						stores.map((result, index, store) =&gt; {
+							const key = store[index][0];
+							const value = store[index][1];
+							const memoryKey = key.replace(MEMORY_KEY_PREFIX, &#x27;&#x27;);
+							dataMemory[memoryKey] = value;
+						});
+						res();
+					});
+				});
+			});
+		}
+		return MemoryStorage.syncPromise;
+	}
+}
+
+export class StorageHelper {
+	private storageWindow;
+	/**
+	 * This is used to get a storage object
+	 * @returns {object} the storage
+	 */
+	constructor() {
+		this.storageWindow = MemoryStorage;
+	}
+
+	/**
+	 * This is used to return the storage
+	 * @returns {object} the storage
+	 */
+	getStorage() {
+		return this.storageWindow;
+	}
+}
+
+/**
+ * @deprecated use named import
+ */
+export default StorageHelper;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:19,&quot;character&quot;:8,&quot;text&quot;:&quot;syncPromise&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:26,&quot;character&quot;:16,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:26,&quot;character&quot;:21,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:27,&quot;character&quot;:6,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:28,&quot;character&quot;:44,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:29,&quot;character&quot;:14,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:30,&quot;character&quot;:21,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:40,&quot;character&quot;:16,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:41,&quot;character&quot;:58,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:42,&quot;character&quot;:16,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:51,&quot;character&quot;:19,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:52,&quot;character&quot;:46,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:53,&quot;character&quot;:27,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:70,&quot;character&quot;:21,&quot;text&quot;:&quot;syncPromise&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:17,&quot;text&quot;:&quot;syncPromise&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:90,&quot;character&quot;:23,&quot;text&quot;:&quot;syncPromise&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:95,&quot;character&quot;:9,&quot;text&quot;:&quot;storageWindow&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:101,&quot;character&quot;:7,&quot;text&quot;:&quot;storageWindow&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/StorageHelper/reactnative.ts&quot;,&quot;line&quot;:109,&quot;character&quot;:14,&quot;text&quot;:&quot;storageWindow&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:20 GMT</p>
+    </body>
+  </html>
+  

@@ -1,0 +1,270 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>axios-http-handler.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/providers/axios-http-handler.ts</td><td class="">86.82%</td><td class="">0%</td><td class="">296</td><td class="">257</td><td class="">39</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import { HttpHandlerOptions } from &#x27;@aws-sdk/types&#x27;;
+import { HttpHandler, HttpRequest, HttpResponse } from &#x27;@aws-sdk/protocol-http&#x27;;
+import { buildQueryString } from &#x27;@aws-sdk/querystring-builder&#x27;;
+import axios, {
+	AxiosRequestConfig,
+	Method,
+	CancelTokenSource,
+	AxiosRequestHeaders,
+	AxiosRequestTransformer,
+} from &#x27;axios&#x27;;
+import { ConsoleLogger as Logger, Platform } from &#x27;@aws-amplify/core&#x27;;
+import { FetchHttpHandlerOptions } from &#x27;@aws-sdk/fetch-http-handler&#x27;;
+import * as events from &#x27;events&#x27;;
+import { AWSS3ProviderUploadErrorStrings } from &#x27;../common/StorageErrorStrings&#x27;;
+
+/**
+Extending the axios interface here to make headers required, (previously, 
+they were not required on the type we were using, but our implementation
+does not currently account for missing headers. This worked previously, 
+because the previous `headers` type was `any`.
+*/
+interface AxiosTransformer extends Partial&lt;AxiosRequestTransformer&gt; {
+	(data: any, headers: AxiosRequestHeaders): any;
+}
+
+const logger = new Logger(&#x27;axios-http-handler&#x27;);
+export const SEND_UPLOAD_PROGRESS_EVENT = &#x27;sendUploadProgress&#x27;;
+export const SEND_DOWNLOAD_PROGRESS_EVENT = &#x27;sendDownloadProgress&#x27;;
+
+export type ErrorWithResponse = {
+	response: { status: number } &amp; { [key: string]: any };
+};
+
+function isBlob(body: any): body is Blob {
+	return typeof Blob !== &#x27;undefined&#x27; &amp;&amp; body instanceof Blob;
+}
+
+function hasErrorResponse(error: any): error is ErrorWithResponse {
+	return (
+		typeof error !== &#x27;undefined&#x27; &amp;&amp;
+		Object.prototype.hasOwnProperty.call(error, &#x27;response&#x27;) &amp;&amp;
+		typeof error.response !== &#x27;undefined&#x27; &amp;&amp;
+		Object.prototype.hasOwnProperty.call(error.response, &#x27;status&#x27;) &amp;&amp;
+		typeof error.response.status === &#x27;number&#x27;
+	);
+}
+
+const normalizeHeaders = (
+	headers: AxiosRequestHeaders,
+	normalizedName: string
+) =&gt; {
+	for (const [k, v] of Object.entries(headers)) {
+		if (
+			k !== normalizedName &amp;&amp;
+			k.toUpperCase() === normalizedName.toUpperCase()
+		) {
+			headers[normalizedName] = v;
+			delete headers[k];
+		}
+	}
+};
+
+export const reactNativeRequestTransformer: AxiosTransformer[] = [
+	(data: any, headers: AxiosRequestHeaders): any =&gt; {
+		if (isBlob(data)) {
+			normalizeHeaders(headers, &#x27;Content-Type&#x27;);
+			normalizeHeaders(headers, &#x27;Accept&#x27;);
+			return data;
+		}
+		// Axios&#x27; default transformRequest is an array
+		return axios.defaults.transformRequest[0].call(null, data, headers);
+	},
+];
+
+export type AxiosHttpHandlerOptions = HttpHandlerOptions &amp; {
+	cancelTokenSource?: CancelTokenSource;
+	emitter?: events.EventEmitter;
+};
+
+export class AxiosHttpHandler implements HttpHandler {
+	constructor(
+		private readonly httpOptions: FetchHttpHandlerOptions = {},
+		private readonly emitter?: events.EventEmitter,
+		private readonly cancelTokenSource?: CancelTokenSource
+	) {}
+
+	destroy(): void {
+		// Do nothing. TLS and HTTP/2 connection pooling is handled by the
+		// browser.
+	}
+
+	handle(
+		request: HttpRequest,
+		options: AxiosHttpHandlerOptions
+	): Promise&lt;{ response: HttpResponse }&gt; {
+		const requestTimeoutInMs = this.httpOptions.requestTimeout;
+		// prioritize the call specific event emitter, this is useful for multipart upload as each individual parts has
+		// their own event emitter, without having to create s3client for every individual calls.
+		const emitter = options.emitter || this.emitter;
+
+		let path = request.path;
+		if (request.query) {
+			const queryString = buildQueryString(request.query);
+			if (queryString) {
+				path += `?${queryString}`;
+			}
+		}
+
+		const port = request.port;
+		const url = `${request.protocol}//${request.hostname}${
+			port ? `:${port}` : &#x27;&#x27;
+		}${path}`;
+
+		const axiosRequest: AxiosRequestConfig = {};
+		axiosRequest.url = url;
+		axiosRequest.method = request.method as Method;
+		axiosRequest.headers = request.headers;
+
+		// The host header is automatically added by the browser and adding it explicitly in the
+		// axios request throws an error https://github.com/aws-amplify/amplify-js/issues/5376
+		// This is because the host header is a forbidden header for the http client to set
+		// see https://developer.mozilla.org/en-US/docs/Glossary/Forbidden_header_name and
+		// https://fetch.spec.whatwg.org/#forbidden-header-name
+		// The reason we are removing this header here instead of in the aws-sdk&#x27;s client
+		// middleware is that the host header is required to be in the request signature and if
+		// we remove it from the middlewares, then the request fails because the header is added
+		// by the browser but is absent from the signature.
+		delete axiosRequest.headers[&#x27;host&#x27;];
+
+		if (request.body) {
+			axiosRequest.data = request.body;
+		} else {
+			// Fix for https://github.com/aws-amplify/amplify-js/issues/5432
+
+			// If the POST request body is empty but content-type header is set, axios is forcibly removing it
+			// See https://github.com/axios/axios/issues/1535 and refusing to fix it https://github.com/axios/axios/issues/755
+			// This change is a workaround to set the data as null (instead of undefined) to prevent axios from
+			// removing the content-type header. Link for the source code
+			// https://github.com/axios/axios/blob/dc4bc49673943e35280e5df831f5c3d0347a9393/lib/adapters/xhr.js#L121-L123
+
+			if (
+				axiosRequest.headers[
+					Object.keys(axiosRequest.headers).find(
+						key =&gt; key.toLowerCase() === &#x27;content-type&#x27;
+					)
+				]
+			) {
+				axiosRequest.data = null;
+			}
+		}
+		if (emitter) {
+			// TODO: Unify linting rules across JS repo
+			axiosRequest.onUploadProgress = function(event) {
+				emitter.emit(SEND_UPLOAD_PROGRESS_EVENT, event);
+				logger.debug(event);
+			};
+			// TODO: Unify linting rules across JS repo
+			axiosRequest.onDownloadProgress = function(event) {
+				emitter.emit(SEND_DOWNLOAD_PROGRESS_EVENT, event);
+				logger.debug(event);
+			};
+		}
+		// If a cancel token source is passed down from the provider, allows cancellation of in-flight requests
+		if (this.cancelTokenSource) {
+			axiosRequest.cancelToken = this.cancelTokenSource.token;
+		}
+
+		if (options.cancelTokenSource) {
+			axiosRequest.cancelToken = options.cancelTokenSource.token;
+		}
+
+		// From gamma release, aws-sdk now expects all response type to be of blob or streams
+		axiosRequest.responseType = &#x27;blob&#x27;;
+		// In Axios, Blobs are identified by calling Object.prototype.toString on the object. However, on React Native,
+		// calling Object.prototype.toString on a Blob returns &#x27;[object Object]&#x27; instead of &#x27;[object Blob]&#x27;, which causes
+		// Axios to treat Blobs as generic Javascript objects. Therefore we need a to use a custom request transformer
+		// to correctly handle Blob in React Native.
+		if (Platform.isReactNative) {
+			axiosRequest.transformRequest = reactNativeRequestTransformer;
+		}
+
+		const raceOfPromises = [
+			axios
+				.request(axiosRequest)
+				.then(response =&gt; {
+					return {
+						response: new HttpResponse({
+							headers: response.headers,
+							statusCode: response.status,
+							body: response.data,
+						}),
+					};
+				})
+				.catch(error =&gt; {
+					// Error
+					if (
+						error.message !==
+						AWSS3ProviderUploadErrorStrings.UPLOAD_PAUSED_MESSAGE
+					) {
+						logger.error(error.message);
+					}
+					// for axios&#x27; cancel error, we should re-throw it back so it&#x27;s not considered an s3client error
+					// if we return empty, or an abitrary error HttpResponse, it will be hard to debug down the line.
+					//
+					// for errors that does not have a &#x27;response&#x27; object, it&#x27;s very likely that it is an unexpected error for
+					// example a disconnect. Without it we cannot meaningfully reconstruct a HttpResponse, and the AWS SDK might
+					// consider the request successful by mistake. In this case we should also re-throw the error.
+					if (axios.isCancel(error) || !hasErrorResponse(error)) {
+						throw error;
+					}
+					// otherwise, we should re-construct an HttpResponse from the error, so that it can be passed down to other
+					// aws sdk middleware (e.g retry, clock skew correction, error message serializing)
+					return {
+						response: new HttpResponse({
+							statusCode: error.response.status,
+							body: error.response?.data,
+							headers: error.response?.headers,
+						}),
+					};
+				}),
+			requestTimeout(requestTimeoutInMs),
+		];
+		return Promise.race(raceOfPromises);
+	}
+}
+
+function requestTimeout(timeoutInMs: number = 0): Promise&lt;never&gt; {
+	return new Promise((resolve, reject) =&gt; {
+		if (timeoutInMs) {
+			setTimeout(() =&gt; {
+				const timeoutError = new Error(
+					`Request did not complete within ${timeoutInMs} ms`
+				);
+				timeoutError.name = &#x27;TimeoutError&#x27;;
+				reject(timeoutError);
+			}, timeoutInMs);
+		}
+	});
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:35,&quot;character&quot;:2,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:46,&quot;character&quot;:16,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:47,&quot;character&quot;:39,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:50,&quot;character&quot;:26,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:52,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:53,&quot;character&quot;:39,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:54,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:54,&quot;character&quot;:15,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:55,&quot;character&quot;:39,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:55,&quot;character&quot;:45,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:56,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:56,&quot;character&quot;:15,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:56,&quot;character&quot;:24,&quot;text&quot;:&quot;status&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:76,&quot;character&quot;:2,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:77,&quot;character&quot;:13,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:83,&quot;character&quot;:55,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:142,&quot;character&quot;:14,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:143,&quot;character&quot;:16,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:143,&quot;character&quot;:31,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:160,&quot;character&quot;:17,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:165,&quot;character&quot;:44,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:166,&quot;character&quot;:45,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:167,&quot;character&quot;:17,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:170,&quot;character&quot;:46,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:171,&quot;character&quot;:47,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:172,&quot;character&quot;:17,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:202,&quot;character&quot;:7,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:202,&quot;character&quot;:22,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:206,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:209,&quot;character&quot;:6,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:209,&quot;character&quot;:12,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:212,&quot;character&quot;:19,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:212,&quot;character&quot;:25,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:220,&quot;character&quot;:24,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:220,&quot;character&quot;:52,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:221,&quot;character&quot;:12,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:228,&quot;character&quot;:7,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:228,&quot;character&quot;:29,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/axios-http-handler.ts&quot;,&quot;line&quot;:229,&quot;character&quot;:32,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:23 GMT</p>
+    </body>
+  </html>
+  

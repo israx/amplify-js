@@ -1,0 +1,79 @@
+{
+  "fileCounts": {},
+  "anys": [
+    {
+      "file": "lib/withSSRContext.d.ts",
+      "line": 2,
+      "character": 4,
+      "text": "req",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/withSSRContext.d.ts",
+      "line": 2,
+      "character": 4,
+      "text": "req",
+      "kind": 1
+    },
+    {
+      "file": "src/withSSRContext.ts",
+      "line": 19,
+      "character": 1,
+      "text": "req",
+      "kind": 1
+    },
+    {
+      "file": "src/withSSRContext.ts",
+      "line": 24,
+      "character": 35,
+      "text": "req",
+      "kind": 1
+    },
+    {
+      "file": "src/withSSRContext.ts",
+      "line": 27,
+      "character": 40,
+      "text": "req",
+      "kind": 1
+    },
+    {
+      "file": "src/withSSRContext.ts",
+      "line": 38,
+      "character": 17,
+      "text": "m",
+      "kind": 1
+    },
+    {
+      "file": "src/withSSRContext.ts",
+      "line": 39,
+      "character": 23,
+      "text": "m",
+      "kind": 1
+    },
+    {
+      "file": "src/index.ts",
+      "line": 20,
+      "character": 8,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "src/index.ts",
+      "line": 21,
+      "character": 8,
+      "text": "Cache",
+      "kind": 1
+    },
+    {
+      "file": "src/index.ts",
+      "line": 22,
+      "character": 8,
+      "text": "ServiceWorker",
+      "kind": 1
+    }
+  ],
+  "percentage": 95.76271186440678,
+  "total": 236,
+  "covered": 226,
+  "uncovered": 10
+}

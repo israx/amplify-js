@@ -1,0 +1,210 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>index.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/predicates/index.ts</td><td class="">98.33%</td><td class="">0%</td><td class="">239</td><td class="">235</td><td class="">4</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import {
+	AllOperators,
+	ModelPredicate,
+	PersistentModel,
+	PredicateExpression,
+	PredicateGroups,
+	PredicatesGroup,
+	ProducerModelPredicate,
+	SchemaModel,
+} from &#x27;../types&#x27;;
+import {
+	exhaustiveCheck,
+	extractPrimaryKeyFieldNames,
+	extractPrimaryKeyValues,
+} from &#x27;../util&#x27;;
+
+export { ModelSortPredicateCreator } from &#x27;./sort&#x27;;
+
+const predicatesAllSet = new WeakSet&lt;ProducerModelPredicate&lt;any&gt;&gt;();
+
+export function isPredicatesAll(
+	predicate: any
+): predicate is typeof PredicateAll {
+	return predicatesAllSet.has(predicate);
+}
+
+// This symbol is not used at runtime, only its type (unique symbol)
+export const PredicateAll = Symbol(&#x27;A predicate that matches all records&#x27;);
+
+export class Predicates {
+	public static get ALL(): typeof PredicateAll {
+		const predicate = &lt;ProducerModelPredicate&lt;any&gt;&gt;(c =&gt; c);
+
+		predicatesAllSet.add(predicate);
+
+		return &lt;typeof PredicateAll&gt;(&lt;unknown&gt;predicate);
+	}
+}
+
+export class ModelPredicateCreator {
+	private static predicateGroupsMap = new WeakMap&lt;
+		ModelPredicate&lt;any&gt;,
+		PredicatesGroup&lt;any&gt;
+	&gt;();
+
+	private static createPredicateBuilder&lt;T extends PersistentModel&gt;(
+		modelDefinition: SchemaModel
+	) {
+		const { name: modelName } = modelDefinition;
+		const fieldNames = new Set&lt;keyof T&gt;(Object.keys(modelDefinition.fields));
+
+		let handler: ProxyHandler&lt;ModelPredicate&lt;T&gt;&gt;;
+		const predicate = new Proxy(
+			{} as ModelPredicate&lt;T&gt;,
+			(handler = {
+				get(
+					_target,
+					propertyKey,
+					receiver: ModelPredicate&lt;T&gt;
+				): PredicateExpression&lt;T, any&gt; {
+					const groupType = propertyKey as keyof PredicateGroups&lt;T&gt;;
+
+					switch (groupType) {
+						case &#x27;and&#x27;:
+						case &#x27;or&#x27;:
+						case &#x27;not&#x27;:
+							const result: PredicateExpression&lt;T, any&gt; = (
+								newPredicate: (criteria: ModelPredicate&lt;T&gt;) =&gt; ModelPredicate&lt;T&gt;
+							) =&gt; {
+								const group: PredicatesGroup&lt;T&gt; = {
+									type: groupType,
+									predicates: [],
+								};
+
+								// Create a new recorder
+								const tmpPredicateRecorder = new Proxy(
+									{} as ModelPredicate&lt;T&gt;,
+									handler
+								);
+
+								// Set the recorder group
+								ModelPredicateCreator.predicateGroupsMap.set(
+									tmpPredicateRecorder,
+									group
+								);
+
+								// Apply the predicates to the recorder (this is the step that records the changes)
+								newPredicate(tmpPredicateRecorder);
+
+								// Push the group to the top-level recorder
+								ModelPredicateCreator.predicateGroupsMap
+									.get(receiver)!
+									.predicates.push(group);
+
+								return receiver;
+							};
+
+							return result;
+						default:
+							exhaustiveCheck(groupType, false);
+					}
+
+					const field = propertyKey as keyof T;
+
+					if (!fieldNames.has(field)) {
+						throw new Error(
+							`Invalid field for model. field: ${field}, model: ${modelName}`
+						);
+					}
+
+					const result: PredicateExpression&lt;T, any&gt; = (
+						operator: keyof AllOperators,
+						operand: any
+					) =&gt; {
+						ModelPredicateCreator.predicateGroupsMap
+							.get(receiver)!
+							.predicates.push({ field, operator, operand });
+						return receiver;
+					};
+					return result;
+				},
+			})
+		);
+
+		const group: PredicatesGroup&lt;T&gt; = {
+			type: &#x27;and&#x27;,
+			predicates: [],
+		};
+		ModelPredicateCreator.predicateGroupsMap.set(predicate, group);
+
+		return predicate;
+	}
+
+	static isValidPredicate&lt;T extends PersistentModel&gt;(
+		predicate: any
+	): predicate is ModelPredicate&lt;T&gt; {
+		return ModelPredicateCreator.predicateGroupsMap.has(predicate);
+	}
+
+	static getPredicates&lt;T extends PersistentModel&gt;(
+		predicate: ModelPredicate&lt;T&gt;,
+		throwOnInvalid: boolean = true
+	) {
+		if (throwOnInvalid &amp;&amp; !ModelPredicateCreator.isValidPredicate(predicate)) {
+			throw new Error(&#x27;The predicate is not valid&#x27;);
+		}
+
+		return ModelPredicateCreator.predicateGroupsMap.get(predicate);
+	}
+
+	// transforms cb-style predicate into Proxy
+	static createFromExisting&lt;T extends PersistentModel&gt;(
+		modelDefinition: SchemaModel,
+		existing?: ProducerModelPredicate&lt;T&gt;
+	) {
+		if (!existing || !modelDefinition) {
+			return undefined;
+		}
+
+		return existing(
+			ModelPredicateCreator.createPredicateBuilder(modelDefinition)
+		);
+	}
+
+	static createForSingleField&lt;T extends PersistentModel&gt;(
+		modelDefinition: SchemaModel,
+		fieldName: string,
+		value: string
+	) {
+		return ModelPredicateCreator.createPredicateBuilder&lt;T&gt;(modelDefinition)[
+			fieldName
+		](&lt;any&gt;&#x27;eq&#x27;, &lt;any&gt;value);
+	}
+
+	static createForPk&lt;T extends PersistentModel&gt;(
+		modelDefinition: SchemaModel,
+		model: T
+	) {
+		const keyFields = extractPrimaryKeyFieldNames(modelDefinition);
+		const keyValues = extractPrimaryKeyValues(model, keyFields);
+
+		let modelPredicate =
+			ModelPredicateCreator.createPredicateBuilder&lt;T&gt;(modelDefinition);
+
+		keyFields.forEach((field, idx) =&gt; {
+			const operand = keyValues[idx];
+			modelPredicate = modelPredicate[field](&lt;any&gt;&#x27;eq&#x27;, &lt;any&gt;operand);
+		});
+
+		return modelPredicate;
+	}
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/predicates/index.ts&quot;,&quot;line&quot;:21,&quot;character&quot;:1,&quot;text&quot;:&quot;predicate&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/predicates/index.ts&quot;,&quot;line&quot;:112,&quot;character&quot;:6,&quot;text&quot;:&quot;operand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/predicates/index.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:43,&quot;text&quot;:&quot;operand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/predicates/index.ts&quot;,&quot;line&quot;:134,&quot;character&quot;:2,&quot;text&quot;:&quot;predicate&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:29 GMT</p>
+    </body>
+  </html>
+  

@@ -1,0 +1,2754 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Auth.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Auth.ts</td><td class="">76.67%</td><td class="">0%</td><td class="">3219</td><td class="">2468</td><td class="">751</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *	 http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import {
+	AuthOptions,
+	FederatedResponse,
+	SignUpParams,
+	FederatedUser,
+	ConfirmSignUpOptions,
+	SignOutOpts,
+	CurrentUserOpts,
+	GetPreferredMFAOpts,
+	SignInOpts,
+	isUsernamePasswordOpts,
+	isCognitoHostedOpts,
+	isFederatedSignInOptions,
+	isFederatedSignInOptionsCustom,
+	hasCustomState,
+	FederatedSignInOptionsCustom,
+	LegacyProvider,
+	FederatedSignInOptions,
+	AwsCognitoOAuthOpts,
+	ClientMetaData,
+} from &#x27;./types&#x27;;
+
+import {
+	Amplify,
+	ConsoleLogger as Logger,
+	Credentials,
+	Hub,
+	StorageHelper,
+	ICredentials,
+	Parser,
+	browserOrNode,
+	UniversalStorage,
+	urlSafeDecode,
+	HubCallback,
+} from &#x27;@aws-amplify/core&#x27;;
+import {
+	CookieStorage,
+	CognitoUserPool,
+	AuthenticationDetails,
+	ICognitoUserPoolData,
+	ICognitoUserData,
+	ISignUpResult,
+	CognitoUser,
+	MFAOption,
+	CognitoUserSession,
+	IAuthenticationCallback,
+	ICognitoUserAttributeData,
+	CognitoUserAttribute,
+	CognitoIdToken,
+	CognitoRefreshToken,
+	CognitoAccessToken,
+	NodeCallback,
+} from &#x27;amazon-cognito-identity-js&#x27;;
+
+import { parse } from &#x27;url&#x27;;
+import OAuth from &#x27;./OAuth/OAuth&#x27;;
+import { default as urlListener } from &#x27;./urlListener&#x27;;
+import { AuthError, NoUserPoolError } from &#x27;./Errors&#x27;;
+import {
+	AuthErrorTypes,
+	AutoSignInOptions,
+	CognitoHostedUIIdentityProvider,
+	IAuthDevice,
+} from &#x27;./types/Auth&#x27;;
+
+const logger = new Logger(&#x27;AuthClass&#x27;);
+const USER_ADMIN_SCOPE = &#x27;aws.cognito.signin.user.admin&#x27;;
+
+// 10 sec, following this guide https://www.nngroup.com/articles/response-times-3-important-limits/
+const OAUTH_FLOW_MS_TIMEOUT = 10 * 1000;
+
+const AMPLIFY_SYMBOL = (
+	typeof Symbol !== &#x27;undefined&#x27; &amp;&amp; typeof Symbol.for === &#x27;function&#x27;
+		? Symbol.for(&#x27;amplify_default&#x27;)
+		: &#x27;@@amplify_default&#x27;
+) as Symbol;
+
+const dispatchAuthEvent = (event: string, data: any, message: string) =&gt; {
+	Hub.dispatch(&#x27;auth&#x27;, { event, data, message }, &#x27;Auth&#x27;, AMPLIFY_SYMBOL);
+};
+
+// Cognito Documentation for max device
+// tslint:disable-next-line:max-line-length
+// https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_ListDevices.html#API_ListDevices_RequestSyntax
+const MAX_DEVICES = 60;
+
+const MAX_AUTOSIGNIN_POLLING_MS = 3 * 60 * 1000;
+
+/**
+ * Provide authentication steps
+ */
+export class AuthClass {
+	private _config: AuthOptions;
+	private userPool: CognitoUserPool = null;
+	private user: any = null;
+	private _oAuthHandler: OAuth;
+	private _storage;
+	private _storageSync;
+	private oAuthFlowInProgress: boolean = false;
+	private pendingSignIn: ReturnType&lt;AuthClass[&#x27;signInWithPassword&#x27;]&gt; | null;
+	private autoSignInInitiated: boolean = false;
+
+	Credentials = Credentials;
+
+	/**
+	 * Initialize Auth with AWS configurations
+	 * @param {Object} config - Configuration of the Auth
+	 */
+	constructor(config: AuthOptions) {
+		this.configure(config);
+		this.currentCredentials = this.currentCredentials.bind(this);
+		this.currentUserCredentials = this.currentUserCredentials.bind(this);
+
+		Hub.listen(&#x27;auth&#x27;, ({ payload }) =&gt; {
+			const { event } = payload;
+			switch (event) {
+				case &#x27;signIn&#x27;:
+					this._storage.setItem(&#x27;amplify-signin-with-hostedUI&#x27;, &#x27;false&#x27;);
+					break;
+				case &#x27;signOut&#x27;:
+					this._storage.removeItem(&#x27;amplify-signin-with-hostedUI&#x27;);
+					break;
+				case &#x27;cognitoHostedUI&#x27;:
+					this._storage.setItem(&#x27;amplify-signin-with-hostedUI&#x27;, &#x27;true&#x27;);
+					break;
+			}
+		});
+	}
+
+	public getModuleName() {
+		return &#x27;Auth&#x27;;
+	}
+
+	configure(config?) {
+		if (!config) return this._config || {};
+		logger.debug(&#x27;configure Auth&#x27;);
+		const conf = Object.assign(
+			{},
+			this._config,
+			Parser.parseMobilehubConfig(config).Auth,
+			config
+		);
+		this._config = conf;
+		const {
+			userPoolId,
+			userPoolWebClientId,
+			cookieStorage,
+			oauth,
+			region,
+			identityPoolId,
+			mandatorySignIn,
+			refreshHandlers,
+			identityPoolRegion,
+			clientMetadata,
+			endpoint,
+		} = this._config;
+
+		if (!this._config.storage) {
+			// backward compatability
+			if (cookieStorage) this._storage = new CookieStorage(cookieStorage);
+			else {
+				this._storage = config.ssr
+					? new UniversalStorage()
+					: new StorageHelper().getStorage();
+			}
+		} else {
+			if (!this._isValidAuthStorage(this._config.storage)) {
+				logger.error(&#x27;The storage in the Auth config is not valid!&#x27;);
+				throw new Error(&#x27;Empty storage object&#x27;);
+			}
+			this._storage = this._config.storage;
+		}
+
+		this._storageSync = Promise.resolve();
+		if (typeof this._storage[&#x27;sync&#x27;] === &#x27;function&#x27;) {
+			this._storageSync = this._storage[&#x27;sync&#x27;]();
+		}
+
+		if (userPoolId) {
+			const userPoolData: ICognitoUserPoolData = {
+				UserPoolId: userPoolId,
+				ClientId: userPoolWebClientId,
+				endpoint,
+			};
+			userPoolData.Storage = this._storage;
+
+			this.userPool = new CognitoUserPool(
+				userPoolData,
+				this.wrapRefreshSessionCallback
+			);
+		}
+
+		this.Credentials.configure({
+			mandatorySignIn,
+			region: identityPoolRegion || region,
+			userPoolId,
+			identityPoolId,
+			refreshHandlers,
+			storage: this._storage,
+		});
+
+		// initialize cognitoauth client if hosted ui options provided
+		// to keep backward compatibility:
+		const cognitoHostedUIConfig = oauth
+			? isCognitoHostedOpts(this._config.oauth)
+				? oauth
+				: (&lt;any&gt;oauth).awsCognito
+			: undefined;
+
+		if (cognitoHostedUIConfig) {
+			const cognitoAuthParams = Object.assign(
+				{
+					cognitoClientId: userPoolWebClientId,
+					UserPoolId: userPoolId,
+					domain: cognitoHostedUIConfig[&#x27;domain&#x27;],
+					scopes: cognitoHostedUIConfig[&#x27;scope&#x27;],
+					redirectSignIn: cognitoHostedUIConfig[&#x27;redirectSignIn&#x27;],
+					redirectSignOut: cognitoHostedUIConfig[&#x27;redirectSignOut&#x27;],
+					responseType: cognitoHostedUIConfig[&#x27;responseType&#x27;],
+					Storage: this._storage,
+					urlOpener: cognitoHostedUIConfig[&#x27;urlOpener&#x27;],
+					clientMetadata,
+				},
+				cognitoHostedUIConfig[&#x27;options&#x27;]
+			);
+
+			this._oAuthHandler = new OAuth({
+				scopes: cognitoAuthParams.scopes,
+				config: cognitoAuthParams,
+				cognitoClientId: cognitoAuthParams.cognitoClientId,
+			});
+
+			// **NOTE** - Remove this in a future major release as it is a breaking change
+			// Prevents _handleAuthResponse from being called multiple times in Expo
+			// See https://github.com/aws-amplify/amplify-js/issues/4388
+			const usedResponseUrls = {};
+			urlListener(({ url }) =&gt; {
+				if (usedResponseUrls[url]) {
+					return;
+				}
+
+				usedResponseUrls[url] = true;
+				this._handleAuthResponse(url);
+			});
+		}
+
+		dispatchAuthEvent(
+			&#x27;configured&#x27;,
+			null,
+			`The Auth category has been configured successfully`
+		);
+
+		if (
+			!this.autoSignInInitiated &amp;&amp;
+			typeof this._storage[&#x27;getItem&#x27;] === &#x27;function&#x27;
+		) {
+			const pollingInitiated = this.isTrueStorageValue(
+				&#x27;amplify-polling-started&#x27;
+			);
+			if (pollingInitiated) {
+				dispatchAuthEvent(
+					&#x27;autoSignIn_failure&#x27;,
+					null,
+					AuthErrorTypes.AutoSignInError
+				);
+				this._storage.removeItem(&#x27;amplify-auto-sign-in&#x27;);
+			}
+			this._storage.removeItem(&#x27;amplify-polling-started&#x27;);
+		}
+		return this._config;
+	}
+
+	wrapRefreshSessionCallback = (callback: NodeCallback.Any) =&gt; {
+		const wrapped: NodeCallback.Any = (error, data) =&gt; {
+			if (data) {
+				dispatchAuthEvent(&#x27;tokenRefresh&#x27;, undefined, `New token retrieved`);
+			} else {
+				dispatchAuthEvent(
+					&#x27;tokenRefresh_failure&#x27;,
+					error,
+					`Failed to retrieve new token`
+				);
+			}
+			return callback(error, data);
+		};
+		return wrapped;
+	} // prettier-ignore
+
+	/**
+	 * Sign up with username, password and other attributes like phone, email
+	 * @param {String | object} params - The user attributes used for signin
+	 * @param {String[]} restOfAttrs - for the backward compatability
+	 * @return - A promise resolves callback data if success
+	 */
+	public signUp(
+		params: string | SignUpParams,
+		...restOfAttrs: string[]
+	): Promise&lt;ISignUpResult&gt; {
+		if (!this.userPool) {
+			return this.rejectNoUserPool();
+		}
+
+		let username: string = null;
+		let password: string = null;
+		const attributes: CognitoUserAttribute[] = [];
+		let validationData: CognitoUserAttribute[] = null;
+		let clientMetadata;
+		let autoSignIn: AutoSignInOptions = { enabled: false };
+		let autoSignInValidationData = {};
+		let autoSignInClientMetaData: ClientMetaData = {};
+
+		if (params &amp;&amp; typeof params === &#x27;string&#x27;) {
+			username = params;
+			password = restOfAttrs ? restOfAttrs[0] : null;
+			const email: string = restOfAttrs ? restOfAttrs[1] : null;
+			const phone_number: string = restOfAttrs ? restOfAttrs[2] : null;
+
+			if (email)
+				attributes.push(
+					new CognitoUserAttribute({ Name: &#x27;email&#x27;, Value: email })
+				);
+
+			if (phone_number)
+				attributes.push(
+					new CognitoUserAttribute({
+						Name: &#x27;phone_number&#x27;,
+						Value: phone_number,
+					})
+				);
+		} else if (params &amp;&amp; typeof params === &#x27;object&#x27;) {
+			username = params[&#x27;username&#x27;];
+			password = params[&#x27;password&#x27;];
+
+			if (params &amp;&amp; params.clientMetadata) {
+				clientMetadata = params.clientMetadata;
+			} else if (this._config.clientMetadata) {
+				clientMetadata = this._config.clientMetadata;
+			}
+
+			const attrs = params[&#x27;attributes&#x27;];
+			if (attrs) {
+				Object.keys(attrs).map(key =&gt; {
+					attributes.push(
+						new CognitoUserAttribute({ Name: key, Value: attrs[key] })
+					);
+				});
+			}
+
+			const validationDataObject = params[&#x27;validationData&#x27;];
+			if (validationDataObject) {
+				validationData = [];
+				Object.keys(validationDataObject).map(key =&gt; {
+					validationData.push(
+						new CognitoUserAttribute({
+							Name: key,
+							Value: validationDataObject[key],
+						})
+					);
+				});
+			}
+
+			autoSignIn = params.autoSignIn ?? { enabled: false };
+			if (autoSignIn.enabled) {
+				this._storage.setItem(&#x27;amplify-auto-sign-in&#x27;, &#x27;true&#x27;);
+				autoSignInValidationData = autoSignIn.validationData ?? {};
+				autoSignInClientMetaData = autoSignIn.clientMetaData ?? {};
+			}
+		} else {
+			return this.rejectAuthError(AuthErrorTypes.SignUpError);
+		}
+
+		if (!username) {
+			return this.rejectAuthError(AuthErrorTypes.EmptyUsername);
+		}
+		if (!password) {
+			return this.rejectAuthError(AuthErrorTypes.EmptyPassword);
+		}
+
+		logger.debug(&#x27;signUp attrs:&#x27;, attributes);
+		logger.debug(&#x27;signUp validation data:&#x27;, validationData);
+
+		return new Promise((resolve, reject) =&gt; {
+			this.userPool.signUp(
+				username,
+				password,
+				attributes,
+				validationData,
+				(err, data) =&gt; {
+					if (err) {
+						dispatchAuthEvent(
+							&#x27;signUp_failure&#x27;,
+							err,
+							`${username} failed to signup`
+						);
+						reject(err);
+					} else {
+						dispatchAuthEvent(
+							&#x27;signUp&#x27;,
+							data,
+							`${username} has signed up successfully`
+						);
+						if (autoSignIn.enabled) {
+							this.handleAutoSignIn(
+								username,
+								password,
+								autoSignInValidationData,
+								autoSignInClientMetaData,
+								data
+							);
+						}
+						resolve(data);
+					}
+				},
+				clientMetadata
+			);
+		});
+	}
+
+	private handleAutoSignIn(
+		username: string,
+		password: string,
+		validationData: {},
+		clientMetadata: any,
+		data: any
+	) {
+		this.autoSignInInitiated = true;
+		const authDetails = new AuthenticationDetails({
+			Username: username,
+			Password: password,
+			ValidationData: validationData,
+			ClientMetadata: clientMetadata,
+		});
+		if (data.userConfirmed) {
+			this.signInAfterUserConfirmed(authDetails);
+		} else if (this._config.signUpVerificationMethod === &#x27;link&#x27;) {
+			this.handleLinkAutoSignIn(authDetails);
+		} else {
+			this.handleCodeAutoSignIn(authDetails);
+		}
+	}
+
+	private handleCodeAutoSignIn(authDetails: AuthenticationDetails) {
+		const listenEvent = ({ payload }) =&gt; {
+			if (payload.event === &#x27;confirmSignUp&#x27;) {
+				this.signInAfterUserConfirmed(authDetails, listenEvent);
+			}
+		};
+		Hub.listen(&#x27;auth&#x27;, listenEvent);
+	}
+
+	private handleLinkAutoSignIn(authDetails: AuthenticationDetails) {
+		this._storage.setItem(&#x27;amplify-polling-started&#x27;, &#x27;true&#x27;);
+		const start = Date.now();
+		const autoSignInPollingIntervalId = setInterval(() =&gt; {
+			if (Date.now() - start &gt; MAX_AUTOSIGNIN_POLLING_MS) {
+				clearInterval(autoSignInPollingIntervalId);
+				dispatchAuthEvent(
+					&#x27;autoSignIn_failure&#x27;,
+					null,
+					&#x27;Please confirm your account and use your credentials to sign in.&#x27;
+				);
+				this._storage.removeItem(&#x27;amplify-auto-sign-in&#x27;);
+			} else {
+				this.signInAfterUserConfirmed(
+					authDetails,
+					null,
+					autoSignInPollingIntervalId
+				);
+			}
+		}, 5000);
+	}
+
+	private async signInAfterUserConfirmed(
+		authDetails: AuthenticationDetails,
+		listenEvent?: HubCallback,
+		autoSignInPollingIntervalId?: ReturnType&lt;typeof setInterval&gt;
+	) {
+		const user = this.createCognitoUser(authDetails.getUsername());
+		try {
+			await user.authenticateUser(
+				authDetails,
+				this.authCallbacks(
+					user,
+					value =&gt; {
+						dispatchAuthEvent(
+							&#x27;autoSignIn&#x27;,
+							value,
+							`${authDetails.getUsername()} has signed in successfully`
+						);
+						if (listenEvent) {
+							Hub.remove(&#x27;auth&#x27;, listenEvent);
+						}
+						if (autoSignInPollingIntervalId) {
+							clearInterval(autoSignInPollingIntervalId);
+							this._storage.removeItem(&#x27;amplify-polling-started&#x27;);
+						}
+						this._storage.removeItem(&#x27;amplify-auto-sign-in&#x27;);
+					},
+					error =&gt; {
+						logger.error(error);
+						this._storage.removeItem(&#x27;amplify-auto-sign-in&#x27;);
+					}
+				)
+			);
+		} catch (error) {
+			logger.error(error);
+		}
+	}
+
+	/**
+	 * Send the verification code to confirm sign up
+	 * @param {String} username - The username to be confirmed
+	 * @param {String} code - The verification code
+	 * @param {ConfirmSignUpOptions} options - other options for confirm signup
+	 * @return - A promise resolves callback data if success
+	 */
+	public confirmSignUp(
+		username: string,
+		code: string,
+		options?: ConfirmSignUpOptions
+	): Promise&lt;any&gt; {
+		if (!this.userPool) {
+			return this.rejectNoUserPool();
+		}
+		if (!username) {
+			return this.rejectAuthError(AuthErrorTypes.EmptyUsername);
+		}
+		if (!code) {
+			return this.rejectAuthError(AuthErrorTypes.EmptyCode);
+		}
+
+		const user = this.createCognitoUser(username);
+		const forceAliasCreation =
+			options &amp;&amp; typeof options.forceAliasCreation === &#x27;boolean&#x27;
+				? options.forceAliasCreation
+				: true;
+
+		let clientMetadata;
+		if (options &amp;&amp; options.clientMetadata) {
+			clientMetadata = options.clientMetadata;
+		} else if (this._config.clientMetadata) {
+			clientMetadata = this._config.clientMetadata;
+		}
+		return new Promise((resolve, reject) =&gt; {
+			user.confirmRegistration(
+				code,
+				forceAliasCreation,
+				(err, data) =&gt; {
+					if (err) {
+						reject(err);
+					} else {
+						dispatchAuthEvent(
+							&#x27;confirmSignUp&#x27;,
+							data,
+							`${username} has been confirmed successfully`
+						);
+						const autoSignIn = this.isTrueStorageValue(&#x27;amplify-auto-sign-in&#x27;);
+						if (autoSignIn &amp;&amp; !this.autoSignInInitiated) {
+							dispatchAuthEvent(
+								&#x27;autoSignIn_failure&#x27;,
+								null,
+								AuthErrorTypes.AutoSignInError
+							);
+							this._storage.removeItem(&#x27;amplify-auto-sign-in&#x27;);
+						}
+						resolve(data);
+					}
+				},
+				clientMetadata
+			);
+		});
+	}
+
+	private isTrueStorageValue(value: string) {
+		const item = this._storage.getItem(value);
+		return item ? item === &#x27;true&#x27; : false;
+	}
+
+	/**
+	 * Resend the verification code
+	 * @param {String} username - The username to be confirmed
+	 * @param {ClientMetadata} clientMetadata - Metadata to be passed to Cognito Lambda triggers
+	 * @return - A promise resolves code delivery details if successful
+	 */
+	public resendSignUp(
+		username: string,
+		clientMetadata: ClientMetaData = this._config.clientMetadata
+	): Promise&lt;any&gt; {
+		if (!this.userPool) {
+			return this.rejectNoUserPool();
+		}
+		if (!username) {
+			return this.rejectAuthError(AuthErrorTypes.EmptyUsername);
+		}
+
+		const user = this.createCognitoUser(username);
+		return new Promise((resolve, reject) =&gt; {
+			user.resendConfirmationCode((err, data) =&gt; {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(data);
+				}
+			}, clientMetadata);
+		});
+	}
+
+	/**
+	 * Sign in
+	 * @param {String | SignInOpts} usernameOrSignInOpts - The username to be signed in or the sign in options
+	 * @param {String} pw - The password of the username
+	 * @param {ClientMetaData} clientMetadata - Client metadata for custom workflows
+	 * @return - A promise resolves the CognitoUser
+	 */
+	public signIn(
+		usernameOrSignInOpts: string | SignInOpts,
+		pw?: string,
+		clientMetadata: ClientMetaData = this._config.clientMetadata
+	): Promise&lt;CognitoUser | any&gt; {
+		if (!this.userPool) {
+			return this.rejectNoUserPool();
+		}
+
+		let username = null;
+		let password = null;
+		let validationData = {};
+
+		// for backward compatibility
+		if (typeof usernameOrSignInOpts === &#x27;string&#x27;) {
+			username = usernameOrSignInOpts;
+			password = pw;
+		} else if (isUsernamePasswordOpts(usernameOrSignInOpts)) {
+			if (typeof pw !== &#x27;undefined&#x27;) {
+				logger.warn(
+					&#x27;The password should be defined under the first parameter object!&#x27;
+				);
+			}
+			username = usernameOrSignInOpts.username;
+			password = usernameOrSignInOpts.password;
+			validationData = usernameOrSignInOpts.validationData;
+		} else {
+			return this.rejectAuthError(AuthErrorTypes.InvalidUsername);
+		}
+		if (!username) {
+			return this.rejectAuthError(AuthErrorTypes.EmptyUsername);
+		}
+		const authDetails = new AuthenticationDetails({
+			Username: username,
+			Password: password,
+			ValidationData: validationData,
+			ClientMetadata: clientMetadata,
+		});
+		if (password) {
+			return this.signInWithPassword(authDetails);
+		} else {
+			return this.signInWithoutPassword(authDetails);
+		}
+	}
+
+	/**
+	 * Return an object with the authentication callbacks
+	 * @param {CognitoUser} user - the cognito user object
+	 * @param {} resolve - function called when resolving the current step
+	 * @param {} reject - function called when rejecting the current step
+	 * @return - an object with the callback methods for user authentication
+	 */
+	private authCallbacks(
+		user: CognitoUser,
+		resolve: (value?: CognitoUser | any) =&gt; void,
+		reject: (value?: any) =&gt; void
+	): IAuthenticationCallback {
+		const that = this;
+		return {
+			onSuccess: async session =&gt; {
+				logger.debug(session);
+				delete user[&#x27;challengeName&#x27;];
+				delete user[&#x27;challengeParam&#x27;];
+				try {
+					await this.Credentials.clear();
+					const cred = await this.Credentials.set(session, &#x27;session&#x27;);
+					logger.debug(&#x27;succeed to get cognito credentials&#x27;, cred);
+				} catch (e) {
+					logger.debug(&#x27;cannot get cognito credentials&#x27;, e);
+				} finally {
+					try {
+						// In order to get user attributes and MFA methods
+						// We need to trigger currentUserPoolUser again
+						const currentUser = await this.currentUserPoolUser();
+						that.user = currentUser;
+						dispatchAuthEvent(
+							&#x27;signIn&#x27;,
+							currentUser,
+							`A user ${user.getUsername()} has been signed in`
+						);
+						resolve(currentUser);
+					} catch (e) {
+						logger.error(&#x27;Failed to get the signed in user&#x27;, e);
+						reject(e);
+					}
+				}
+			},
+			onFailure: err =&gt; {
+				logger.debug(&#x27;signIn failure&#x27;, err);
+				dispatchAuthEvent(
+					&#x27;signIn_failure&#x27;,
+					err,
+					`${user.getUsername()} failed to signin`
+				);
+				reject(err);
+			},
+			customChallenge: challengeParam =&gt; {
+				logger.debug(&#x27;signIn custom challenge answer required&#x27;);
+				user[&#x27;challengeName&#x27;] = &#x27;CUSTOM_CHALLENGE&#x27;;
+				user[&#x27;challengeParam&#x27;] = challengeParam;
+				resolve(user);
+			},
+			mfaRequired: (challengeName, challengeParam) =&gt; {
+				logger.debug(&#x27;signIn MFA required&#x27;);
+				user[&#x27;challengeName&#x27;] = challengeName;
+				user[&#x27;challengeParam&#x27;] = challengeParam;
+				resolve(user);
+			},
+			mfaSetup: (challengeName, challengeParam) =&gt; {
+				logger.debug(&#x27;signIn mfa setup&#x27;, challengeName);
+				user[&#x27;challengeName&#x27;] = challengeName;
+				user[&#x27;challengeParam&#x27;] = challengeParam;
+				resolve(user);
+			},
+			newPasswordRequired: (userAttributes, requiredAttributes) =&gt; {
+				logger.debug(&#x27;signIn new password&#x27;);
+				user[&#x27;challengeName&#x27;] = &#x27;NEW_PASSWORD_REQUIRED&#x27;;
+				user[&#x27;challengeParam&#x27;] = {
+					userAttributes,
+					requiredAttributes,
+				};
+				resolve(user);
+			},
+			totpRequired: (challengeName, challengeParam) =&gt; {
+				logger.debug(&#x27;signIn totpRequired&#x27;);
+				user[&#x27;challengeName&#x27;] = challengeName;
+				user[&#x27;challengeParam&#x27;] = challengeParam;
+				resolve(user);
+			},
+			selectMFAType: (challengeName, challengeParam) =&gt; {
+				logger.debug(&#x27;signIn selectMFAType&#x27;, challengeName);
+				user[&#x27;challengeName&#x27;] = challengeName;
+				user[&#x27;challengeParam&#x27;] = challengeParam;
+				resolve(user);
+			},
+		};
+	}
+
+	/**
+	 * Sign in with a password
+	 * @private
+	 * @param {AuthenticationDetails} authDetails - the user sign in data
+	 * @return - A promise resolves the CognitoUser object if success or mfa required
+	 */
+	private signInWithPassword(
+		authDetails: AuthenticationDetails
+	): Promise&lt;CognitoUser | any&gt; {
+		if (this.pendingSignIn) {
+			throw new Error(&#x27;Pending sign-in attempt already in progress&#x27;);
+		}
+
+		const user = this.createCognitoUser(authDetails.getUsername());
+
+		this.pendingSignIn = new Promise((resolve, reject) =&gt; {
+			user.authenticateUser(
+				authDetails,
+				this.authCallbacks(
+					user,
+					value =&gt; {
+						this.pendingSignIn = null;
+						resolve(value);
+					},
+					error =&gt; {
+						this.pendingSignIn = null;
+						reject(error);
+					}
+				)
+			);
+		});
+
+		return this.pendingSignIn;
+	}
+
+	/**
+	 * Sign in without a password
+	 * @private
+	 * @param {AuthenticationDetails} authDetails - the user sign in data
+	 * @return - A promise resolves the CognitoUser object if success or mfa required
+	 */
+	private signInWithoutPassword(
+		authDetails: AuthenticationDetails
+	): Promise&lt;CognitoUser | any&gt; {
+		const user = this.createCognitoUser(authDetails.getUsername());
+		user.setAuthenticationFlowType(&#x27;CUSTOM_AUTH&#x27;);
+
+		return new Promise((resolve, reject) =&gt; {
+			user.initiateAuth(authDetails, this.authCallbacks(user, resolve, reject));
+		});
+	}
+
+	/**
+	 * This was previously used by an authenticated user to get MFAOptions,
+	 * but no longer returns a meaningful response. Refer to the documentation for
+	 * how to setup and use MFA: https://docs.amplify.aws/lib/auth/mfa/q/platform/js
+	 * @deprecated
+	 * @param {CognitoUser} user - the current user
+	 * @return - A promise resolves the current preferred mfa option if success
+	 */
+	public getMFAOptions(user: CognitoUser | any): Promise&lt;MFAOption[]&gt; {
+		return new Promise((res, rej) =&gt; {
+			user.getMFAOptions((err, mfaOptions) =&gt; {
+				if (err) {
+					logger.debug(&#x27;get MFA Options failed&#x27;, err);
+					rej(err);
+					return;
+				}
+				logger.debug(&#x27;get MFA options success&#x27;, mfaOptions);
+				res(mfaOptions);
+				return;
+			});
+		});
+	}
+
+	/**
+	 * get preferred mfa method
+	 * @param {CognitoUser} user - the current cognito user
+	 * @param {GetPreferredMFAOpts} params - options for getting the current user preferred MFA
+	 */
+	public getPreferredMFA(
+		user: CognitoUser | any,
+		params?: GetPreferredMFAOpts
+	): Promise&lt;string&gt; {
+		const that = this;
+		return new Promise((res, rej) =&gt; {
+			const clientMetadata = this._config.clientMetadata; // TODO: verify behavior if this is override during signIn
+
+			const bypassCache = params ? params.bypassCache : false;
+			user.getUserData(
+				async (err, data) =&gt; {
+					if (err) {
+						logger.debug(&#x27;getting preferred mfa failed&#x27;, err);
+						if (this.isSessionInvalid(err)) {
+							try {
+								await this.cleanUpInvalidSession(user);
+							} catch (cleanUpError) {
+								rej(
+									new Error(
+										`Session is invalid due to: ${err.message} and failed to clean up invalid session: ${cleanUpError.message}`
+									)
+								);
+								return;
+							}
+						}
+						rej(err);
+						return;
+					}
+
+					const mfaType = that._getMfaTypeFromUserData(data);
+					if (!mfaType) {
+						rej(&#x27;invalid MFA Type&#x27;);
+						return;
+					} else {
+						res(mfaType);
+						return;
+					}
+				},
+				{ bypassCache, clientMetadata }
+			);
+		});
+	}
+
+	private _getMfaTypeFromUserData(data) {
+		let ret = null;
+		const preferredMFA = data.PreferredMfaSetting;
+		// if the user has used Auth.setPreferredMFA() to setup the mfa type
+		// then the &quot;PreferredMfaSetting&quot; would exist in the response
+		if (preferredMFA) {
+			ret = preferredMFA;
+		} else {
+			// if mfaList exists but empty, then its noMFA
+			const mfaList = data.UserMFASettingList;
+			if (!mfaList) {
+				// if SMS was enabled by using Auth.enableSMS(),
+				// the response would contain MFAOptions
+				// as for now Cognito only supports for SMS, so we will say it is &#x27;SMS_MFA&#x27;
+				// if it does not exist, then it should be NOMFA
+				const MFAOptions = data.MFAOptions;
+				if (MFAOptions) {
+					ret = &#x27;SMS_MFA&#x27;;
+				} else {
+					ret = &#x27;NOMFA&#x27;;
+				}
+			} else if (mfaList.length === 0) {
+				ret = &#x27;NOMFA&#x27;;
+			} else {
+				logger.debug(&#x27;invalid case for getPreferredMFA&#x27;, data);
+			}
+		}
+		return ret;
+	}
+
+	private _getUserData(user, params) {
+		return new Promise((res, rej) =&gt; {
+			user.getUserData(async (err, data) =&gt; {
+				if (err) {
+					logger.debug(&#x27;getting user data failed&#x27;, err);
+					if (this.isSessionInvalid(err)) {
+						try {
+							await this.cleanUpInvalidSession(user);
+						} catch (cleanUpError) {
+							rej(
+								new Error(
+									`Session is invalid due to: ${err.message} and failed to clean up invalid session: ${cleanUpError.message}`
+								)
+							);
+							return;
+						}
+					}
+					rej(err);
+					return;
+				} else {
+					res(data);
+				}
+			}, params);
+		});
+	}
+
+	/**
+	 * set preferred MFA method
+	 * @param {CognitoUser} user - the current Cognito user
+	 * @param {string} mfaMethod - preferred mfa method
+	 * @return - A promise resolve if success
+	 */
+	public async setPreferredMFA(
+		user: CognitoUser | any,
+		mfaMethod: &#x27;TOTP&#x27; | &#x27;SMS&#x27; | &#x27;NOMFA&#x27; | &#x27;SMS_MFA&#x27; | &#x27;SOFTWARE_TOKEN_MFA&#x27;
+	): Promise&lt;string&gt; {
+		const clientMetadata = this._config.clientMetadata; // TODO: verify behavior if this is override during signIn
+
+		const userData = await this._getUserData(user, {
+			bypassCache: true,
+			clientMetadata,
+		});
+		let smsMfaSettings = null;
+		let totpMfaSettings = null;
+
+		switch (mfaMethod) {
+			case &#x27;TOTP&#x27;:
+			case &#x27;SOFTWARE_TOKEN_MFA&#x27;:
+				totpMfaSettings = {
+					PreferredMfa: true,
+					Enabled: true,
+				};
+				break;
+			case &#x27;SMS&#x27;:
+			case &#x27;SMS_MFA&#x27;:
+				smsMfaSettings = {
+					PreferredMfa: true,
+					Enabled: true,
+				};
+				break;
+			case &#x27;NOMFA&#x27;:
+				const mfaList = userData[&#x27;UserMFASettingList&#x27;];
+				const currentMFAType = await this._getMfaTypeFromUserData(userData);
+				if (currentMFAType === &#x27;NOMFA&#x27;) {
+					return Promise.resolve(&#x27;No change for mfa type&#x27;);
+				} else if (currentMFAType === &#x27;SMS_MFA&#x27;) {
+					smsMfaSettings = {
+						PreferredMfa: false,
+						Enabled: false,
+					};
+				} else if (currentMFAType === &#x27;SOFTWARE_TOKEN_MFA&#x27;) {
+					totpMfaSettings = {
+						PreferredMfa: false,
+						Enabled: false,
+					};
+				} else {
+					return this.rejectAuthError(AuthErrorTypes.InvalidMFA);
+				}
+				// if there is a UserMFASettingList in the response
+				// we need to disable every mfa type in that list
+				if (mfaList &amp;&amp; mfaList.length !== 0) {
+					// to disable SMS or TOTP if exists in that list
+					mfaList.forEach(mfaType =&gt; {
+						if (mfaType === &#x27;SMS_MFA&#x27;) {
+							smsMfaSettings = {
+								PreferredMfa: false,
+								Enabled: false,
+							};
+						} else if (mfaType === &#x27;SOFTWARE_TOKEN_MFA&#x27;) {
+							totpMfaSettings = {
+								PreferredMfa: false,
+								Enabled: false,
+							};
+						}
+					});
+				}
+				break;
+			default:
+				logger.debug(&#x27;no validmfa method provided&#x27;);
+				return this.rejectAuthError(AuthErrorTypes.NoMFA);
+		}
+
+		const that = this;
+		return new Promise&lt;string&gt;((res, rej) =&gt; {
+			user.setUserMfaPreference(
+				smsMfaSettings,
+				totpMfaSettings,
+				(err, result) =&gt; {
+					if (err) {
+						logger.debug(&#x27;Set user mfa preference error&#x27;, err);
+						return rej(err);
+					}
+					logger.debug(&#x27;Set user mfa success&#x27;, result);
+					logger.debug(&#x27;Caching the latest user data into local&#x27;);
+					// cache the latest result into user data
+					user.getUserData(
+						async (err, data) =&gt; {
+							if (err) {
+								logger.debug(&#x27;getting user data failed&#x27;, err);
+								if (this.isSessionInvalid(err)) {
+									try {
+										await this.cleanUpInvalidSession(user);
+									} catch (cleanUpError) {
+										rej(
+											new Error(
+												`Session is invalid due to: ${err.message} and failed to clean up invalid session: ${cleanUpError.message}`
+											)
+										);
+										return;
+									}
+								}
+								return rej(err);
+							} else {
+								return res(result);
+							}
+						},
+						{
+							bypassCache: true,
+							clientMetadata,
+						}
+					);
+				}
+			);
+		});
+	}
+
+	/**
+	 * disable SMS
+	 * @deprecated
+	 * @param {CognitoUser} user - the current user
+	 * @return - A promise resolves is success
+	 */
+	public disableSMS(user: CognitoUser): Promise&lt;string&gt; {
+		return new Promise((res, rej) =&gt; {
+			user.disableMFA((err, data) =&gt; {
+				if (err) {
+					logger.debug(&#x27;disable mfa failed&#x27;, err);
+					rej(err);
+					return;
+				}
+				logger.debug(&#x27;disable mfa succeed&#x27;, data);
+				res(data);
+				return;
+			});
+		});
+	}
+
+	/**
+	 * enable SMS
+	 * @deprecated
+	 * @param {CognitoUser} user - the current user
+	 * @return - A promise resolves is success
+	 */
+	public enableSMS(user: CognitoUser): Promise&lt;string&gt; {
+		return new Promise((res, rej) =&gt; {
+			user.enableMFA((err, data) =&gt; {
+				if (err) {
+					logger.debug(&#x27;enable mfa failed&#x27;, err);
+					rej(err);
+					return;
+				}
+				logger.debug(&#x27;enable mfa succeed&#x27;, data);
+				res(data);
+				return;
+			});
+		});
+	}
+
+	/**
+	 * Setup TOTP
+	 * @param {CognitoUser} user - the current user
+	 * @return - A promise resolves with the secret code if success
+	 */
+	public setupTOTP(user: CognitoUser | any): Promise&lt;string&gt; {
+		return new Promise((res, rej) =&gt; {
+			user.associateSoftwareToken({
+				onFailure: err =&gt; {
+					logger.debug(&#x27;associateSoftwareToken failed&#x27;, err);
+					rej(err);
+					return;
+				},
+				associateSecretCode: secretCode =&gt; {
+					logger.debug(&#x27;associateSoftwareToken sucess&#x27;, secretCode);
+					res(secretCode);
+					return;
+				},
+			});
+		});
+	}
+
+	/**
+	 * verify TOTP setup
+	 * @param {CognitoUser} user - the current user
+	 * @param {string} challengeAnswer - challenge answer
+	 * @return - A promise resolves is success
+	 */
+	public verifyTotpToken(
+		user: CognitoUser | any,
+		challengeAnswer: string
+	): Promise&lt;CognitoUserSession&gt; {
+		logger.debug(&#x27;verification totp token&#x27;, user, challengeAnswer);
+		return new Promise((res, rej) =&gt; {
+			user.verifySoftwareToken(challengeAnswer, &#x27;My TOTP device&#x27;, {
+				onFailure: err =&gt; {
+					logger.debug(&#x27;verifyTotpToken failed&#x27;, err);
+					rej(err);
+					return;
+				},
+				onSuccess: data =&gt; {
+					dispatchAuthEvent(
+						&#x27;signIn&#x27;,
+						user,
+						`A user ${user.getUsername()} has been signed in`
+					);
+					logger.debug(&#x27;verifyTotpToken success&#x27;, data);
+					res(data);
+					return;
+				},
+			});
+		});
+	}
+
+	/**
+	 * Send MFA code to confirm sign in
+	 * @param {Object} user - The CognitoUser object
+	 * @param {String} code - The confirmation code
+	 */
+	public confirmSignIn(
+		user: CognitoUser | any,
+		code: string,
+		mfaType?: &#x27;SMS_MFA&#x27; | &#x27;SOFTWARE_TOKEN_MFA&#x27; | null,
+		clientMetadata: ClientMetaData = this._config.clientMetadata
+	): Promise&lt;CognitoUser | any&gt; {
+		if (!code) {
+			return this.rejectAuthError(AuthErrorTypes.EmptyCode);
+		}
+
+		const that = this;
+		return new Promise((resolve, reject) =&gt; {
+			user.sendMFACode(
+				code,
+				{
+					onSuccess: async session =&gt; {
+						logger.debug(session);
+						try {
+							await this.Credentials.clear();
+							const cred = await this.Credentials.set(session, &#x27;session&#x27;);
+							logger.debug(&#x27;succeed to get cognito credentials&#x27;, cred);
+						} catch (e) {
+							logger.debug(&#x27;cannot get cognito credentials&#x27;, e);
+						} finally {
+							that.user = user;
+
+							dispatchAuthEvent(
+								&#x27;signIn&#x27;,
+								user,
+								`A user ${user.getUsername()} has been signed in`
+							);
+							resolve(user);
+						}
+					},
+					onFailure: err =&gt; {
+						logger.debug(&#x27;confirm signIn failure&#x27;, err);
+						reject(err);
+					},
+				},
+				mfaType,
+				clientMetadata
+			);
+		});
+	}
+
+	public completeNewPassword(
+		user: CognitoUser | any,
+		password: string,
+		requiredAttributes: any = {},
+		clientMetadata: ClientMetaData = this._config.clientMetadata
+	): Promise&lt;CognitoUser | any&gt; {
+		if (!password) {
+			return this.rejectAuthError(AuthErrorTypes.EmptyPassword);
+		}
+
+		const that = this;
+		return new Promise((resolve, reject) =&gt; {
+			user.completeNewPasswordChallenge(
+				password,
+				requiredAttributes,
+				{
+					onSuccess: async session =&gt; {
+						logger.debug(session);
+						try {
+							await this.Credentials.clear();
+							const cred = await this.Credentials.set(session, &#x27;session&#x27;);
+							logger.debug(&#x27;succeed to get cognito credentials&#x27;, cred);
+						} catch (e) {
+							logger.debug(&#x27;cannot get cognito credentials&#x27;, e);
+						} finally {
+							that.user = user;
+							dispatchAuthEvent(
+								&#x27;signIn&#x27;,
+								user,
+								`A user ${user.getUsername()} has been signed in`
+							);
+							resolve(user);
+						}
+					},
+					onFailure: err =&gt; {
+						logger.debug(&#x27;completeNewPassword failure&#x27;, err);
+						dispatchAuthEvent(
+							&#x27;completeNewPassword_failure&#x27;,
+							err,
+							`${this.user} failed to complete the new password flow`
+						);
+						reject(err);
+					},
+					mfaRequired: (challengeName, challengeParam) =&gt; {
+						logger.debug(&#x27;signIn MFA required&#x27;);
+						user[&#x27;challengeName&#x27;] = challengeName;
+						user[&#x27;challengeParam&#x27;] = challengeParam;
+						resolve(user);
+					},
+					mfaSetup: (challengeName, challengeParam) =&gt; {
+						logger.debug(&#x27;signIn mfa setup&#x27;, challengeName);
+						user[&#x27;challengeName&#x27;] = challengeName;
+						user[&#x27;challengeParam&#x27;] = challengeParam;
+						resolve(user);
+					},
+					totpRequired: (challengeName, challengeParam) =&gt; {
+						logger.debug(&#x27;signIn mfa setup&#x27;, challengeName);
+						user[&#x27;challengeName&#x27;] = challengeName;
+						user[&#x27;challengeParam&#x27;] = challengeParam;
+						resolve(user);
+					},
+				},
+				clientMetadata
+			);
+		});
+	}
+
+	/**
+	 * Send the answer to a custom challenge
+	 * @param {CognitoUser} user - The CognitoUser object
+	 * @param {String} challengeResponses - The confirmation code
+	 */
+	public sendCustomChallengeAnswer(
+		user: CognitoUser | any,
+		challengeResponses: string,
+		clientMetadata: ClientMetaData = this._config.clientMetadata
+	): Promise&lt;CognitoUser | any&gt; {
+		if (!this.userPool) {
+			return this.rejectNoUserPool();
+		}
+		if (!challengeResponses) {
+			return this.rejectAuthError(AuthErrorTypes.EmptyChallengeResponse);
+		}
+
+		const that = this;
+		return new Promise((resolve, reject) =&gt; {
+			user.sendCustomChallengeAnswer(
+				challengeResponses,
+				this.authCallbacks(user, resolve, reject),
+				clientMetadata
+			);
+		});
+	}
+
+	/**
+	 * Delete an authenticated users&#x27; attributes
+	 * @param {CognitoUser} - The currently logged in user object
+	 * @return {Promise}
+	 **/
+	public deleteUserAttributes(
+		user: CognitoUser | any,
+		attributeNames: string[]
+	) {
+		const that = this;
+		return new Promise((resolve, reject) =&gt; {
+			that.userSession(user).then(session =&gt; {
+				user.deleteAttributes(attributeNames, (err, result) =&gt; {
+					if (err) {
+						return reject(err);
+					} else {
+						return resolve(result);
+					}
+				});
+			});
+		});
+	}
+
+	/**
+	 * Delete the current authenticated user
+	 * @return {Promise}
+	 **/
+	// TODO: Check return type void
+	public async deleteUser(): Promise&lt;string | void&gt; {
+		try {
+			await this._storageSync;
+		} catch (e) {
+			logger.debug(&#x27;Failed to sync cache info into memory&#x27;, e);
+			throw new Error(e);
+		}
+
+		const isSignedInHostedUI =
+			this._oAuthHandler &amp;&amp;
+			this._storage.getItem(&#x27;amplify-signin-with-hostedUI&#x27;) === &#x27;true&#x27;;
+
+		return new Promise(async (res, rej) =&gt; {
+			if (this.userPool) {
+				const user = this.userPool.getCurrentUser();
+
+				if (!user) {
+					logger.debug(&#x27;Failed to get user from user pool&#x27;);
+					return rej(new Error(&#x27;No current user.&#x27;));
+				} else {
+					user.getSession(async (err, session) =&gt; {
+						if (err) {
+							logger.debug(&#x27;Failed to get the user session&#x27;, err);
+							if (this.isSessionInvalid(err)) {
+								try {
+									await this.cleanUpInvalidSession(user);
+								} catch (cleanUpError) {
+									rej(
+										new Error(
+											`Session is invalid due to: ${err.message} and failed to clean up invalid session: ${cleanUpError.message}`
+										)
+									);
+									return;
+								}
+							}
+							return rej(err);
+						} else {
+							user.deleteUser((err, result: string) =&gt; {
+								if (err) {
+									rej(err);
+								} else {
+									dispatchAuthEvent(
+										&#x27;userDeleted&#x27;,
+										result,
+										&#x27;The authenticated user has been deleted.&#x27;
+									);
+									user.signOut();
+									this.user = null;
+									try {
+										this.cleanCachedItems(); // clean aws credentials
+									} catch (e) {
+										// TODO: change to rejects in refactor
+										logger.debug(&#x27;failed to clear cached items&#x27;);
+									}
+
+									if (isSignedInHostedUI) {
+										this.oAuthSignOutRedirect(res, rej);
+									} else {
+										dispatchAuthEvent(
+											&#x27;signOut&#x27;,
+											this.user,
+											`A user has been signed out`
+										);
+										res(result);
+									}
+								}
+							});
+						}
+					});
+				}
+			} else {
+				logger.debug(&#x27;no Congito User pool&#x27;);
+				rej(new Error(&#x27;Cognito User pool does not exist&#x27;));
+			}
+		});
+	}
+
+	/**
+	 * Update an authenticated users&#x27; attributes
+	 * @param {CognitoUser} - The currently logged in user object
+	 * @return {Promise}
+	 **/
+	public updateUserAttributes(
+		user: CognitoUser | any,
+		attributes: object,
+		clientMetadata: ClientMetaData = this._config.clientMetadata
+	): Promise&lt;string&gt; {
+		const attributeList: ICognitoUserAttributeData[] = [];
+		const that = this;
+		return new Promise((resolve, reject) =&gt; {
+			that.userSession(user).then(session =&gt; {
+				for (const key in attributes) {
+					if (key !== &#x27;sub&#x27; &amp;&amp; key.indexOf(&#x27;_verified&#x27;) &lt; 0) {
+						const attr: ICognitoUserAttributeData = {
+							Name: key,
+							Value: attributes[key],
+						};
+						attributeList.push(attr);
+					}
+				}
+				user.updateAttributes(
+					attributeList,
+					(err, result) =&gt; {
+						if (err) {
+							return reject(err);
+						} else {
+							return resolve(result);
+						}
+					},
+					clientMetadata
+				);
+			});
+		});
+	}
+	/**
+	 * Return user attributes
+	 * @param {Object} user - The CognitoUser object
+	 * @return - A promise resolves to user attributes if success
+	 */
+	public userAttributes(
+		user: CognitoUser | any
+	): Promise&lt;CognitoUserAttribute[]&gt; {
+		return new Promise((resolve, reject) =&gt; {
+			this.userSession(user).then(session =&gt; {
+				user.getUserAttributes((err, attributes) =&gt; {
+					if (err) {
+						reject(err);
+					} else {
+						resolve(attributes);
+					}
+				});
+			});
+		});
+	}
+
+	public verifiedContact(user: CognitoUser | any) {
+		const that = this;
+		return this.userAttributes(user).then(attributes =&gt; {
+			const attrs = that.attributesToObject(attributes);
+			const unverified = {};
+			const verified = {};
+			if (attrs[&#x27;email&#x27;]) {
+				if (attrs[&#x27;email_verified&#x27;]) {
+					verified[&#x27;email&#x27;] = attrs[&#x27;email&#x27;];
+				} else {
+					unverified[&#x27;email&#x27;] = attrs[&#x27;email&#x27;];
+				}
+			}
+			if (attrs[&#x27;phone_number&#x27;]) {
+				if (attrs[&#x27;phone_number_verified&#x27;]) {
+					verified[&#x27;phone_number&#x27;] = attrs[&#x27;phone_number&#x27;];
+				} else {
+					unverified[&#x27;phone_number&#x27;] = attrs[&#x27;phone_number&#x27;];
+				}
+			}
+			return {
+				verified,
+				unverified,
+			};
+		});
+	}
+
+	private isErrorWithMessage(err: any): err is { message: string } {
+		return (
+			typeof err === &#x27;object&#x27; &amp;&amp;
+			Object.prototype.hasOwnProperty.call(err, &#x27;message&#x27;)
+		);
+	}
+
+	// Session revoked by another app
+	private isTokenRevokedError(
+		err: any
+	): err is { message: &#x27;Access Token has been revoked&#x27; } {
+		return (
+			this.isErrorWithMessage(err) &amp;&amp;
+			err.message === &#x27;Access Token has been revoked&#x27;
+		);
+	}
+
+	private isRefreshTokenRevokedError(
+		err: any
+	): err is { message: &#x27;Refresh Token has been revoked&#x27; } {
+		return (
+			this.isErrorWithMessage(err) &amp;&amp;
+			err.message === &#x27;Refresh Token has been revoked&#x27;
+		);
+	}
+
+	private isUserDisabledError(
+		err: any
+	): err is { message: &#x27;User is disabled.&#x27; } {
+		return this.isErrorWithMessage(err) &amp;&amp; err.message === &#x27;User is disabled.&#x27;;
+	}
+
+	private isUserDoesNotExistError(
+		err: any
+	): err is { message: &#x27;User does not exist.&#x27; } {
+		return (
+			this.isErrorWithMessage(err) &amp;&amp; err.message === &#x27;User does not exist.&#x27;
+		);
+	}
+
+	private isRefreshTokenExpiredError(
+		err: any
+	): err is { message: &#x27;Refresh Token has expired&#x27; } {
+		return (
+			this.isErrorWithMessage(err) &amp;&amp;
+			err.message === &#x27;Refresh Token has expired&#x27;
+		);
+	}
+
+	private isSignedInHostedUI() {
+		return (
+			this._oAuthHandler &amp;&amp;
+			this._storage.getItem(&#x27;amplify-signin-with-hostedUI&#x27;) === &#x27;true&#x27;
+		);
+	}
+
+	private isSessionInvalid(err: any) {
+		return (
+			this.isUserDisabledError(err) ||
+			this.isUserDoesNotExistError(err) ||
+			this.isTokenRevokedError(err) ||
+			this.isRefreshTokenRevokedError(err) ||
+			this.isRefreshTokenExpiredError(err)
+		);
+	}
+
+	private async cleanUpInvalidSession(user: CognitoUser) {
+		user.signOut();
+		this.user = null;
+		try {
+			await this.cleanCachedItems(); // clean aws credentials
+		} catch (e) {
+			logger.debug(&#x27;failed to clear cached items&#x27;);
+		}
+		if (this.isSignedInHostedUI()) {
+			return new Promise((res, rej) =&gt; {
+				this.oAuthSignOutRedirect(res, rej);
+			});
+		} else {
+			dispatchAuthEvent(&#x27;signOut&#x27;, this.user, `A user has been signed out`);
+		}
+	}
+
+	/**
+	 * Get current authenticated user
+	 * @return - A promise resolves to current authenticated CognitoUser if success
+	 */
+	public currentUserPoolUser(
+		params?: CurrentUserOpts
+	): Promise&lt;CognitoUser | any&gt; {
+		if (!this.userPool) {
+			return this.rejectNoUserPool();
+		}
+
+		return new Promise((res, rej) =&gt; {
+			this._storageSync
+				.then(async () =&gt; {
+					if (this.isOAuthInProgress()) {
+						logger.debug(&#x27;OAuth signIn in progress, waiting for resolution...&#x27;);
+
+						await new Promise(res =&gt; {
+							const timeoutId = setTimeout(() =&gt; {
+								logger.debug(&#x27;OAuth signIn in progress timeout&#x27;);
+
+								Hub.remove(&#x27;auth&#x27;, hostedUISignCallback);
+
+								res();
+							}, OAUTH_FLOW_MS_TIMEOUT);
+
+							Hub.listen(&#x27;auth&#x27;, hostedUISignCallback);
+
+							function hostedUISignCallback({ payload }) {
+								const { event } = payload;
+
+								if (
+									event === &#x27;cognitoHostedUI&#x27; ||
+									event === &#x27;cognitoHostedUI_failure&#x27;
+								) {
+									logger.debug(`OAuth signIn resolved: ${event}`);
+									clearTimeout(timeoutId);
+
+									Hub.remove(&#x27;auth&#x27;, hostedUISignCallback);
+
+									res();
+								}
+							}
+						});
+					}
+
+					const user = this.userPool.getCurrentUser();
+
+					if (!user) {
+						logger.debug(&#x27;Failed to get user from user pool&#x27;);
+						rej(&#x27;No current user&#x27;);
+						return;
+					}
+
+					const clientMetadata = this._config.clientMetadata; // TODO: verify behavior if this is override during signIn
+
+					// refresh the session if the session expired.
+					user.getSession(
+						async (err, session) =&gt; {
+							if (err) {
+								logger.debug(&#x27;Failed to get the user session&#x27;, err);
+								if (this.isSessionInvalid(err)) {
+									try {
+										await this.cleanUpInvalidSession(user);
+									} catch (cleanUpError) {
+										rej(
+											new Error(
+												`Session is invalid due to: ${err.message} and failed to clean up invalid session: ${cleanUpError.message}`
+											)
+										);
+										return;
+									}
+								}
+								rej(err);
+								return;
+							}
+
+							// get user data from Cognito
+							const bypassCache = params ? params.bypassCache : false;
+
+							if (bypassCache) {
+								await this.Credentials.clear();
+							}
+
+							const clientMetadata = this._config.clientMetadata; // TODO: verify behavior if this is override during signIn
+
+							// validate the token&#x27;s scope first before calling this function
+							const { scope = &#x27;&#x27; } = session.getAccessToken().decodePayload();
+							if (scope.split(&#x27; &#x27;).includes(USER_ADMIN_SCOPE)) {
+								user.getUserData(
+									async (err, data) =&gt; {
+										if (err) {
+											logger.debug(&#x27;getting user data failed&#x27;, err);
+											if (this.isSessionInvalid(err)) {
+												try {
+													await this.cleanUpInvalidSession(user);
+												} catch (cleanUpError) {
+													rej(
+														new Error(
+															`Session is invalid due to: ${err.message} and failed to clean up invalid session: ${cleanUpError.message}`
+														)
+													);
+													return;
+												}
+												rej(err);
+											} else {
+												res(user);
+											}
+											return;
+										}
+										const preferredMFA = data.PreferredMfaSetting || &#x27;NOMFA&#x27;;
+										const attributeList = [];
+
+										for (let i = 0; i &lt; data.UserAttributes.length; i++) {
+											const attribute = {
+												Name: data.UserAttributes[i].Name,
+												Value: data.UserAttributes[i].Value,
+											};
+											const userAttribute = new CognitoUserAttribute(attribute);
+											attributeList.push(userAttribute);
+										}
+
+										const attributes = this.attributesToObject(attributeList);
+										Object.assign(user, { attributes, preferredMFA });
+										return res(user);
+									},
+									{ bypassCache, clientMetadata }
+								);
+							} else {
+								logger.debug(
+									`Unable to get the user data because the ${USER_ADMIN_SCOPE} ` +
+										`is not in the scopes of the access token`
+								);
+								return res(user);
+							}
+						},
+						{ clientMetadata }
+					);
+				})
+				.catch(e =&gt; {
+					logger.debug(&#x27;Failed to sync cache info into memory&#x27;, e);
+					return rej(e);
+				});
+		});
+	}
+
+	private isOAuthInProgress(): boolean {
+		return this.oAuthFlowInProgress;
+	}
+
+	/**
+	 * Get current authenticated user
+	 * @param {CurrentUserOpts} - options for getting the current user
+	 * @return - A promise resolves to current authenticated CognitoUser if success
+	 */
+	public async currentAuthenticatedUser(
+		params?: CurrentUserOpts
+	): Promise&lt;CognitoUser | any&gt; {
+		logger.debug(&#x27;getting current authenticated user&#x27;);
+		let federatedUser = null;
+		try {
+			await this._storageSync;
+		} catch (e) {
+			logger.debug(&#x27;Failed to sync cache info into memory&#x27;, e);
+			throw e;
+		}
+
+		try {
+			const federatedInfo = JSON.parse(
+				this._storage.getItem(&#x27;aws-amplify-federatedInfo&#x27;)
+			);
+			if (federatedInfo) {
+				federatedUser = {
+					...federatedInfo.user,
+					token: federatedInfo.token,
+				};
+			}
+		} catch (e) {
+			logger.debug(&#x27;cannot load federated user from auth storage&#x27;);
+		}
+
+		if (federatedUser) {
+			this.user = federatedUser;
+			logger.debug(&#x27;get current authenticated federated user&#x27;, this.user);
+			return this.user;
+		} else {
+			logger.debug(&#x27;get current authenticated userpool user&#x27;);
+			let user = null;
+			try {
+				user = await this.currentUserPoolUser(params);
+			} catch (e) {
+				if (e === &#x27;No userPool&#x27;) {
+					logger.error(
+						&#x27;Cannot get the current user because the user pool is missing. &#x27; +
+							&#x27;Please make sure the Auth module is configured with a valid Cognito User Pool ID&#x27;
+					);
+				}
+				logger.debug(&#x27;The user is not authenticated by the error&#x27;, e);
+				return Promise.reject(&#x27;The user is not authenticated&#x27;);
+			}
+			this.user = user;
+			return this.user;
+		}
+	}
+
+	/**
+	 * Get current user&#x27;s session
+	 * @return - A promise resolves to session object if success
+	 */
+	public currentSession(): Promise&lt;CognitoUserSession&gt; {
+		const that = this;
+		logger.debug(&#x27;Getting current session&#x27;);
+		// Purposely not calling the reject method here because we don&#x27;t need a console error
+		if (!this.userPool) {
+			return Promise.reject(new Error(&#x27;No User Pool in the configuration.&#x27;));
+		}
+
+		return new Promise((res, rej) =&gt; {
+			that
+				.currentUserPoolUser()
+				.then(user =&gt; {
+					that
+						.userSession(user)
+						.then(session =&gt; {
+							res(session);
+							return;
+						})
+						.catch(e =&gt; {
+							logger.debug(&#x27;Failed to get the current session&#x27;, e);
+							rej(e);
+							return;
+						});
+				})
+				.catch(e =&gt; {
+					logger.debug(&#x27;Failed to get the current user&#x27;, e);
+					rej(e);
+					return;
+				});
+		});
+	}
+
+	/**
+	 * Get the corresponding user session
+	 * @param {Object} user - The CognitoUser object
+	 * @return - A promise resolves to the session
+	 */
+	public userSession(user): Promise&lt;CognitoUserSession&gt; {
+		if (!user) {
+			logger.debug(&#x27;the user is null&#x27;);
+			return this.rejectAuthError(AuthErrorTypes.NoUserSession);
+		}
+		const clientMetadata = this._config.clientMetadata; // TODO: verify behavior if this is override during signIn
+
+		return new Promise((res, rej) =&gt; {
+			logger.debug(&#x27;Getting the session from this user:&#x27;, user);
+			user.getSession(
+				async (err, session) =&gt; {
+					if (err) {
+						logger.debug(&#x27;Failed to get the session from user&#x27;, user);
+						if (this.isSessionInvalid(err)) {
+							try {
+								await this.cleanUpInvalidSession(user);
+							} catch (cleanUpError) {
+								rej(
+									new Error(
+										`Session is invalid due to: ${err.message} and failed to clean up invalid session: ${cleanUpError.message}`
+									)
+								);
+								return;
+							}
+						}
+						rej(err);
+						return;
+					} else {
+						logger.debug(&#x27;Succeed to get the user session&#x27;, session);
+						res(session);
+						return;
+					}
+				},
+				{ clientMetadata }
+			);
+		});
+	}
+
+	/**
+	 * Get authenticated credentials of current user.
+	 * @return - A promise resolves to be current user&#x27;s credentials
+	 */
+	public async currentUserCredentials(): Promise&lt;ICredentials&gt; {
+		logger.debug(&#x27;Getting current user credentials&#x27;);
+
+		try {
+			await this._storageSync;
+		} catch (e) {
+			logger.debug(&#x27;Failed to sync cache info into memory&#x27;, e);
+			throw e;
+		}
+
+		// first to check whether there is federation info in the auth storage
+		let federatedInfo = null;
+		try {
+			federatedInfo = JSON.parse(
+				this._storage.getItem(&#x27;aws-amplify-federatedInfo&#x27;)
+			);
+		} catch (e) {
+			logger.debug(&#x27;failed to get or parse item aws-amplify-federatedInfo&#x27;, e);
+		}
+
+		if (federatedInfo) {
+			// refresh the jwt token here if necessary
+			return this.Credentials.refreshFederatedToken(federatedInfo);
+		} else {
+			return this.currentSession()
+				.then(session =&gt; {
+					logger.debug(&#x27;getting session success&#x27;, session);
+					return this.Credentials.set(session, &#x27;session&#x27;);
+				})
+				.catch(() =&gt; {
+					logger.debug(&#x27;getting guest credentials&#x27;);
+					return this.Credentials.set(null, &#x27;guest&#x27;);
+				});
+		}
+	}
+
+	public currentCredentials(): Promise&lt;ICredentials&gt; {
+		logger.debug(&#x27;getting current credentials&#x27;);
+		return this.Credentials.get();
+	}
+
+	/**
+	 * Initiate an attribute confirmation request
+	 * @param {Object} user - The CognitoUser
+	 * @param {Object} attr - The attributes to be verified
+	 * @return - A promise resolves to callback data if success
+	 */
+	public verifyUserAttribute(
+		user: CognitoUser | any,
+		attr: string,
+		clientMetadata: ClientMetaData = this._config.clientMetadata
+	): Promise&lt;void&gt; {
+		return new Promise((resolve, reject) =&gt; {
+			user.getAttributeVerificationCode(
+				attr,
+				{
+					onSuccess(success) {
+						return resolve(success);
+					},
+					onFailure(err) {
+						return reject(err);
+					},
+				},
+				clientMetadata
+			);
+		});
+	}
+
+	/**
+	 * Confirm an attribute using a confirmation code
+	 * @param {Object} user - The CognitoUser
+	 * @param {Object} attr - The attribute to be verified
+	 * @param {String} code - The confirmation code
+	 * @return - A promise resolves to callback data if success
+	 */
+	public verifyUserAttributeSubmit(
+		user: CognitoUser | any,
+		attr: string,
+		code: string
+	): Promise&lt;string&gt; {
+		if (!code) {
+			return this.rejectAuthError(AuthErrorTypes.EmptyCode);
+		}
+
+		return new Promise((resolve, reject) =&gt; {
+			user.verifyAttribute(attr, code, {
+				onSuccess(data) {
+					resolve(data);
+					return;
+				},
+				onFailure(err) {
+					reject(err);
+					return;
+				},
+			});
+		});
+	}
+
+	public verifyCurrentUserAttribute(attr: string): Promise&lt;void&gt; {
+		const that = this;
+		return that
+			.currentUserPoolUser()
+			.then(user =&gt; that.verifyUserAttribute(user, attr));
+	}
+
+	/**
+	 * Confirm current user&#x27;s attribute using a confirmation code
+	 * @param {Object} attr - The attribute to be verified
+	 * @param {String} code - The confirmation code
+	 * @return - A promise resolves to callback data if success
+	 */
+	verifyCurrentUserAttributeSubmit(
+		attr: string,
+		code: string
+	): Promise&lt;string&gt; {
+		const that = this;
+		return that
+			.currentUserPoolUser()
+			.then(user =&gt; that.verifyUserAttributeSubmit(user, attr, code));
+	}
+
+	private async cognitoIdentitySignOut(
+		opts: SignOutOpts,
+		user: CognitoUser | any
+	) {
+		try {
+			await this._storageSync;
+		} catch (e) {
+			logger.debug(&#x27;Failed to sync cache info into memory&#x27;, e);
+			throw e;
+		}
+
+		const isSignedInHostedUI =
+			this._oAuthHandler &amp;&amp;
+			this._storage.getItem(&#x27;amplify-signin-with-hostedUI&#x27;) === &#x27;true&#x27;;
+
+		return new Promise((res, rej) =&gt; {
+			if (opts &amp;&amp; opts.global) {
+				logger.debug(&#x27;user global sign out&#x27;, user);
+				// in order to use global signout
+				// we must validate the user as an authenticated user by using getSession
+				const clientMetadata = this._config.clientMetadata; // TODO: verify behavior if this is override during signIn
+
+				user.getSession(
+					async (err, result) =&gt; {
+						if (err) {
+							logger.debug(&#x27;failed to get the user session&#x27;, err);
+							if (this.isSessionInvalid(err)) {
+								try {
+									await this.cleanUpInvalidSession(user);
+								} catch (cleanUpError) {
+									rej(
+										new Error(
+											`Session is invalid due to: ${err.message} and failed to clean up invalid session: ${cleanUpError.message}`
+										)
+									);
+									return;
+								}
+							}
+							return rej(err);
+						}
+						user.globalSignOut({
+							onSuccess: data =&gt; {
+								logger.debug(&#x27;global sign out success&#x27;);
+								if (isSignedInHostedUI) {
+									this.oAuthSignOutRedirect(res, rej);
+								} else {
+									return res();
+								}
+							},
+							onFailure: err =&gt; {
+								logger.debug(&#x27;global sign out failed&#x27;, err);
+								return rej(err);
+							},
+						});
+					},
+					{ clientMetadata }
+				);
+			} else {
+				logger.debug(&#x27;user sign out&#x27;, user);
+				user.signOut(() =&gt; {
+					if (isSignedInHostedUI) {
+						this.oAuthSignOutRedirect(res, rej);
+					} else {
+						return res();
+					}
+				});
+			}
+		});
+	}
+
+	private oAuthSignOutRedirect(
+		resolve: () =&gt; void,
+		reject: (reason?: any) =&gt; void
+	) {
+		const { isBrowser } = browserOrNode();
+
+		if (isBrowser) {
+			this.oAuthSignOutRedirectOrReject(reject);
+		} else {
+			this.oAuthSignOutAndResolve(resolve);
+		}
+	}
+
+	private oAuthSignOutAndResolve(resolve: () =&gt; void) {
+		this._oAuthHandler.signOut();
+		resolve();
+	}
+
+	private oAuthSignOutRedirectOrReject(reject: (reason?: any) =&gt; void) {
+		this._oAuthHandler.signOut(); // this method redirects url
+
+		// App should be redirected to another url otherwise it will reject
+		setTimeout(() =&gt; reject(Error(&#x27;Signout timeout fail&#x27;)), 3000);
+	}
+
+	/**
+	 * Sign out method
+	 * @
+	 * @return - A promise resolved if success
+	 */
+	public async signOut(opts?: SignOutOpts): Promise&lt;any&gt; {
+		try {
+			await this.cleanCachedItems();
+		} catch (e) {
+			logger.debug(&#x27;failed to clear cached items&#x27;);
+		}
+
+		if (this.userPool) {
+			const user = this.userPool.getCurrentUser();
+			if (user) {
+				await this.cognitoIdentitySignOut(opts, user);
+			} else {
+				logger.debug(&#x27;no current Cognito user&#x27;);
+			}
+		} else {
+			logger.debug(&#x27;no Cognito User pool&#x27;);
+		}
+
+		/**
+		 * Note for future refactor - no reliable way to get username with
+		 * Cognito User Pools vs Identity when federating with Social Providers
+		 * This is why we need a well structured session object that can be inspected
+		 * and information passed back in the message below for Hub dispatch
+		 */
+		dispatchAuthEvent(&#x27;signOut&#x27;, this.user, `A user has been signed out`);
+		this.user = null;
+	}
+
+	private async cleanCachedItems() {
+		// clear cognito cached item
+		await this.Credentials.clear();
+	}
+
+	/**
+	 * Change a password for an authenticated user
+	 * @param {Object} user - The CognitoUser object
+	 * @param {String} oldPassword - the current password
+	 * @param {String} newPassword - the requested new password
+	 * @return - A promise resolves if success
+	 */
+	public changePassword(
+		user: CognitoUser | any,
+		oldPassword: string,
+		newPassword: string,
+		clientMetadata: ClientMetaData = this._config.clientMetadata
+	): Promise&lt;&#x27;SUCCESS&#x27;&gt; {
+		return new Promise((resolve, reject) =&gt; {
+			this.userSession(user).then(session =&gt; {
+				user.changePassword(
+					oldPassword,
+					newPassword,
+					(err, data) =&gt; {
+						if (err) {
+							logger.debug(&#x27;change password failure&#x27;, err);
+							return reject(err);
+						} else {
+							return resolve(data);
+						}
+					},
+					clientMetadata
+				);
+			});
+		});
+	}
+
+	/**
+	 * Initiate a forgot password request
+	 * @param {String} username - the username to change password
+	 * @return - A promise resolves if success
+	 */
+	public forgotPassword(
+		username: string,
+		clientMetadata: ClientMetaData = this._config.clientMetadata
+	): Promise&lt;any&gt; {
+		if (!this.userPool) {
+			return this.rejectNoUserPool();
+		}
+		if (!username) {
+			return this.rejectAuthError(AuthErrorTypes.EmptyUsername);
+		}
+
+		const user = this.createCognitoUser(username);
+		return new Promise((resolve, reject) =&gt; {
+			user.forgotPassword(
+				{
+					onSuccess: () =&gt; {
+						resolve();
+						return;
+					},
+					onFailure: err =&gt; {
+						logger.debug(&#x27;forgot password failure&#x27;, err);
+						dispatchAuthEvent(
+							&#x27;forgotPassword_failure&#x27;,
+							err,
+							`${username} forgotPassword failed`
+						);
+						reject(err);
+						return;
+					},
+					inputVerificationCode: data =&gt; {
+						dispatchAuthEvent(
+							&#x27;forgotPassword&#x27;,
+							user,
+							`${username} has initiated forgot password flow`
+						);
+						resolve(data);
+						return;
+					},
+				},
+				clientMetadata
+			);
+		});
+	}
+
+	/**
+	 * Confirm a new password using a confirmation Code
+	 * @param {String} username - The username
+	 * @param {String} code - The confirmation code
+	 * @param {String} password - The new password
+	 * @return - A promise that resolves if success
+	 */
+	public forgotPasswordSubmit(
+		username: string,
+		code: string,
+		password: string,
+		clientMetadata: ClientMetaData = this._config.clientMetadata
+	): Promise&lt;string&gt; {
+		if (!this.userPool) {
+			return this.rejectNoUserPool();
+		}
+		if (!username) {
+			return this.rejectAuthError(AuthErrorTypes.EmptyUsername);
+		}
+		if (!code) {
+			return this.rejectAuthError(AuthErrorTypes.EmptyCode);
+		}
+		if (!password) {
+			return this.rejectAuthError(AuthErrorTypes.EmptyPassword);
+		}
+
+		const user = this.createCognitoUser(username);
+		return new Promise((resolve, reject) =&gt; {
+			user.confirmPassword(
+				code,
+				password,
+				{
+					onSuccess: success =&gt; {
+						dispatchAuthEvent(
+							&#x27;forgotPasswordSubmit&#x27;,
+							user,
+							`${username} forgotPasswordSubmit successful`
+						);
+						resolve(success);
+						return;
+					},
+					onFailure: err =&gt; {
+						dispatchAuthEvent(
+							&#x27;forgotPasswordSubmit_failure&#x27;,
+							err,
+							`${username} forgotPasswordSubmit failed`
+						);
+						reject(err);
+						return;
+					},
+				},
+				clientMetadata
+			);
+		});
+	}
+
+	/**
+	 * Get user information
+	 * @async
+	 * @return {Object }- current User&#x27;s information
+	 */
+	public async currentUserInfo() {
+		const source = this.Credentials.getCredSource();
+
+		if (!source || source === &#x27;aws&#x27; || source === &#x27;userPool&#x27;) {
+			const user = await this.currentUserPoolUser().catch(err =&gt;
+				logger.error(err)
+			);
+			if (!user) {
+				return null;
+			}
+
+			try {
+				const attributes = await this.userAttributes(user);
+				const userAttrs: object = this.attributesToObject(attributes);
+				let credentials = null;
+				try {
+					credentials = await this.currentCredentials();
+				} catch (e) {
+					logger.debug(
+						&#x27;Failed to retrieve credentials while getting current user info&#x27;,
+						e
+					);
+				}
+
+				const info = {
+					id: credentials ? credentials.identityId : undefined,
+					username: user.getUsername(),
+					attributes: userAttrs,
+				};
+				return info;
+			} catch (err) {
+				logger.error(&#x27;currentUserInfo error&#x27;, err);
+				return {};
+			}
+		}
+
+		if (source === &#x27;federated&#x27;) {
+			const user = this.user;
+			return user ? user : {};
+		}
+	}
+
+	public async federatedSignIn(
+		options?: FederatedSignInOptions
+	): Promise&lt;ICredentials&gt;;
+	public async federatedSignIn(
+		provider: LegacyProvider,
+		response: FederatedResponse,
+		user: FederatedUser
+	): Promise&lt;ICredentials&gt;;
+	public async federatedSignIn(
+		options?: FederatedSignInOptionsCustom
+	): Promise&lt;ICredentials&gt;;
+	public async federatedSignIn(
+		providerOrOptions:
+			| LegacyProvider
+			| FederatedSignInOptions
+			| FederatedSignInOptionsCustom,
+		response?: FederatedResponse,
+		user?: FederatedUser
+	): Promise&lt;ICredentials&gt; {
+		if (!this._config.identityPoolId &amp;&amp; !this._config.userPoolId) {
+			throw new Error(
+				`Federation requires either a User Pool or Identity Pool in config`
+			);
+		}
+
+		// Ensure backwards compatability
+		if (typeof providerOrOptions === &#x27;undefined&#x27;) {
+			if (this._config.identityPoolId &amp;&amp; !this._config.userPoolId) {
+				throw new Error(
+					`Federation with Identity Pools requires tokens passed as arguments`
+				);
+			}
+		}
+
+		if (
+			isFederatedSignInOptions(providerOrOptions) ||
+			isFederatedSignInOptionsCustom(providerOrOptions) ||
+			hasCustomState(providerOrOptions) ||
+			typeof providerOrOptions === &#x27;undefined&#x27;
+		) {
+			const options = providerOrOptions || {
+				provider: CognitoHostedUIIdentityProvider.Cognito,
+			};
+			const provider = isFederatedSignInOptions(options)
+				? options.provider
+				: (options as FederatedSignInOptionsCustom).customProvider;
+
+			const customState = isFederatedSignInOptions(options)
+				? options.customState
+				: (options as FederatedSignInOptionsCustom).customState;
+
+			if (this._config.userPoolId) {
+				const client_id = isCognitoHostedOpts(this._config.oauth)
+					? this._config.userPoolWebClientId
+					: this._config.oauth.clientID;
+				/*Note: Invenstigate automatically adding trailing slash */
+				const redirect_uri = isCognitoHostedOpts(this._config.oauth)
+					? this._config.oauth.redirectSignIn
+					: this._config.oauth.redirectUri;
+
+				this._oAuthHandler.oauthSignIn(
+					this._config.oauth.responseType,
+					this._config.oauth.domain,
+					redirect_uri,
+					client_id,
+					provider,
+					customState
+				);
+			}
+		} else {
+			const provider = providerOrOptions;
+			// To check if the user is already logged in
+			try {
+				const loggedInUser = JSON.stringify(
+					JSON.parse(this._storage.getItem(&#x27;aws-amplify-federatedInfo&#x27;)).user
+				);
+				if (loggedInUser) {
+					logger.warn(`There is already a signed in user: ${loggedInUser} in your app.
+																	You should not call Auth.federatedSignIn method again as it may cause unexpected behavior.`);
+				}
+			} catch (e) {}
+
+			const { token, identity_id, expires_at } = response;
+			// Because this.Credentials.set would update the user info with identity id
+			// So we need to retrieve the user again.
+			const credentials = await this.Credentials.set(
+				{ provider, token, identity_id, user, expires_at },
+				&#x27;federation&#x27;
+			);
+			const currentUser = await this.currentAuthenticatedUser();
+			dispatchAuthEvent(
+				&#x27;signIn&#x27;,
+				currentUser,
+				`A user ${currentUser.username} has been signed in`
+			);
+			logger.debug(&#x27;federated sign in credentials&#x27;, credentials);
+			return credentials;
+		}
+	}
+
+	/**
+	 * Used to complete the OAuth flow with or without the Cognito Hosted UI
+	 * @param {String} URL - optional parameter for customers to pass in the response URL
+	 */
+	private async _handleAuthResponse(URL?: string) {
+		if (this.oAuthFlowInProgress) {
+			logger.debug(`Skipping URL ${URL} current flow in progress`);
+			return;
+		}
+
+		try {
+			this.oAuthFlowInProgress = true;
+			if (!this._config.userPoolId) {
+				throw new Error(
+					`OAuth responses require a User Pool defined in config`
+				);
+			}
+
+			dispatchAuthEvent(
+				&#x27;parsingCallbackUrl&#x27;,
+				{ url: URL },
+				`The callback url is being parsed`
+			);
+
+			const currentUrl =
+				URL || (browserOrNode().isBrowser ? window.location.href : &#x27;&#x27;);
+
+			const hasCodeOrError = !!(parse(currentUrl).query || &#x27;&#x27;)
+				.split(&#x27;&amp;&#x27;)
+				.map(entry =&gt; entry.split(&#x27;=&#x27;))
+				.find(([k]) =&gt; k === &#x27;code&#x27; || k === &#x27;error&#x27;);
+
+			const hasTokenOrError = !!(parse(currentUrl).hash || &#x27;#&#x27;)
+				.substr(1)
+				.split(&#x27;&amp;&#x27;)
+				.map(entry =&gt; entry.split(&#x27;=&#x27;))
+				.find(([k]) =&gt; k === &#x27;access_token&#x27; || k === &#x27;error&#x27;);
+
+			if (hasCodeOrError || hasTokenOrError) {
+				this._storage.setItem(&#x27;amplify-redirected-from-hosted-ui&#x27;, &#x27;true&#x27;);
+				try {
+					const { accessToken, idToken, refreshToken, state } =
+						await this._oAuthHandler.handleAuthResponse(currentUrl);
+					const session = new CognitoUserSession({
+						IdToken: new CognitoIdToken({ IdToken: idToken }),
+						RefreshToken: new CognitoRefreshToken({
+							RefreshToken: refreshToken,
+						}),
+						AccessToken: new CognitoAccessToken({
+							AccessToken: accessToken,
+						}),
+					});
+
+					let credentials;
+					// Get AWS Credentials &amp; store if Identity Pool is defined
+					if (this._config.identityPoolId) {
+						credentials = await this.Credentials.set(session, &#x27;session&#x27;);
+						logger.debug(&#x27;AWS credentials&#x27;, credentials);
+					}
+
+					/*
+				Prior to the request we do sign the custom state along with the state we set. This check will verify
+				if there is a dash indicated when setting custom state from the request. If a dash is contained
+				then there is custom state present on the state string.
+				*/
+					const isCustomStateIncluded = /-/.test(state);
+
+					/*
+				The following is to create a user for the Cognito Identity SDK to store the tokens
+				When we remove this SDK later that logic will have to be centralized in our new version
+				*/
+					//#region
+					const currentUser = this.createCognitoUser(
+						session.getIdToken().decodePayload()[&#x27;cognito:username&#x27;]
+					);
+
+					// This calls cacheTokens() in Cognito SDK
+					currentUser.setSignInUserSession(session);
+
+					if (window &amp;&amp; typeof window.history !== &#x27;undefined&#x27;) {
+						window.history.replaceState(
+							{},
+							null,
+							(this._config.oauth as AwsCognitoOAuthOpts).redirectSignIn
+						);
+					}
+
+					dispatchAuthEvent(
+						&#x27;signIn&#x27;,
+						currentUser,
+						`A user ${currentUser.getUsername()} has been signed in`
+					);
+					dispatchAuthEvent(
+						&#x27;cognitoHostedUI&#x27;,
+						currentUser,
+						`A user ${currentUser.getUsername()} has been signed in via Cognito Hosted UI`
+					);
+
+					if (isCustomStateIncluded) {
+						const customState = state.split(&#x27;-&#x27;).splice(1).join(&#x27;-&#x27;);
+
+						dispatchAuthEvent(
+							&#x27;customOAuthState&#x27;,
+							urlSafeDecode(customState),
+							`State for user ${currentUser.getUsername()}`
+						);
+					}
+					//#endregion
+
+					return credentials;
+				} catch (err) {
+					logger.debug(&#x27;Error in cognito hosted auth response&#x27;, err);
+
+					// Just like a successful handling of `?code`, replace the window history to &quot;dispose&quot; of the `code`.
+					// Otherwise, reloading the page will throw errors as the `code` has already been spent.
+					if (window &amp;&amp; typeof window.history !== &#x27;undefined&#x27;) {
+						window.history.replaceState(
+							{},
+							null,
+							(this._config.oauth as AwsCognitoOAuthOpts).redirectSignIn
+						);
+					}
+
+					dispatchAuthEvent(
+						&#x27;signIn_failure&#x27;,
+						err,
+						`The OAuth response flow failed`
+					);
+					dispatchAuthEvent(
+						&#x27;cognitoHostedUI_failure&#x27;,
+						err,
+						`A failure occurred when returning to the Cognito Hosted UI`
+					);
+					dispatchAuthEvent(
+						&#x27;customState_failure&#x27;,
+						err,
+						`A failure occurred when returning state`
+					);
+				}
+			}
+		} finally {
+			this.oAuthFlowInProgress = false;
+		}
+	}
+
+	/**
+	 * Compact version of credentials
+	 * @param {Object} credentials
+	 * @return {Object} - Credentials
+	 */
+	public essentialCredentials(credentials): ICredentials {
+		return {
+			accessKeyId: credentials.accessKeyId,
+			sessionToken: credentials.sessionToken,
+			secretAccessKey: credentials.secretAccessKey,
+			identityId: credentials.identityId,
+			authenticated: credentials.authenticated,
+		};
+	}
+
+	private attributesToObject(attributes) {
+		const obj = {};
+		if (attributes) {
+			attributes.map(attribute =&gt; {
+				if (
+					attribute.Name === &#x27;email_verified&#x27; ||
+					attribute.Name === &#x27;phone_number_verified&#x27;
+				) {
+					obj[attribute.Name] =
+						this.isTruthyString(attribute.Value) || attribute.Value === true;
+				} else {
+					obj[attribute.Name] = attribute.Value;
+				}
+			});
+		}
+		return obj;
+	}
+
+	private isTruthyString(value: any): boolean {
+		return (
+			typeof value.toLowerCase === &#x27;function&#x27; &amp;&amp; value.toLowerCase() === &#x27;true&#x27;
+		);
+	}
+
+	private createCognitoUser(username: string): CognitoUser {
+		const userData: ICognitoUserData = {
+			Username: username,
+			Pool: this.userPool,
+		};
+		userData.Storage = this._storage;
+
+		const { authenticationFlowType } = this._config;
+
+		const user = new CognitoUser(userData);
+		if (authenticationFlowType) {
+			user.setAuthenticationFlowType(authenticationFlowType);
+		}
+		return user;
+	}
+
+	private _isValidAuthStorage(obj) {
+		// We need to check if the obj has the functions of Storage
+		return (
+			!!obj &amp;&amp;
+			typeof obj.getItem === &#x27;function&#x27; &amp;&amp;
+			typeof obj.setItem === &#x27;function&#x27; &amp;&amp;
+			typeof obj.removeItem === &#x27;function&#x27; &amp;&amp;
+			typeof obj.clear === &#x27;function&#x27;
+		);
+	}
+
+	private noUserPoolErrorHandler(config: AuthOptions): AuthErrorTypes {
+		if (config) {
+			if (!config.userPoolId || !config.identityPoolId) {
+				return AuthErrorTypes.MissingAuthConfig;
+			}
+		}
+		return AuthErrorTypes.NoConfig;
+	}
+
+	private rejectAuthError(type: AuthErrorTypes): Promise&lt;never&gt; {
+		return Promise.reject(new AuthError(type));
+	}
+
+	private rejectNoUserPool(): Promise&lt;never&gt; {
+		const type = this.noUserPoolErrorHandler(this._config);
+		return Promise.reject(new NoUserPoolError(type));
+	}
+
+	public async rememberDevice(): Promise&lt;string | AuthError&gt; {
+		let currUser;
+
+		try {
+			currUser = await this.currentUserPoolUser();
+		} catch (error) {
+			logger.debug(&#x27;The user is not authenticated by the error&#x27;, error);
+			return Promise.reject(&#x27;The user is not authenticated&#x27;);
+		}
+
+		currUser.getCachedDeviceKeyAndPassword();
+		return new Promise((res, rej) =&gt; {
+			currUser.setDeviceStatusRemembered({
+				onSuccess: data =&gt; {
+					res(data);
+				},
+				onFailure: err =&gt; {
+					if (err.code === &#x27;InvalidParameterException&#x27;) {
+						rej(new AuthError(AuthErrorTypes.DeviceConfig));
+					} else if (err.code === &#x27;NetworkError&#x27;) {
+						rej(new AuthError(AuthErrorTypes.NetworkError));
+					} else {
+						rej(err);
+					}
+				},
+			});
+		});
+	}
+
+	public async forgetDevice(): Promise&lt;void&gt; {
+		let currUser;
+
+		try {
+			currUser = await this.currentUserPoolUser();
+		} catch (error) {
+			logger.debug(&#x27;The user is not authenticated by the error&#x27;, error);
+			return Promise.reject(&#x27;The user is not authenticated&#x27;);
+		}
+
+		currUser.getCachedDeviceKeyAndPassword();
+		return new Promise((res, rej) =&gt; {
+			currUser.forgetDevice({
+				onSuccess: data =&gt; {
+					res(data);
+				},
+				onFailure: err =&gt; {
+					if (err.code === &#x27;InvalidParameterException&#x27;) {
+						rej(new AuthError(AuthErrorTypes.DeviceConfig));
+					} else if (err.code === &#x27;NetworkError&#x27;) {
+						rej(new AuthError(AuthErrorTypes.NetworkError));
+					} else {
+						rej(err);
+					}
+				},
+			});
+		});
+	}
+
+	public async fetchDevices(): Promise&lt;IAuthDevice[]&gt; {
+		let currUser;
+
+		try {
+			currUser = await this.currentUserPoolUser();
+		} catch (error) {
+			logger.debug(&#x27;The user is not authenticated by the error&#x27;, error);
+			throw new Error(&#x27;The user is not authenticated&#x27;);
+		}
+
+		currUser.getCachedDeviceKeyAndPassword();
+		return new Promise((res, rej) =&gt; {
+			const cb = {
+				onSuccess(data) {
+					const deviceList: IAuthDevice[] = data.Devices.map(device =&gt; {
+						const deviceName =
+							device.DeviceAttributes.find(
+								({ Name }) =&gt; Name === &#x27;device_name&#x27;
+							) || {};
+
+						const deviceInfo: IAuthDevice = {
+							id: device.DeviceKey,
+							name: deviceName.Value,
+						};
+						return deviceInfo;
+					});
+					res(deviceList);
+				},
+				onFailure: err =&gt; {
+					if (err.code === &#x27;InvalidParameterException&#x27;) {
+						rej(new AuthError(AuthErrorTypes.DeviceConfig));
+					} else if (err.code === &#x27;NetworkError&#x27;) {
+						rej(new AuthError(AuthErrorTypes.NetworkError));
+					} else {
+						rej(err);
+					}
+				},
+			};
+			currUser.listDevices(MAX_DEVICES, null, cb);
+		});
+	}
+}
+
+export const Auth = new AuthClass(null);
+
+Amplify.register(Auth);
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:90,&quot;character&quot;:42,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:31,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:107,&quot;character&quot;:9,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:109,&quot;character&quot;:9,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:110,&quot;character&quot;:9,&quot;text&quot;:&quot;_storageSync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:130,&quot;character&quot;:10,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:130,&quot;character&quot;:19,&quot;text&quot;:&quot;setItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:133,&quot;character&quot;:10,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:133,&quot;character&quot;:19,&quot;text&quot;:&quot;removeItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:136,&quot;character&quot;:10,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:136,&quot;character&quot;:19,&quot;text&quot;:&quot;setItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:146,&quot;character&quot;:11,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:147,&quot;character&quot;:7,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:149,&quot;character&quot;:8,&quot;text&quot;:&quot;conf&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:152,&quot;character&quot;:31,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:153,&quot;character&quot;:3,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:166,&quot;character&quot;:3,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:172,&quot;character&quot;:27,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:174,&quot;character&quot;:9,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:174,&quot;character&quot;:20,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:174,&quot;character&quot;:27,&quot;text&quot;:&quot;ssr&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:183,&quot;character&quot;:8,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:186,&quot;character&quot;:7,&quot;text&quot;:&quot;_storageSync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:187,&quot;character&quot;:18,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:188,&quot;character&quot;:8,&quot;text&quot;:&quot;_storageSync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:188,&quot;character&quot;:28,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:197,&quot;character&quot;:31,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:3,&quot;text&quot;:&quot;storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:17,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:216,&quot;character&quot;:8,&quot;text&quot;:&quot;cognitoHostedUIConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:219,&quot;character&quot;:19,&quot;text&quot;:&quot;awsCognito&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:222,&quot;character&quot;:6,&quot;text&quot;:&quot;cognitoHostedUIConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:223,&quot;character&quot;:9,&quot;text&quot;:&quot;cognitoAuthParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:227,&quot;character&quot;:5,&quot;text&quot;:&quot;domain&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:227,&quot;character&quot;:13,&quot;text&quot;:&quot;cognitoHostedUIConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:228,&quot;character&quot;:5,&quot;text&quot;:&quot;scopes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:228,&quot;character&quot;:13,&quot;text&quot;:&quot;cognitoHostedUIConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:229,&quot;character&quot;:5,&quot;text&quot;:&quot;redirectSignIn&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:229,&quot;character&quot;:21,&quot;text&quot;:&quot;cognitoHostedUIConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:230,&quot;character&quot;:5,&quot;text&quot;:&quot;redirectSignOut&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:230,&quot;character&quot;:22,&quot;text&quot;:&quot;cognitoHostedUIConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:5,&quot;text&quot;:&quot;responseType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:19,&quot;text&quot;:&quot;cognitoHostedUIConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:5,&quot;text&quot;:&quot;Storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:19,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:233,&quot;character&quot;:5,&quot;text&quot;:&quot;urlOpener&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:233,&quot;character&quot;:16,&quot;text&quot;:&quot;cognitoHostedUIConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:234,&quot;character&quot;:5,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:236,&quot;character&quot;:4,&quot;text&quot;:&quot;cognitoHostedUIConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:240,&quot;character&quot;:12,&quot;text&quot;:&quot;cognitoAuthParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:240,&quot;character&quot;:30,&quot;text&quot;:&quot;scopes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:242,&quot;character&quot;:21,&quot;text&quot;:&quot;cognitoAuthParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:242,&quot;character&quot;:39,&quot;text&quot;:&quot;cognitoClientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:249,&quot;character&quot;:18,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:250,&quot;character&quot;:25,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:254,&quot;character&quot;:21,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:267,&quot;character&quot;:15,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:278,&quot;character&quot;:9,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:278,&quot;character&quot;:18,&quot;text&quot;:&quot;removeItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:280,&quot;character&quot;:8,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:280,&quot;character&quot;:17,&quot;text&quot;:&quot;removeItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:286,&quot;character&quot;:44,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:287,&quot;character&quot;:7,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:296,&quot;character&quot;:26,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:319,&quot;character&quot;:6,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:347,&quot;character&quot;:4,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:348,&quot;character&quot;:27,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:349,&quot;character&quot;:4,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:349,&quot;character&quot;:34,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:376,&quot;character&quot;:9,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:376,&quot;character&quot;:18,&quot;text&quot;:&quot;setItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:435,&quot;character&quot;:2,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:436,&quot;character&quot;:2,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:445,&quot;character&quot;:6,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:445,&quot;character&quot;:11,&quot;text&quot;:&quot;userConfirmed&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:455,&quot;character&quot;:25,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:456,&quot;character&quot;:7,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:456,&quot;character&quot;:15,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:464,&quot;character&quot;:7,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:464,&quot;character&quot;:16,&quot;text&quot;:&quot;setItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:474,&quot;character&quot;:9,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:474,&quot;character&quot;:18,&quot;text&quot;:&quot;removeItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:496,&quot;character&quot;:5,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:499,&quot;character&quot;:7,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:507,&quot;character&quot;:12,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:507,&quot;character&quot;:21,&quot;text&quot;:&quot;removeItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:509,&quot;character&quot;:11,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:509,&quot;character&quot;:20,&quot;text&quot;:&quot;removeItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:511,&quot;character&quot;:5,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:512,&quot;character&quot;:19,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:513,&quot;character&quot;:11,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:513,&quot;character&quot;:20,&quot;text&quot;:&quot;removeItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:518,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:517,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:550,&quot;character&quot;:6,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:552,&quot;character&quot;:3,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:553,&quot;character&quot;:26,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:554,&quot;character&quot;:3,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:554,&quot;character&quot;:33,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:560,&quot;character&quot;:5,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:560,&quot;character&quot;:10,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:561,&quot;character&quot;:9,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:562,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:566,&quot;character&quot;:7,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:576,&quot;character&quot;:12,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:576,&quot;character&quot;:21,&quot;text&quot;:&quot;removeItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:578,&quot;character&quot;:14,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:587,&quot;character&quot;:8,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:587,&quot;character&quot;:20,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:587,&quot;character&quot;:29,&quot;text&quot;:&quot;getItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:588,&quot;character&quot;:9,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:588,&quot;character&quot;:16,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:599,&quot;character&quot;:48,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:610,&quot;character&quot;:37,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:614,&quot;character&quot;:13,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:630,&quot;character&quot;:48,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:636,&quot;character&quot;:6,&quot;text&quot;:&quot;username&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:637,&quot;character&quot;:6,&quot;text&quot;:&quot;password&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:642,&quot;character&quot;:3,&quot;text&quot;:&quot;username&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:643,&quot;character&quot;:3,&quot;text&quot;:&quot;password&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:650,&quot;character&quot;:3,&quot;text&quot;:&quot;username&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:651,&quot;character&quot;:3,&quot;text&quot;:&quot;password&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:656,&quot;character&quot;:7,&quot;text&quot;:&quot;username&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:665,&quot;character&quot;:6,&quot;text&quot;:&quot;password&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:681,&quot;character&quot;:12,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:682,&quot;character&quot;:11,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:695,&quot;character&quot;:52,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:694,&quot;character&quot;:13,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:700,&quot;character&quot;:12,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:701,&quot;character&quot;:11,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:701,&quot;character&quot;:18,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:704,&quot;character&quot;:7,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:707,&quot;character&quot;:14,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:709,&quot;character&quot;:55,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:710,&quot;character&quot;:13,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:708,&quot;character&quot;:14,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:714,&quot;character&quot;:14,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:715,&quot;character&quot;:35,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:718,&quot;character&quot;:5,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:721,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:723,&quot;character&quot;:20,&quot;text&quot;:&quot;challengeParam&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:729,&quot;character&quot;:32,&quot;text&quot;:&quot;challengeParam&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:735,&quot;character&quot;:29,&quot;text&quot;:&quot;challengeParam&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:741,&quot;character&quot;:25,&quot;text&quot;:&quot;userAttributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:741,&quot;character&quot;:41,&quot;text&quot;:&quot;requiredAttributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:745,&quot;character&quot;:5,&quot;text&quot;:&quot;userAttributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:746,&quot;character&quot;:5,&quot;text&quot;:&quot;requiredAttributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:750,&quot;character&quot;:33,&quot;text&quot;:&quot;challengeParam&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:756,&quot;character&quot;:34,&quot;text&quot;:&quot;challengeParam&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:785,&quot;character&quot;:5,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:787,&quot;character&quot;:14,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:789,&quot;character&quot;:5,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:791,&quot;character&quot;:13,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:825,&quot;character&quot;:22,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:827,&quot;character&quot;:3,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:827,&quot;character&quot;:8,&quot;text&quot;:&quot;getMFAOptions&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:827,&quot;character&quot;:23,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:827,&quot;character&quot;:28,&quot;text&quot;:&quot;mfaOptions&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:828,&quot;character&quot;:8,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:829,&quot;character&quot;:44,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:830,&quot;character&quot;:9,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:833,&quot;character&quot;:44,&quot;text&quot;:&quot;mfaOptions&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:846,&quot;character&quot;:2,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:851,&quot;character&quot;:9,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:851,&quot;character&quot;:39,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:854,&quot;character&quot;:3,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:854,&quot;character&quot;:8,&quot;text&quot;:&quot;getUserData&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:855,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:855,&quot;character&quot;:16,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:856,&quot;character&quot;:9,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:857,&quot;character&quot;:51,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:858,&quot;character&quot;:32,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:864,&quot;character&quot;:40,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:864,&quot;character&quot;:44,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:864,&quot;character&quot;:95,&quot;text&quot;:&quot;cleanUpError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:864,&quot;character&quot;:108,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:861,&quot;character&quot;:16,&quot;text&quot;:&quot;cleanUpError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:870,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:874,&quot;character&quot;:11,&quot;text&quot;:&quot;mfaType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:874,&quot;character&quot;:50,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:875,&quot;character&quot;:10,&quot;text&quot;:&quot;mfaType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:883,&quot;character&quot;:19,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:888,&quot;character&quot;:33,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:889,&quot;character&quot;:6,&quot;text&quot;:&quot;ret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:890,&quot;character&quot;:8,&quot;text&quot;:&quot;preferredMFA&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:890,&quot;character&quot;:23,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:890,&quot;character&quot;:28,&quot;text&quot;:&quot;PreferredMfaSetting&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:893,&quot;character&quot;:6,&quot;text&quot;:&quot;preferredMFA&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:894,&quot;character&quot;:3,&quot;text&quot;:&quot;ret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:894,&quot;character&quot;:9,&quot;text&quot;:&quot;preferredMFA&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:897,&quot;character&quot;:9,&quot;text&quot;:&quot;mfaList&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:897,&quot;character&quot;:19,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:897,&quot;character&quot;:24,&quot;text&quot;:&quot;UserMFASettingList&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:898,&quot;character&quot;:8,&quot;text&quot;:&quot;mfaList&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:903,&quot;character&quot;:10,&quot;text&quot;:&quot;MFAOptions&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:903,&quot;character&quot;:23,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:903,&quot;character&quot;:28,&quot;text&quot;:&quot;MFAOptions&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:904,&quot;character&quot;:8,&quot;text&quot;:&quot;MFAOptions&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:905,&quot;character&quot;:5,&quot;text&quot;:&quot;ret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:907,&quot;character&quot;:5,&quot;text&quot;:&quot;ret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:909,&quot;character&quot;:14,&quot;text&quot;:&quot;mfaList&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:909,&quot;character&quot;:22,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:910,&quot;character&quot;:4,&quot;text&quot;:&quot;ret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:912,&quot;character&quot;:53,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:915,&quot;character&quot;:9,&quot;text&quot;:&quot;ret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:918,&quot;character&quot;:22,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:918,&quot;character&quot;:28,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:920,&quot;character&quot;:3,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:920,&quot;character&quot;:8,&quot;text&quot;:&quot;getUserData&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:920,&quot;character&quot;:27,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:920,&quot;character&quot;:32,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:921,&quot;character&quot;:8,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:922,&quot;character&quot;:46,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:923,&quot;character&quot;:31,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:929,&quot;character&quot;:39,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:929,&quot;character&quot;:43,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:929,&quot;character&quot;:94,&quot;text&quot;:&quot;cleanUpError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:929,&quot;character&quot;:107,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:926,&quot;character&quot;:15,&quot;text&quot;:&quot;cleanUpError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:935,&quot;character&quot;:9,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:940,&quot;character&quot;:6,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:951,&quot;character&quot;:2,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:954,&quot;character&quot;:8,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:954,&quot;character&quot;:38,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:956,&quot;character&quot;:43,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:958,&quot;character&quot;:3,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:960,&quot;character&quot;:6,&quot;text&quot;:&quot;smsMfaSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:961,&quot;character&quot;:6,&quot;text&quot;:&quot;totpMfaSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:966,&quot;character&quot;:4,&quot;text&quot;:&quot;totpMfaSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:973,&quot;character&quot;:4,&quot;text&quot;:&quot;smsMfaSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:980,&quot;character&quot;:10,&quot;text&quot;:&quot;currentMFAType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:981,&quot;character&quot;:8,&quot;text&quot;:&quot;currentMFAType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:983,&quot;character&quot;:15,&quot;text&quot;:&quot;currentMFAType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:984,&quot;character&quot;:5,&quot;text&quot;:&quot;smsMfaSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:988,&quot;character&quot;:15,&quot;text&quot;:&quot;currentMFAType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:989,&quot;character&quot;:5,&quot;text&quot;:&quot;totpMfaSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1000,&quot;character&quot;:21,&quot;text&quot;:&quot;mfaType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1001,&quot;character&quot;:10,&quot;text&quot;:&quot;mfaType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1002,&quot;character&quot;:7,&quot;text&quot;:&quot;smsMfaSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1006,&quot;character&quot;:17,&quot;text&quot;:&quot;mfaType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1007,&quot;character&quot;:7,&quot;text&quot;:&quot;totpMfaSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1022,&quot;character&quot;:3,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1022,&quot;character&quot;:8,&quot;text&quot;:&quot;setUserMfaPreference&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1023,&quot;character&quot;:4,&quot;text&quot;:&quot;smsMfaSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1024,&quot;character&quot;:4,&quot;text&quot;:&quot;totpMfaSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1025,&quot;character&quot;:5,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1025,&quot;character&quot;:10,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1026,&quot;character&quot;:9,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1027,&quot;character&quot;:52,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1028,&quot;character&quot;:17,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1030,&quot;character&quot;:42,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1033,&quot;character&quot;:5,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1033,&quot;character&quot;:10,&quot;text&quot;:&quot;getUserData&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1034,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1034,&quot;character&quot;:18,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1035,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1036,&quot;character&quot;:49,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1037,&quot;character&quot;:34,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1043,&quot;character&quot;:42,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1043,&quot;character&quot;:46,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1043,&quot;character&quot;:97,&quot;text&quot;:&quot;cleanUpError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1043,&quot;character&quot;:110,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1040,&quot;character&quot;:18,&quot;text&quot;:&quot;cleanUpError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1049,&quot;character&quot;:19,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1056,&quot;character&quot;:7,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1111,&quot;character&quot;:18,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1113,&quot;character&quot;:3,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1113,&quot;character&quot;:8,&quot;text&quot;:&quot;associateSoftwareToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1114,&quot;character&quot;:15,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1115,&quot;character&quot;:51,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1116,&quot;character&quot;:9,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1119,&quot;character&quot;:25,&quot;text&quot;:&quot;secretCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1120,&quot;character&quot;:51,&quot;text&quot;:&quot;secretCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1135,&quot;character&quot;:2,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1138,&quot;character&quot;:42,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1140,&quot;character&quot;:3,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1140,&quot;character&quot;:8,&quot;text&quot;:&quot;verifySoftwareToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1141,&quot;character&quot;:15,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1142,&quot;character&quot;:44,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1143,&quot;character&quot;:9,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1146,&quot;character&quot;:15,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1149,&quot;character&quot;:6,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1150,&quot;character&quot;:16,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1150,&quot;character&quot;:21,&quot;text&quot;:&quot;getUsername&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1152,&quot;character&quot;:45,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1166,&quot;character&quot;:2,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1169,&quot;character&quot;:48,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1177,&quot;character&quot;:3,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1177,&quot;character&quot;:8,&quot;text&quot;:&quot;sendMFACode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1180,&quot;character&quot;:22,&quot;text&quot;:&quot;session&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1181,&quot;character&quot;:19,&quot;text&quot;:&quot;session&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1184,&quot;character&quot;:47,&quot;text&quot;:&quot;session&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1187,&quot;character&quot;:54,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1186,&quot;character&quot;:15,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1189,&quot;character&quot;:12,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1189,&quot;character&quot;:19,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1193,&quot;character&quot;:8,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1194,&quot;character&quot;:18,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1194,&quot;character&quot;:23,&quot;text&quot;:&quot;getUsername&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1196,&quot;character&quot;:15,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1199,&quot;character&quot;:16,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1200,&quot;character&quot;:45,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1201,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1211,&quot;character&quot;:2,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1213,&quot;character&quot;:2,&quot;text&quot;:&quot;requiredAttributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1214,&quot;character&quot;:48,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1222,&quot;character&quot;:3,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1222,&quot;character&quot;:8,&quot;text&quot;:&quot;completeNewPasswordChallenge&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1224,&quot;character&quot;:4,&quot;text&quot;:&quot;requiredAttributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1226,&quot;character&quot;:22,&quot;text&quot;:&quot;session&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1227,&quot;character&quot;:19,&quot;text&quot;:&quot;session&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1230,&quot;character&quot;:47,&quot;text&quot;:&quot;session&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1233,&quot;character&quot;:54,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1232,&quot;character&quot;:15,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1235,&quot;character&quot;:12,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1235,&quot;character&quot;:19,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1238,&quot;character&quot;:8,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1239,&quot;character&quot;:18,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1239,&quot;character&quot;:23,&quot;text&quot;:&quot;getUsername&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1241,&quot;character&quot;:15,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1244,&quot;character&quot;:16,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1245,&quot;character&quot;:50,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1248,&quot;character&quot;:7,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1249,&quot;character&quot;:15,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1251,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1253,&quot;character&quot;:19,&quot;text&quot;:&quot;challengeName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1253,&quot;character&quot;:34,&quot;text&quot;:&quot;challengeParam&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1255,&quot;character&quot;:6,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1255,&quot;character&quot;:30,&quot;text&quot;:&quot;challengeName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1256,&quot;character&quot;:6,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1256,&quot;character&quot;:31,&quot;text&quot;:&quot;challengeParam&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1257,&quot;character&quot;:14,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1259,&quot;character&quot;:16,&quot;text&quot;:&quot;challengeName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1259,&quot;character&quot;:31,&quot;text&quot;:&quot;challengeParam&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1260,&quot;character&quot;:39,&quot;text&quot;:&quot;challengeName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1261,&quot;character&quot;:6,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1261,&quot;character&quot;:30,&quot;text&quot;:&quot;challengeName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1262,&quot;character&quot;:6,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1262,&quot;character&quot;:31,&quot;text&quot;:&quot;challengeParam&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1263,&quot;character&quot;:14,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1265,&quot;character&quot;:20,&quot;text&quot;:&quot;challengeName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1265,&quot;character&quot;:35,&quot;text&quot;:&quot;challengeParam&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1266,&quot;character&quot;:39,&quot;text&quot;:&quot;challengeName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1267,&quot;character&quot;:6,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1267,&quot;character&quot;:30,&quot;text&quot;:&quot;challengeName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1268,&quot;character&quot;:6,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1268,&quot;character&quot;:31,&quot;text&quot;:&quot;challengeParam&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1269,&quot;character&quot;:14,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1283,&quot;character&quot;:2,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1285,&quot;character&quot;:48,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1296,&quot;character&quot;:3,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1296,&quot;character&quot;:8,&quot;text&quot;:&quot;sendCustomChallengeAnswer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1310,&quot;character&quot;:2,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1315,&quot;character&quot;:20,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1316,&quot;character&quot;:4,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1316,&quot;character&quot;:9,&quot;text&quot;:&quot;deleteAttributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1316,&quot;character&quot;:43,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1316,&quot;character&quot;:48,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1317,&quot;character&quot;:9,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1318,&quot;character&quot;:20,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1334,&quot;character&quot;:14,&quot;text&quot;:&quot;_storageSync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1336,&quot;character&quot;:57,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1335,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1342,&quot;character&quot;:8,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1342,&quot;character&quot;:17,&quot;text&quot;:&quot;getItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1352,&quot;character&quot;:28,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1352,&quot;character&quot;:33,&quot;text&quot;:&quot;session&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1353,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1354,&quot;character&quot;:54,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1355,&quot;character&quot;:33,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1361,&quot;character&quot;:41,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1361,&quot;character&quot;:45,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1361,&quot;character&quot;:96,&quot;text&quot;:&quot;cleanUpError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1361,&quot;character&quot;:109,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1358,&quot;character&quot;:17,&quot;text&quot;:&quot;cleanUpError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1367,&quot;character&quot;:18,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1379,&quot;character&quot;:14,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1382,&quot;character&quot;:18,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1392,&quot;character&quot;:16,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1415,&quot;character&quot;:2,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1417,&quot;character&quot;:48,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1422,&quot;character&quot;:20,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1432,&quot;character&quot;:4,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1432,&quot;character&quot;:9,&quot;text&quot;:&quot;updateAttributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1434,&quot;character&quot;:6,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1434,&quot;character&quot;:11,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1435,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1436,&quot;character&quot;:21,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1452,&quot;character&quot;:2,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1455,&quot;character&quot;:20,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1456,&quot;character&quot;:4,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1456,&quot;character&quot;:9,&quot;text&quot;:&quot;getUserAttributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1456,&quot;character&quot;:28,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1456,&quot;character&quot;:33,&quot;text&quot;:&quot;attributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1457,&quot;character&quot;:9,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1458,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1467,&quot;character&quot;:24,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1469,&quot;character&quot;:29,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1494,&quot;character&quot;:28,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1496,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1497,&quot;character&quot;:40,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1503,&quot;character&quot;:2,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1506,&quot;character&quot;:27,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1512,&quot;character&quot;:2,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1515,&quot;character&quot;:27,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1521,&quot;character&quot;:2,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1523,&quot;character&quot;:33,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1527,&quot;character&quot;:2,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1530,&quot;character&quot;:27,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1535,&quot;character&quot;:2,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1538,&quot;character&quot;:27,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1546,&quot;character&quot;:8,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1546,&quot;character&quot;:17,&quot;text&quot;:&quot;getItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1550,&quot;character&quot;:26,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1552,&quot;character&quot;:28,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1553,&quot;character&quot;:32,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1554,&quot;character&quot;:28,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1555,&quot;character&quot;:35,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1556,&quot;character&quot;:35,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1562,&quot;character&quot;:7,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1565,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1573,&quot;character&quot;:37,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1589,&quot;character&quot;:8,&quot;text&quot;:&quot;_storageSync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1590,&quot;character&quot;:5,&quot;text&quot;:&quot;then&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1605,&quot;character&quot;:39,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1606,&quot;character&quot;:16,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1609,&quot;character&quot;:9,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1610,&quot;character&quot;:9,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1612,&quot;character&quot;:48,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1631,&quot;character&quot;:11,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1631,&quot;character&quot;:41,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1635,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1635,&quot;character&quot;:18,&quot;text&quot;:&quot;session&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1636,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1637,&quot;character&quot;:55,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1638,&quot;character&quot;:34,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1644,&quot;character&quot;:42,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1644,&quot;character&quot;:46,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1644,&quot;character&quot;:97,&quot;text&quot;:&quot;cleanUpError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1644,&quot;character&quot;:110,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1641,&quot;character&quot;:18,&quot;text&quot;:&quot;cleanUpError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1650,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1661,&quot;character&quot;:13,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1661,&quot;character&quot;:43,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1664,&quot;character&quot;:15,&quot;text&quot;:&quot;scope&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1664,&quot;character&quot;:30,&quot;text&quot;:&quot;session&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1664,&quot;character&quot;:38,&quot;text&quot;:&quot;getAccessToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1664,&quot;character&quot;:55,&quot;text&quot;:&quot;decodePayload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1665,&quot;character&quot;:11,&quot;text&quot;:&quot;scope&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1665,&quot;character&quot;:17,&quot;text&quot;:&quot;split&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1665,&quot;character&quot;:28,&quot;text&quot;:&quot;includes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1676,&quot;character&quot;:100,&quot;text&quot;:&quot;cleanUpError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1676,&quot;character&quot;:113,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1673,&quot;character&quot;:21,&quot;text&quot;:&quot;cleanUpError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1703,&quot;character&quot;:24,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1716,&quot;character&quot;:5,&quot;text&quot;:&quot;catch&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1716,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1717,&quot;character&quot;:59,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1718,&quot;character&quot;:16,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1736,&quot;character&quot;:6,&quot;text&quot;:&quot;federatedUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1738,&quot;character&quot;:14,&quot;text&quot;:&quot;_storageSync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1740,&quot;character&quot;:57,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1741,&quot;character&quot;:9,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1739,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1745,&quot;character&quot;:9,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1746,&quot;character&quot;:9,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1746,&quot;character&quot;:18,&quot;text&quot;:&quot;getItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1748,&quot;character&quot;:7,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1749,&quot;character&quot;:4,&quot;text&quot;:&quot;federatedUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1750,&quot;character&quot;:8,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1750,&quot;character&quot;:22,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1751,&quot;character&quot;:5,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1751,&quot;character&quot;:12,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1751,&quot;character&quot;:26,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1754,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1758,&quot;character&quot;:6,&quot;text&quot;:&quot;federatedUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1759,&quot;character&quot;:8,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1759,&quot;character&quot;:15,&quot;text&quot;:&quot;federatedUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1760,&quot;character&quot;:65,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1761,&quot;character&quot;:15,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1764,&quot;character&quot;:7,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1766,&quot;character&quot;:4,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1768,&quot;character&quot;:8,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1774,&quot;character&quot;:63,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1767,&quot;character&quot;:12,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1777,&quot;character&quot;:8,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1777,&quot;character&quot;:15,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1778,&quot;character&quot;:15,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1797,&quot;character&quot;:10,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1799,&quot;character&quot;:19,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1804,&quot;character&quot;:13,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1805,&quot;character&quot;:57,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1806,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1810,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1811,&quot;character&quot;:52,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1812,&quot;character&quot;:9,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1823,&quot;character&quot;:20,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1824,&quot;character&quot;:7,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1828,&quot;character&quot;:8,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1828,&quot;character&quot;:38,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1831,&quot;character&quot;:55,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1832,&quot;character&quot;:3,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1832,&quot;character&quot;:8,&quot;text&quot;:&quot;getSession&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1833,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1833,&quot;character&quot;:16,&quot;text&quot;:&quot;session&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1834,&quot;character&quot;:9,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1835,&quot;character&quot;:58,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1836,&quot;character&quot;:32,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1842,&quot;character&quot;:40,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1842,&quot;character&quot;:44,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1842,&quot;character&quot;:95,&quot;text&quot;:&quot;cleanUpError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1842,&quot;character&quot;:108,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1839,&quot;character&quot;:16,&quot;text&quot;:&quot;cleanUpError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1848,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1851,&quot;character&quot;:54,&quot;text&quot;:&quot;session&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1856,&quot;character&quot;:6,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1869,&quot;character&quot;:14,&quot;text&quot;:&quot;_storageSync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1871,&quot;character&quot;:57,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1872,&quot;character&quot;:9,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1870,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1876,&quot;character&quot;:6,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1878,&quot;character&quot;:3,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1879,&quot;character&quot;:9,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1879,&quot;character&quot;:18,&quot;text&quot;:&quot;getItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1882,&quot;character&quot;:73,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1881,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1885,&quot;character&quot;:6,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1887,&quot;character&quot;:49,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1913,&quot;character&quot;:2,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1915,&quot;character&quot;:48,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1918,&quot;character&quot;:3,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1918,&quot;character&quot;:8,&quot;text&quot;:&quot;getAttributeVerificationCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1921,&quot;character&quot;:15,&quot;text&quot;:&quot;success&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1924,&quot;character&quot;:15,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1925,&quot;character&quot;:20,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1941,&quot;character&quot;:2,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1950,&quot;character&quot;:3,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1950,&quot;character&quot;:8,&quot;text&quot;:&quot;verifyAttribute&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1951,&quot;character&quot;:14,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1955,&quot;character&quot;:14,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1956,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1967,&quot;character&quot;:9,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1967,&quot;character&quot;:42,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1983,&quot;character&quot;:9,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1983,&quot;character&quot;:48,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1988,&quot;character&quot;:2,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1991,&quot;character&quot;:14,&quot;text&quot;:&quot;_storageSync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1993,&quot;character&quot;:57,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1994,&quot;character&quot;:9,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1992,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1999,&quot;character&quot;:8,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:1999,&quot;character&quot;:17,&quot;text&quot;:&quot;getItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2003,&quot;character&quot;:41,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2006,&quot;character&quot;:10,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2006,&quot;character&quot;:40,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2008,&quot;character&quot;:4,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2008,&quot;character&quot;:9,&quot;text&quot;:&quot;getSession&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2009,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2009,&quot;character&quot;:17,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2010,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2011,&quot;character&quot;:54,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2012,&quot;character&quot;:33,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2018,&quot;character&quot;:41,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2018,&quot;character&quot;:45,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2018,&quot;character&quot;:96,&quot;text&quot;:&quot;cleanUpError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2018,&quot;character&quot;:109,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2015,&quot;character&quot;:17,&quot;text&quot;:&quot;cleanUpError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2024,&quot;character&quot;:18,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2026,&quot;character&quot;:6,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2026,&quot;character&quot;:11,&quot;text&quot;:&quot;globalSignOut&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2027,&quot;character&quot;:18,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2035,&quot;character&quot;:18,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2036,&quot;character&quot;:47,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2037,&quot;character&quot;:19,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2041,&quot;character&quot;:7,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2044,&quot;character&quot;:34,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2045,&quot;character&quot;:4,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2045,&quot;character&quot;:9,&quot;text&quot;:&quot;signOut&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2058,&quot;character&quot;:11,&quot;text&quot;:&quot;reason&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2074,&quot;character&quot;:47,&quot;text&quot;:&quot;reason&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2089,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2110,&quot;character&quot;:36,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2111,&quot;character&quot;:7,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2127,&quot;character&quot;:2,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2130,&quot;character&quot;:48,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2133,&quot;character&quot;:20,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2134,&quot;character&quot;:4,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2134,&quot;character&quot;:9,&quot;text&quot;:&quot;changePassword&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2137,&quot;character&quot;:6,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2137,&quot;character&quot;:11,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2138,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2139,&quot;character&quot;:47,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2140,&quot;character&quot;:21,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2158,&quot;character&quot;:48,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2185,&quot;character&quot;:28,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2191,&quot;character&quot;:14,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2211,&quot;character&quot;:48,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2262,&quot;character&quot;:8,&quot;text&quot;:&quot;source&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2264,&quot;character&quot;:7,&quot;text&quot;:&quot;source&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2264,&quot;character&quot;:17,&quot;text&quot;:&quot;source&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2264,&quot;character&quot;:37,&quot;text&quot;:&quot;source&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2265,&quot;character&quot;:9,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2265,&quot;character&quot;:55,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2266,&quot;character&quot;:17,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2268,&quot;character&quot;:8,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2273,&quot;character&quot;:49,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2275,&quot;character&quot;:8,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2277,&quot;character&quot;:5,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2281,&quot;character&quot;:6,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2278,&quot;character&quot;:13,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2286,&quot;character&quot;:5,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2286,&quot;character&quot;:9,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2286,&quot;character&quot;:23,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2286,&quot;character&quot;:35,&quot;text&quot;:&quot;identityId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2287,&quot;character&quot;:5,&quot;text&quot;:&quot;username&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2287,&quot;character&quot;:15,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2287,&quot;character&quot;:20,&quot;text&quot;:&quot;getUsername&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2292,&quot;character&quot;:42,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2291,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2297,&quot;character&quot;:6,&quot;text&quot;:&quot;source&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2298,&quot;character&quot;:9,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2298,&quot;character&quot;:21,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2299,&quot;character&quot;:10,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2299,&quot;character&quot;:17,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2377,&quot;character&quot;:21,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2377,&quot;character&quot;:30,&quot;text&quot;:&quot;getItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2377,&quot;character&quot;:68,&quot;text&quot;:&quot;user&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2383,&quot;character&quot;:12,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2392,&quot;character&quot;:9,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2395,&quot;character&quot;:4,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2396,&quot;character&quot;:14,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2396,&quot;character&quot;:26,&quot;text&quot;:&quot;username&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2442,&quot;character&quot;:9,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2442,&quot;character&quot;:18,&quot;text&quot;:&quot;setItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2444,&quot;character&quot;:13,&quot;text&quot;:&quot;accessToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2444,&quot;character&quot;:26,&quot;text&quot;:&quot;idToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2444,&quot;character&quot;:35,&quot;text&quot;:&quot;refreshToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2456,&quot;character&quot;:9,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2459,&quot;character&quot;:6,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2460,&quot;character&quot;:38,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2512,&quot;character&quot;:12,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2514,&quot;character&quot;:59,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2528,&quot;character&quot;:6,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2533,&quot;character&quot;:6,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2538,&quot;character&quot;:6,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2513,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2553,&quot;character&quot;:29,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2555,&quot;character&quot;:16,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2555,&quot;character&quot;:28,&quot;text&quot;:&quot;accessKeyId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2556,&quot;character&quot;:17,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2556,&quot;character&quot;:29,&quot;text&quot;:&quot;sessionToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2557,&quot;character&quot;:20,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2557,&quot;character&quot;:32,&quot;text&quot;:&quot;secretAccessKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2558,&quot;character&quot;:15,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2558,&quot;character&quot;:27,&quot;text&quot;:&quot;identityId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2559,&quot;character&quot;:18,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2559,&quot;character&quot;:30,&quot;text&quot;:&quot;authenticated&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2563,&quot;character&quot;:28,&quot;text&quot;:&quot;attributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2565,&quot;character&quot;:6,&quot;text&quot;:&quot;attributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2566,&quot;character&quot;:3,&quot;text&quot;:&quot;attributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2566,&quot;character&quot;:14,&quot;text&quot;:&quot;map&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2566,&quot;character&quot;:18,&quot;text&quot;:&quot;attribute&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2568,&quot;character&quot;:5,&quot;text&quot;:&quot;attribute&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2568,&quot;character&quot;:15,&quot;text&quot;:&quot;Name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2569,&quot;character&quot;:5,&quot;text&quot;:&quot;attribute&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2569,&quot;character&quot;:15,&quot;text&quot;:&quot;Name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2571,&quot;character&quot;:9,&quot;text&quot;:&quot;attribute&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2571,&quot;character&quot;:19,&quot;text&quot;:&quot;Name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2572,&quot;character&quot;:26,&quot;text&quot;:&quot;attribute&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2572,&quot;character&quot;:36,&quot;text&quot;:&quot;Value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2572,&quot;character&quot;:46,&quot;text&quot;:&quot;attribute&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2572,&quot;character&quot;:56,&quot;text&quot;:&quot;Value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2574,&quot;character&quot;:9,&quot;text&quot;:&quot;attribute&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2574,&quot;character&quot;:19,&quot;text&quot;:&quot;Name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2574,&quot;character&quot;:27,&quot;text&quot;:&quot;attribute&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2574,&quot;character&quot;:37,&quot;text&quot;:&quot;Value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2581,&quot;character&quot;:24,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2583,&quot;character&quot;:10,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2583,&quot;character&quot;:16,&quot;text&quot;:&quot;toLowerCase&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2583,&quot;character&quot;:46,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2583,&quot;character&quot;:52,&quot;text&quot;:&quot;toLowerCase&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2592,&quot;character&quot;:26,&quot;text&quot;:&quot;_storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2603,&quot;character&quot;:29,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2606,&quot;character&quot;:5,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2607,&quot;character&quot;:10,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2607,&quot;character&quot;:14,&quot;text&quot;:&quot;getItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2608,&quot;character&quot;:10,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2608,&quot;character&quot;:14,&quot;text&quot;:&quot;setItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2609,&quot;character&quot;:10,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2609,&quot;character&quot;:14,&quot;text&quot;:&quot;removeItem&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2610,&quot;character&quot;:10,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2610,&quot;character&quot;:14,&quot;text&quot;:&quot;clear&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2633,&quot;character&quot;:6,&quot;text&quot;:&quot;currUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2636,&quot;character&quot;:3,&quot;text&quot;:&quot;currUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2638,&quot;character&quot;:62,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2637,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2642,&quot;character&quot;:2,&quot;text&quot;:&quot;currUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2642,&quot;character&quot;:11,&quot;text&quot;:&quot;getCachedDeviceKeyAndPassword&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2644,&quot;character&quot;:3,&quot;text&quot;:&quot;currUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2644,&quot;character&quot;:12,&quot;text&quot;:&quot;setDeviceStatusRemembered&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2645,&quot;character&quot;:15,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2648,&quot;character&quot;:15,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2649,&quot;character&quot;:9,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2649,&quot;character&quot;:13,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2651,&quot;character&quot;:16,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2651,&quot;character&quot;:20,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2654,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2662,&quot;character&quot;:6,&quot;text&quot;:&quot;currUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2665,&quot;character&quot;:3,&quot;text&quot;:&quot;currUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2667,&quot;character&quot;:62,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2666,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2671,&quot;character&quot;:2,&quot;text&quot;:&quot;currUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2671,&quot;character&quot;:11,&quot;text&quot;:&quot;getCachedDeviceKeyAndPassword&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2673,&quot;character&quot;:3,&quot;text&quot;:&quot;currUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2673,&quot;character&quot;:12,&quot;text&quot;:&quot;forgetDevice&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2674,&quot;character&quot;:15,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2677,&quot;character&quot;:15,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2678,&quot;character&quot;:9,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2678,&quot;character&quot;:13,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2680,&quot;character&quot;:16,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2680,&quot;character&quot;:20,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2683,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2691,&quot;character&quot;:6,&quot;text&quot;:&quot;currUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2694,&quot;character&quot;:3,&quot;text&quot;:&quot;currUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2696,&quot;character&quot;:62,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2695,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2700,&quot;character&quot;:2,&quot;text&quot;:&quot;currUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2700,&quot;character&quot;:11,&quot;text&quot;:&quot;getCachedDeviceKeyAndPassword&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2703,&quot;character&quot;:14,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2704,&quot;character&quot;:39,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2704,&quot;character&quot;:44,&quot;text&quot;:&quot;Devices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2704,&quot;character&quot;:52,&quot;text&quot;:&quot;map&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2704,&quot;character&quot;:56,&quot;text&quot;:&quot;device&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2705,&quot;character&quot;:12,&quot;text&quot;:&quot;deviceName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2706,&quot;character&quot;:7,&quot;text&quot;:&quot;device&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2706,&quot;character&quot;:14,&quot;text&quot;:&quot;DeviceAttributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2706,&quot;character&quot;:31,&quot;text&quot;:&quot;find&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2707,&quot;character&quot;:11,&quot;text&quot;:&quot;Name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2707,&quot;character&quot;:22,&quot;text&quot;:&quot;Name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2711,&quot;character&quot;:11,&quot;text&quot;:&quot;device&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2711,&quot;character&quot;:18,&quot;text&quot;:&quot;DeviceKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2712,&quot;character&quot;:13,&quot;text&quot;:&quot;deviceName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2712,&quot;character&quot;:24,&quot;text&quot;:&quot;Value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2718,&quot;character&quot;:15,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2719,&quot;character&quot;:9,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2719,&quot;character&quot;:13,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2721,&quot;character&quot;:16,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2721,&quot;character&quot;:20,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2724,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2728,&quot;character&quot;:3,&quot;text&quot;:&quot;currUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Auth.ts&quot;,&quot;line&quot;:2728,&quot;character&quot;:12,&quot;text&quot;:&quot;listDevices&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:24 GMT</p>
+    </body>
+  </html>
+  

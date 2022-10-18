@@ -1,0 +1,190 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Interactions.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Interactions.ts</td><td class="">76.27%</td><td class="">0%</td><td class="">236</td><td class="">180</td><td class="">56</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import {
+	InteractionsOptions,
+	InteractionsProviders,
+	InteractionsProvider,
+	InteractionsMessage,
+	InteractionsResponse,
+} from &#x27;./types&#x27;;
+import { Amplify, ConsoleLogger as Logger } from &#x27;@aws-amplify/core&#x27;;
+import { AWSLexProvider } from &#x27;./Providers&#x27;;
+const logger = new Logger(&#x27;Interactions&#x27;);
+
+export class InteractionsClass {
+	private _options: InteractionsOptions;
+
+	private _pluggables: InteractionsProviders;
+
+	/**
+	 * Initialize PubSub with AWS configurations
+	 *
+	 * @param {InteractionsOptions} options - Configuration object for Interactions
+	 */
+	constructor(options: InteractionsOptions = {}) {
+		this._options = options;
+		logger.debug(&#x27;Interactions Options&#x27;, this._options);
+		this._pluggables = {};
+	}
+
+	public getModuleName() {
+		return &#x27;Interactions&#x27;;
+	}
+
+	/**
+	 *
+	 * @param {InteractionsOptions} options - Configuration object for Interactions
+	 * @return {InteractionsOptions} - The current configuration
+	 */
+	public configure(options: InteractionsOptions): InteractionsOptions {
+		const opt = options ? options.Interactions || options : {};
+		logger.debug(&#x27;configure Interactions&#x27;, { opt });
+		this._options = { bots: {}, ...opt, ...opt.Interactions };
+
+		const aws_bots_config = this._options.aws_bots_config;
+		const bots_config = this._options.bots;
+
+		if (!Object.keys(bots_config).length &amp;&amp; aws_bots_config) {
+			// Convert aws_bots_config to bots object
+			if (Array.isArray(aws_bots_config)) {
+				aws_bots_config.forEach(bot =&gt; {
+					this._options.bots[bot.name] = bot;
+				});
+			}
+		}
+
+		// configure bots to their specific providers
+		Object.keys(bots_config).forEach(botKey =&gt; {
+			const bot = bots_config[botKey];
+			const providerName = bot.providerName || &#x27;AWSLexProvider&#x27;;
+
+			// add default provider if required
+			if (
+				!this._pluggables.AWSLexProvider &amp;&amp;
+				providerName === &#x27;AWSLexProvider&#x27;
+			) {
+				this._pluggables.AWSLexProvider = new AWSLexProvider();
+			}
+
+			// configure bot with it&#x27;s respective provider
+			if (this._pluggables[providerName]) {
+				this._pluggables[providerName].configure({ [bot.name]: bot });
+			} else {
+				logger.debug(
+					`bot ${bot.name} was not configured as ${providerName} provider was not found`
+				);
+			}
+		});
+
+		return this._options;
+	}
+
+	public addPluggable(pluggable: InteractionsProvider) {
+		if (pluggable &amp;&amp; pluggable.getCategory() === &#x27;Interactions&#x27;) {
+			if (!this._pluggables[pluggable.getProviderName()]) {
+				// configure bots for the new plugin
+				Object.keys(this._options.bots)
+					.filter(
+						botKey =&gt;
+							this._options.bots[botKey].providerName ===
+							pluggable.getProviderName()
+					)
+					.forEach(botKey =&gt; {
+						const bot = this._options.bots[botKey];
+						pluggable.configure({ [bot.name]: bot });
+					});
+
+				this._pluggables[pluggable.getProviderName()] = pluggable;
+				return;
+			} else {
+				throw new Error(
+					&#x27;Pluggable &#x27; + pluggable.getProviderName() + &#x27; already plugged&#x27;
+				);
+			}
+		}
+	}
+
+	public async send(
+		botname: string,
+		message: string
+	): Promise&lt;InteractionsResponse&gt;;
+	public async send(
+		botname: string,
+		message: InteractionsMessage
+	): Promise&lt;InteractionsResponse&gt;;
+	public async send(
+		botname: string,
+		message: object
+	): Promise&lt;InteractionsResponse&gt;;
+	public async send(
+		botname: string,
+		message: string | object
+	): Promise&lt;InteractionsResponse&gt; {
+		if (!this._options.bots || !this._options.bots[botname]) {
+			return Promise.reject(&#x27;Bot &#x27; + botname + &#x27; does not exist&#x27;);
+		}
+
+		const botProvider =
+			this._options.bots[botname].providerName || &#x27;AWSLexProvider&#x27;;
+
+		if (!this._pluggables[botProvider]) {
+			return Promise.reject(
+				&#x27;Bot &#x27; +
+					botProvider +
+					&#x27; does not have valid pluggin did you try addPluggable first?&#x27;
+			);
+		}
+		return await this._pluggables[botProvider].sendMessage(botname, message);
+	}
+
+	public onComplete(
+		botname: string,
+		callback: (err, confirmation) =&gt; void
+	): void {
+		if (!this._options.bots || !this._options.bots[botname]) {
+			throw new Error(&#x27;Bot &#x27; + botname + &#x27; does not exist&#x27;);
+		}
+		const botProvider =
+			this._options.bots[botname].providerName || &#x27;AWSLexProvider&#x27;;
+
+		if (!this._pluggables[botProvider]) {
+			throw new Error(
+				&#x27;Bot &#x27; +
+					botProvider +
+					&#x27; does not have valid pluggin did you try addPluggable first?&#x27;
+			);
+		}
+		this._pluggables[botProvider].onComplete(botname, callback);
+	}
+}
+
+export const Interactions = new InteractionsClass();
+Amplify.register(Interactions);
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:49,&quot;character&quot;:8,&quot;text&quot;:&quot;opt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:49,&quot;character&quot;:32,&quot;text&quot;:&quot;Interactions&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:50,&quot;character&quot;:43,&quot;text&quot;:&quot;opt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:51,&quot;character&quot;:41,&quot;text&quot;:&quot;opt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:51,&quot;character&quot;:45,&quot;text&quot;:&quot;Interactions&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:53,&quot;character&quot;:8,&quot;text&quot;:&quot;aws_bots_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:53,&quot;character&quot;:40,&quot;text&quot;:&quot;aws_bots_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:54,&quot;character&quot;:8,&quot;text&quot;:&quot;bots_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:54,&quot;character&quot;:36,&quot;text&quot;:&quot;bots&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:56,&quot;character&quot;:42,&quot;text&quot;:&quot;aws_bots_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:58,&quot;character&quot;:21,&quot;text&quot;:&quot;aws_bots_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:28,&quot;text&quot;:&quot;bot&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:19,&quot;text&quot;:&quot;bots&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:24,&quot;text&quot;:&quot;bot&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:28,&quot;text&quot;:&quot;name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:36,&quot;text&quot;:&quot;bot&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:67,&quot;character&quot;:9,&quot;text&quot;:&quot;bot&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:67,&quot;character&quot;:15,&quot;text&quot;:&quot;bots_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:68,&quot;character&quot;:9,&quot;text&quot;:&quot;providerName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:68,&quot;character&quot;:24,&quot;text&quot;:&quot;bot&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:68,&quot;character&quot;:28,&quot;text&quot;:&quot;providerName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:4,&quot;text&quot;:&quot;providerName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:79,&quot;character&quot;:24,&quot;text&quot;:&quot;providerName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:80,&quot;character&quot;:21,&quot;text&quot;:&quot;providerName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:80,&quot;character&quot;:48,&quot;text&quot;:&quot;bot&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:80,&quot;character&quot;:52,&quot;text&quot;:&quot;name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:80,&quot;character&quot;:59,&quot;text&quot;:&quot;bot&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:83,&quot;character&quot;:12,&quot;text&quot;:&quot;bot&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:83,&quot;character&quot;:16,&quot;text&quot;:&quot;name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:83,&quot;character&quot;:46,&quot;text&quot;:&quot;providerName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:95,&quot;character&quot;:30,&quot;text&quot;:&quot;bots&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:98,&quot;character&quot;:21,&quot;text&quot;:&quot;bots&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:98,&quot;character&quot;:34,&quot;text&quot;:&quot;providerName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:102,&quot;character&quot;:12,&quot;text&quot;:&quot;bot&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:102,&quot;character&quot;:32,&quot;text&quot;:&quot;bots&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:103,&quot;character&quot;:29,&quot;text&quot;:&quot;bot&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:103,&quot;character&quot;:33,&quot;text&quot;:&quot;name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:103,&quot;character&quot;:40,&quot;text&quot;:&quot;bot&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:132,&quot;character&quot;:21,&quot;text&quot;:&quot;bots&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:132,&quot;character&quot;:44,&quot;text&quot;:&quot;bots&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:136,&quot;character&quot;:8,&quot;text&quot;:&quot;botProvider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:137,&quot;character&quot;:17,&quot;text&quot;:&quot;bots&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:137,&quot;character&quot;:31,&quot;text&quot;:&quot;providerName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:139,&quot;character&quot;:24,&quot;text&quot;:&quot;botProvider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:142,&quot;character&quot;:5,&quot;text&quot;:&quot;botProvider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:146,&quot;character&quot;:32,&quot;text&quot;:&quot;botProvider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:151,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:151,&quot;character&quot;:18,&quot;text&quot;:&quot;confirmation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:153,&quot;character&quot;:21,&quot;text&quot;:&quot;bots&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:153,&quot;character&quot;:44,&quot;text&quot;:&quot;bots&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:156,&quot;character&quot;:8,&quot;text&quot;:&quot;botProvider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:157,&quot;character&quot;:17,&quot;text&quot;:&quot;bots&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:157,&quot;character&quot;:31,&quot;text&quot;:&quot;providerName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:159,&quot;character&quot;:24,&quot;text&quot;:&quot;botProvider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:162,&quot;character&quot;:5,&quot;text&quot;:&quot;botProvider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Interactions.ts&quot;,&quot;line&quot;:166,&quot;character&quot;:19,&quot;text&quot;:&quot;botProvider&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:22 GMT</p>
+    </body>
+  </html>
+  

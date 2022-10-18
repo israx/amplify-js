@@ -1,0 +1,452 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>AmazonAIConvertPredictionsProvider.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Providers/AmazonAIConvertPredictionsProvider.ts</td><td class="">75.25%</td><td class="">0%</td><td class="">594</td><td class="">447</td><td class="">147</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import { AbstractConvertPredictionsProvider } from &#x27;../types/Providers/AbstractConvertPredictionsProvider&#x27;;
+import {
+	TranslateClient,
+	TranslateTextCommand,
+} from &#x27;@aws-sdk/client-translate&#x27;;
+import { PollyClient, SynthesizeSpeechCommand } from &#x27;@aws-sdk/client-polly&#x27;;
+import {
+	TranslateTextInput,
+	TextToSpeechInput,
+	SpeechToTextInput,
+	TranslateTextOutput,
+	TextToSpeechOutput,
+	SpeechToTextOutput,
+	isBytesSource,
+} from &#x27;../types&#x27;;
+import {
+	Credentials,
+	ConsoleLogger as Logger,
+	Signer,
+	getAmplifyUserAgent,
+} from &#x27;@aws-amplify/core&#x27;;
+import {
+	EventStreamMarshaller,
+	MessageHeaderValue,
+} from &#x27;@aws-sdk/eventstream-marshaller&#x27;;
+import { fromUtf8, toUtf8 } from &#x27;@aws-sdk/util-utf8-node&#x27;;
+
+const logger = new Logger(&#x27;AmazonAIConvertPredictionsProvider&#x27;);
+const eventBuilder = new EventStreamMarshaller(toUtf8, fromUtf8);
+
+const LANGUAGES_CODE_IN_8KHZ = [&#x27;fr-FR&#x27;, &#x27;en-AU&#x27;, &#x27;en-GB&#x27;, &#x27;fr-CA&#x27;];
+
+export class AmazonAIConvertPredictionsProvider extends AbstractConvertPredictionsProvider {
+	private translateClient: TranslateClient;
+	private pollyClient: PollyClient;
+	constructor() {
+		super();
+	}
+
+	getProviderName() {
+		return &#x27;AmazonAIConvertPredictionsProvider&#x27;;
+	}
+
+	protected async translateText(
+		input: TranslateTextInput
+	): Promise&lt;TranslateTextOutput&gt; {
+		logger.debug(&#x27;Starting translation&#x27;);
+		const {
+			translateText: {
+				defaults: { sourceLanguage = &#x27;&#x27;, targetLanguage = &#x27;&#x27; } = {},
+				region = &#x27;&#x27;,
+			} = {},
+		} = this._config;
+
+		if (!region) {
+			return Promise.reject(&#x27;region not configured for transcription&#x27;);
+		}
+
+		const credentials = await Credentials.get();
+		if (!credentials) {
+			return Promise.reject(&#x27;No credentials&#x27;);
+		}
+		const sourceLanguageCode =
+			input.translateText.source.language || sourceLanguage;
+		const targetLanguageCode =
+			input.translateText.targetLanguage || targetLanguage;
+		if (!sourceLanguageCode || !targetLanguageCode) {
+			return Promise.reject(&#x27;Please provide both source and target language&#x27;);
+		}
+
+		this.translateClient = new TranslateClient({
+			region,
+			credentials,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+		const translateTextCommand = new TranslateTextCommand({
+			SourceLanguageCode: sourceLanguageCode,
+			TargetLanguageCode: targetLanguageCode,
+			Text: input.translateText.source.text,
+		});
+		try {
+			const data = await this.translateClient.send(translateTextCommand);
+			return {
+				text: data.TranslatedText,
+				language: data.TargetLanguageCode,
+			} as TranslateTextOutput;
+		} catch (err) {
+			return Promise.reject(err);
+		}
+	}
+
+	protected async convertTextToSpeech(
+		input: TextToSpeechInput
+	): Promise&lt;TextToSpeechOutput&gt; {
+		const credentials = await Credentials.get();
+		if (!credentials) {
+			return Promise.reject(&#x27;No credentials&#x27;);
+		}
+		const {
+			speechGenerator: { defaults: { VoiceId = &#x27;&#x27; } = {}, region = &#x27;&#x27; } = {},
+		} = this._config;
+
+		if (!input.textToSpeech.source) {
+			return Promise.reject(&#x27;Source needs to be provided in the input&#x27;);
+		}
+		const voiceId = input.textToSpeech.voiceId || VoiceId;
+
+		if (!region) {
+			return Promise.reject(
+				&#x27;Region was undefined. Did you enable speech generator using amplify CLI?&#x27;
+			);
+		}
+
+		if (!voiceId) {
+			return Promise.reject(&#x27;VoiceId was undefined.&#x27;);
+		}
+
+		this.pollyClient = new PollyClient({
+			region,
+			credentials,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+		const synthesizeSpeechCommand = new SynthesizeSpeechCommand({
+			OutputFormat: &#x27;mp3&#x27;,
+			Text: input.textToSpeech.source.text,
+			VoiceId: voiceId,
+			TextType: &#x27;text&#x27;,
+			SampleRate: &#x27;24000&#x27;,
+			// tslint:disable-next-line: align
+		});
+		try {
+			const data = await this.pollyClient.send(synthesizeSpeechCommand);
+			const response = new Response(data.AudioStream as ReadableStream);
+			const arrayBuffer = await response.arrayBuffer();
+			const blob = new Blob([arrayBuffer], {
+				type: data.ContentType,
+			});
+			const url = URL.createObjectURL(blob);
+			return {
+				speech: { url },
+				audioStream: arrayBuffer,
+				text: input.textToSpeech.source.text,
+			} as TextToSpeechOutput;
+		} catch (err) {
+			return Promise.reject(err);
+		}
+	}
+
+	protected async convertSpeechToText(
+		input: SpeechToTextInput
+	): Promise&lt;SpeechToTextOutput&gt; {
+		try {
+			logger.debug(&#x27;starting transcription..&#x27;);
+			const credentials = await Credentials.get();
+			if (!credentials) {
+				return Promise.reject(&#x27;No credentials&#x27;);
+			}
+			const {
+				transcription: {
+					defaults: { language: languageCode = &#x27;&#x27; } = {},
+					region = &#x27;&#x27;,
+				} = {},
+			} = this._config;
+			if (!region) {
+				return Promise.reject(&#x27;region not configured for transcription&#x27;);
+			}
+			if (!languageCode) {
+				return Promise.reject(
+					&#x27;languageCode not configured or provided for transcription&#x27;
+				);
+			}
+			const {
+				transcription: { source, language = languageCode },
+			} = input;
+
+			if (isBytesSource(source)) {
+				const connection = await this.openConnectionWithTranscribe({
+					credentials,
+					region,
+					languageCode: language,
+				});
+
+				try {
+					const fullText = await this.sendDataToTranscribe({
+						connection,
+						raw: source.bytes,
+						languageCode: language,
+					});
+					return {
+						transcription: {
+							fullText,
+						},
+					};
+				} catch (err) {
+					return Promise.reject(err);
+				}
+			}
+
+			return Promise.reject(
+				&#x27;Source types other than byte source are not supported.&#x27;
+			);
+		} catch (err) {
+			return Promise.reject(err.name + &#x27;: &#x27; + err.message);
+		}
+	}
+
+	public static serializeDataFromTranscribe(message) {
+		let decodedMessage = &#x27;&#x27;;
+		const transcribeMessage = eventBuilder.unmarshall(
+			Buffer.from(message.data)
+		);
+		const transcribeMessageJson = JSON.parse(toUtf8(transcribeMessage.body));
+		if (transcribeMessage.headers[&#x27;:message-type&#x27;].value === &#x27;exception&#x27;) {
+			logger.debug(
+				&#x27;exception&#x27;,
+				JSON.stringify(transcribeMessageJson.Message, null, 2)
+			);
+			throw new Error(transcribeMessageJson.Message);
+		} else if (transcribeMessage.headers[&#x27;:message-type&#x27;].value === &#x27;event&#x27;) {
+			if (transcribeMessageJson.Transcript.Results.length &gt; 0) {
+				if (
+					transcribeMessageJson.Transcript.Results[0].Alternatives.length &gt; 0
+				) {
+					if (
+						transcribeMessageJson.Transcript.Results[0].Alternatives[0]
+							.Transcript.length &gt; 0
+					) {
+						if (
+							transcribeMessageJson.Transcript.Results[0].IsPartial === false
+						) {
+							decodedMessage =
+								transcribeMessageJson.Transcript.Results[0].Alternatives[0]
+									.Transcript + &#x27;\n&#x27;;
+							logger.debug({ decodedMessage });
+						} else {
+							logger.debug({
+								transcript:
+									transcribeMessageJson.Transcript.Results[0].Alternatives[0],
+							});
+						}
+					}
+				}
+			}
+		}
+		return decodedMessage;
+	}
+
+	private sendDataToTranscribe({
+		connection,
+		raw,
+		languageCode,
+	}): Promise&lt;string&gt; {
+		return new Promise((res, rej) =&gt; {
+			let fullText = &#x27;&#x27;;
+			connection.onmessage = message =&gt; {
+				try {
+					const decodedMessage = AmazonAIConvertPredictionsProvider.serializeDataFromTranscribe(
+						message
+					);
+					if (decodedMessage) {
+						fullText += decodedMessage + &#x27; &#x27;;
+					}
+				} catch (err) {
+					logger.debug(err);
+					rej(err.message);
+				}
+			};
+
+			connection.onerror = errorEvent =&gt; {
+				logger.debug({ errorEvent });
+				rej(&#x27;failed to transcribe, network error&#x27;);
+			};
+
+			connection.onclose = closeEvent =&gt; {
+				logger.debug({ closeEvent });
+				return res(fullText.trim());
+			};
+
+			logger.debug({ raw });
+
+			if (Array.isArray(raw)) {
+				for (let i = 0; i &lt; raw.length - 1023; i += 1024) {
+					const data = raw.slice(i, i + 1024);
+					this.sendEncodedDataToTranscribe(connection, data, languageCode);
+				}
+			} else {
+				// If Buffer
+				this.sendEncodedDataToTranscribe(connection, raw, languageCode);
+			}
+
+			// sending end frame
+			const endFrameEventMessage = this.getAudioEventMessage(Buffer.from([]));
+			const endFrameBinary = eventBuilder.marshall(endFrameEventMessage);
+			connection.send(endFrameBinary);
+		});
+	}
+
+	private sendEncodedDataToTranscribe(connection, data, languageCode) {
+		const downsampledBuffer = this.downsampleBuffer({
+			buffer: data,
+			outputSampleRate: LANGUAGES_CODE_IN_8KHZ.includes(languageCode)
+				? 8000
+				: 16000,
+		});
+		const pcmEncodedBuffer = this.pcmEncode(downsampledBuffer);
+		const audioEventMessage = this.getAudioEventMessage(
+			Buffer.from(pcmEncodedBuffer)
+		);
+		const binary = eventBuilder.marshall(audioEventMessage);
+		connection.send(binary);
+	}
+
+	private getAudioEventMessage(buffer) {
+		const audioEventMessage = {
+			body: buffer as Uint8Array,
+			headers: {
+				&#x27;:message-type&#x27;: {
+					type: &#x27;string&#x27;,
+					value: &#x27;event&#x27;,
+				} as MessageHeaderValue,
+				&#x27;:event-type&#x27;: {
+					type: &#x27;string&#x27;,
+					value: &#x27;AudioEvent&#x27;,
+				} as MessageHeaderValue,
+			},
+		};
+
+		return audioEventMessage;
+	}
+
+	private pcmEncode(input) {
+		let offset = 0;
+		const buffer = new ArrayBuffer(input.length * 2);
+		const view = new DataView(buffer);
+		for (let i = 0; i &lt; input.length; i++, offset += 2) {
+			const s = Math.max(-1, Math.min(1, input[i]));
+			view.setInt16(offset, s &lt; 0 ? s * 0x8000 : s * 0x7fff, true);
+		}
+		return buffer;
+	}
+
+	private inputSampleRate = 44100;
+
+	private downsampleBuffer({ buffer, outputSampleRate = 16000 }) {
+		if (outputSampleRate === this.inputSampleRate) {
+			return buffer;
+		}
+
+		const sampleRateRatio = this.inputSampleRate / outputSampleRate;
+		const newLength = Math.round(buffer.length / sampleRateRatio);
+		const result = new Float32Array(newLength);
+		let offsetResult = 0;
+		let offsetBuffer = 0;
+		while (offsetResult &lt; result.length) {
+			const nextOffsetBuffer = Math.round((offsetResult + 1) * sampleRateRatio);
+			let accum = 0,
+				count = 0;
+			for (
+				let i = offsetBuffer;
+				i &lt; nextOffsetBuffer &amp;&amp; i &lt; buffer.length;
+				i++
+			) {
+				accum += buffer[i];
+				count++;
+			}
+			result[offsetResult] = accum / count;
+			offsetResult++;
+			offsetBuffer = nextOffsetBuffer;
+		}
+
+		return result;
+	}
+
+	private openConnectionWithTranscribe({
+		credentials: userCredentials,
+		region,
+		languageCode,
+	}): Promise&lt;WebSocket&gt; {
+		return new Promise(async (res, rej) =&gt; {
+			const {
+				accessKeyId: access_key,
+				secretAccessKey: secret_key,
+				sessionToken: session_token,
+			} = userCredentials;
+
+			const credentials = {
+				access_key,
+				secret_key,
+				session_token,
+			};
+
+			const signedUrl = this.generateTranscribeUrl({
+				credentials,
+				region,
+				languageCode,
+			});
+
+			logger.debug(&#x27;connecting...&#x27;);
+			const connection = new WebSocket(signedUrl);
+
+			connection.binaryType = &#x27;arraybuffer&#x27;;
+			connection.onopen = () =&gt; {
+				logger.debug(&#x27;connected&#x27;);
+				res(connection);
+			};
+		});
+	}
+
+	private generateTranscribeUrl({ credentials, region, languageCode }): string {
+		const url = [
+			`wss://transcribestreaming.${region}.amazonaws.com:8443`,
+			&#x27;/stream-transcription-websocket?&#x27;,
+			`media-encoding=pcm&amp;`,
+			`sample-rate=${
+				LANGUAGES_CODE_IN_8KHZ.includes(languageCode) ? &#x27;8000&#x27; : &#x27;16000&#x27;
+			}&amp;`,
+			`language-code=${languageCode}`,
+		].join(&#x27;&#x27;);
+
+		const signedUrl = Signer.signUrl(
+			url,
+			credentials,
+			{ region, service: &#x27;transcribe&#x27; },
+			300
+		);
+
+		return signedUrl;
+	}
+}
+
+/**
+ * @deprecated use named import
+ */
+export default AmazonAIConvertPredictionsProvider;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:49,&quot;character&quot;:16,&quot;text&quot;:&quot;sourceLanguage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:49,&quot;character&quot;:37,&quot;text&quot;:&quot;targetLanguage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:50,&quot;character&quot;:4,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:54,&quot;character&quot;:7,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:58,&quot;character&quot;:8,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:7,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:8,&quot;text&quot;:&quot;sourceLanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:64,&quot;character&quot;:8,&quot;text&quot;:&quot;targetLanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:66,&quot;character&quot;:7,&quot;text&quot;:&quot;sourceLanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:66,&quot;character&quot;:30,&quot;text&quot;:&quot;targetLanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:87,&quot;character&quot;:25,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:86,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:94,&quot;character&quot;:8,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:95,&quot;character&quot;:7,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:99,&quot;character&quot;:34,&quot;text&quot;:&quot;VoiceId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:99,&quot;character&quot;:55,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:105,&quot;character&quot;:8,&quot;text&quot;:&quot;voiceId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:107,&quot;character&quot;:7,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:113,&quot;character&quot;:7,&quot;text&quot;:&quot;voiceId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:144,&quot;character&quot;:25,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:143,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:153,&quot;character&quot;:9,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:154,&quot;character&quot;:8,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:159,&quot;character&quot;:27,&quot;text&quot;:&quot;languageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:160,&quot;character&quot;:5,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:163,&quot;character&quot;:8,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:166,&quot;character&quot;:8,&quot;text&quot;:&quot;languageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:172,&quot;character&quot;:29,&quot;text&quot;:&quot;language&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:177,&quot;character&quot;:5,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:178,&quot;character&quot;:5,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:179,&quot;character&quot;:5,&quot;text&quot;:&quot;languageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:179,&quot;character&quot;:19,&quot;text&quot;:&quot;language&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:186,&quot;character&quot;:6,&quot;text&quot;:&quot;languageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:186,&quot;character&quot;:20,&quot;text&quot;:&quot;language&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:194,&quot;character&quot;:27,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:193,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:202,&quot;character&quot;:25,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:202,&quot;character&quot;:29,&quot;text&quot;:&quot;name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:202,&quot;character&quot;:43,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:202,&quot;character&quot;:47,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:201,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:206,&quot;character&quot;:43,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:209,&quot;character&quot;:15,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:209,&quot;character&quot;:23,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:8,&quot;text&quot;:&quot;transcribeMessageJson&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:215,&quot;character&quot;:19,&quot;text&quot;:&quot;transcribeMessageJson&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:215,&quot;character&quot;:41,&quot;text&quot;:&quot;Message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:217,&quot;character&quot;:19,&quot;text&quot;:&quot;transcribeMessageJson&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:217,&quot;character&quot;:41,&quot;text&quot;:&quot;Message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:219,&quot;character&quot;:7,&quot;text&quot;:&quot;transcribeMessageJson&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:219,&quot;character&quot;:29,&quot;text&quot;:&quot;Transcript&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:219,&quot;character&quot;:40,&quot;text&quot;:&quot;Results&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:219,&quot;character&quot;:48,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:221,&quot;character&quot;:5,&quot;text&quot;:&quot;transcribeMessageJson&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:221,&quot;character&quot;:27,&quot;text&quot;:&quot;Transcript&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:221,&quot;character&quot;:38,&quot;text&quot;:&quot;Results&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:221,&quot;character&quot;:49,&quot;text&quot;:&quot;Alternatives&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:221,&quot;character&quot;:62,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:224,&quot;character&quot;:6,&quot;text&quot;:&quot;transcribeMessageJson&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:224,&quot;character&quot;:28,&quot;text&quot;:&quot;Transcript&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:224,&quot;character&quot;:39,&quot;text&quot;:&quot;Results&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:224,&quot;character&quot;:50,&quot;text&quot;:&quot;Alternatives&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:225,&quot;character&quot;:8,&quot;text&quot;:&quot;Transcript&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:225,&quot;character&quot;:19,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:228,&quot;character&quot;:7,&quot;text&quot;:&quot;transcribeMessageJson&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:228,&quot;character&quot;:29,&quot;text&quot;:&quot;Transcript&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:228,&quot;character&quot;:40,&quot;text&quot;:&quot;Results&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:228,&quot;character&quot;:51,&quot;text&quot;:&quot;IsPartial&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:8,&quot;text&quot;:&quot;transcribeMessageJson&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:30,&quot;text&quot;:&quot;Transcript&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:41,&quot;text&quot;:&quot;Results&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:52,&quot;text&quot;:&quot;Alternatives&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:10,&quot;text&quot;:&quot;Transcript&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:236,&quot;character&quot;:8,&quot;text&quot;:&quot;transcript&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:237,&quot;character&quot;:9,&quot;text&quot;:&quot;transcribeMessageJson&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:237,&quot;character&quot;:31,&quot;text&quot;:&quot;Transcript&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:237,&quot;character&quot;:42,&quot;text&quot;:&quot;Results&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:237,&quot;character&quot;:53,&quot;text&quot;:&quot;Alternatives&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:248,&quot;character&quot;:2,&quot;text&quot;:&quot;connection&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:249,&quot;character&quot;:2,&quot;text&quot;:&quot;raw&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:250,&quot;character&quot;:2,&quot;text&quot;:&quot;languageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:254,&quot;character&quot;:3,&quot;text&quot;:&quot;connection&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:254,&quot;character&quot;:14,&quot;text&quot;:&quot;onmessage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:254,&quot;character&quot;:26,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:257,&quot;character&quot;:6,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:263,&quot;character&quot;:18,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:264,&quot;character&quot;:9,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:264,&quot;character&quot;:13,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:262,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:268,&quot;character&quot;:3,&quot;text&quot;:&quot;connection&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:268,&quot;character&quot;:14,&quot;text&quot;:&quot;onerror&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:268,&quot;character&quot;:24,&quot;text&quot;:&quot;errorEvent&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:269,&quot;character&quot;:19,&quot;text&quot;:&quot;errorEvent&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:3,&quot;text&quot;:&quot;connection&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:14,&quot;text&quot;:&quot;onclose&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:24,&quot;text&quot;:&quot;closeEvent&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:274,&quot;character&quot;:19,&quot;text&quot;:&quot;closeEvent&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:278,&quot;character&quot;:18,&quot;text&quot;:&quot;raw&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:280,&quot;character&quot;:21,&quot;text&quot;:&quot;raw&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:38,&quot;text&quot;:&quot;connection&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:56,&quot;text&quot;:&quot;languageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:287,&quot;character&quot;:37,&quot;text&quot;:&quot;connection&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:287,&quot;character&quot;:49,&quot;text&quot;:&quot;raw&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:287,&quot;character&quot;:54,&quot;text&quot;:&quot;languageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:293,&quot;character&quot;:3,&quot;text&quot;:&quot;connection&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:293,&quot;character&quot;:14,&quot;text&quot;:&quot;send&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:297,&quot;character&quot;:37,&quot;text&quot;:&quot;connection&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:297,&quot;character&quot;:49,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:297,&quot;character&quot;:55,&quot;text&quot;:&quot;languageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:298,&quot;character&quot;:8,&quot;text&quot;:&quot;downsampledBuffer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:299,&quot;character&quot;:3,&quot;text&quot;:&quot;buffer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:299,&quot;character&quot;:11,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:304,&quot;character&quot;:42,&quot;text&quot;:&quot;downsampledBuffer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:309,&quot;character&quot;:2,&quot;text&quot;:&quot;connection&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:309,&quot;character&quot;:13,&quot;text&quot;:&quot;send&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:312,&quot;character&quot;:30,&quot;text&quot;:&quot;buffer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:330,&quot;character&quot;:19,&quot;text&quot;:&quot;input&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:332,&quot;character&quot;:33,&quot;text&quot;:&quot;input&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:332,&quot;character&quot;:39,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:334,&quot;character&quot;:22,&quot;text&quot;:&quot;input&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:334,&quot;character&quot;:28,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:335,&quot;character&quot;:38,&quot;text&quot;:&quot;input&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:343,&quot;character&quot;:28,&quot;text&quot;:&quot;buffer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:345,&quot;character&quot;:10,&quot;text&quot;:&quot;buffer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:349,&quot;character&quot;:31,&quot;text&quot;:&quot;buffer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:349,&quot;character&quot;:38,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:359,&quot;character&quot;:32,&quot;text&quot;:&quot;buffer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:359,&quot;character&quot;:39,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:362,&quot;character&quot;:13,&quot;text&quot;:&quot;buffer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:374,&quot;character&quot;:15,&quot;text&quot;:&quot;userCredentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:375,&quot;character&quot;:2,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:376,&quot;character&quot;:2,&quot;text&quot;:&quot;languageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:380,&quot;character&quot;:17,&quot;text&quot;:&quot;access_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:381,&quot;character&quot;:21,&quot;text&quot;:&quot;secret_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:382,&quot;character&quot;:18,&quot;text&quot;:&quot;session_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:386,&quot;character&quot;:4,&quot;text&quot;:&quot;access_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:387,&quot;character&quot;:4,&quot;text&quot;:&quot;secret_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:388,&quot;character&quot;:4,&quot;text&quot;:&quot;session_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:393,&quot;character&quot;:4,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:394,&quot;character&quot;:4,&quot;text&quot;:&quot;languageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:408,&quot;character&quot;:33,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:408,&quot;character&quot;:46,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:408,&quot;character&quot;:54,&quot;text&quot;:&quot;languageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:410,&quot;character&quot;:32,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:416,&quot;character&quot;:20,&quot;text&quot;:&quot;languageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:421,&quot;character&quot;:3,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIConvertPredictionsProvider.ts&quot;,&quot;line&quot;:422,&quot;character&quot;:5,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:25 GMT</p>
+    </body>
+  </html>
+  

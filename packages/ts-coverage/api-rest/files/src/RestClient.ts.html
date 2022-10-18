@@ -1,0 +1,456 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>RestClient.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/RestClient.ts</td><td class="">64.10%</td><td class="">0%</td><td class="">493</td><td class="">316</td><td class="">177</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import {
+	ConsoleLogger as Logger,
+	Credentials,
+	DateUtils,
+	Signer,
+	Platform,
+} from &#x27;@aws-amplify/core&#x27;;
+
+import { apiOptions, ApiInfo } from &#x27;./types&#x27;;
+import axios, { CancelTokenSource } from &#x27;axios&#x27;;
+import { parse, format } from &#x27;url&#x27;;
+
+const logger = new Logger(&#x27;RestClient&#x27;);
+
+/**
+* HTTP Client for REST requests. Send and receive JSON data.
+* Sign request with AWS credentials if available
+* Usage:
+&lt;pre&gt;
+const restClient = new RestClient();
+restClient.get(&#x27;...&#x27;)
+    .then(function(data) {
+        console.log(data);
+    })
+    .catch(err =&gt; console.log(err));
+&lt;/pre&gt;
+*/
+export class RestClient {
+	private _options;
+	private _region: string = &#x27;us-east-1&#x27;; // this will be updated by endpoint function
+	private _service: string = &#x27;execute-api&#x27;; // this can be updated by endpoint function
+	private _custom_header = undefined; // this can be updated by endpoint function
+
+	/**
+	 * This weak map provides functionality to let clients cancel
+	 * in-flight axios requests. https://github.com/axios/axios#cancellation
+	 *
+	 * 1. For every axios request, a unique cancel token is generated and added in the request.
+	 * 2. Promise for fulfilling the request is then mapped to that unique cancel token.
+	 * 3. The promise is returned to the client.
+	 * 4. Clients can either wait for the promise to fulfill or call `API.cancel(promise)` to cancel the request.
+	 * 5. If `API.cancel(promise)` is called, then the corresponding cancel token is retrieved from the map below.
+	 * 6. Promise returned to the client will be in rejected state with the error provided during cancel.
+	 * 7. Clients can check if the error is because of cancelling by calling `API.isCancel(error)`.
+	 *
+	 * For more details, see https://github.com/aws-amplify/amplify-js/pull/3769#issuecomment-552660025
+	 */
+	private _cancelTokenMap: WeakMap&lt;any, CancelTokenSource&gt; = null;
+
+	Credentials = Credentials;
+
+	/**
+	 * @param {RestClientOptions} [options] - Instance options
+	 */
+	constructor(options: apiOptions) {
+		this._options = options;
+		logger.debug(&#x27;API Options&#x27;, this._options);
+		if (this._cancelTokenMap == null) {
+			this._cancelTokenMap = new WeakMap();
+		}
+	}
+
+	/**
+    * Update AWS credentials
+    * @param {AWSCredentials} credentials - AWS credentials
+    *
+    updateCredentials(credentials: AWSCredentials) {
+        this.options.credentials = credentials;
+    }
+*/
+	/**
+	 * Basic HTTP request. Customizable
+	 * @param {string | ApiInfo } urlOrApiInfo - Full request URL or Api information
+	 * @param {string} method - Request HTTP method
+	 * @param {json} [init] - Request extra params
+	 * @return {Promise} - A promise that resolves to an object with response status and JSON data, if successful.
+	 */
+	async ajax(urlOrApiInfo: string | ApiInfo, method: string, init) {
+		logger.debug(method, urlOrApiInfo);
+
+		let parsed_url;
+		let url: string;
+		let region: string = &#x27;us-east-1&#x27;;
+		let service: string = &#x27;execute-api&#x27;;
+		let custom_header: () =&gt; {
+			[key: string]: string;
+		} = undefined;
+
+		if (typeof urlOrApiInfo === &#x27;string&#x27;) {
+			parsed_url = this._parseUrl(urlOrApiInfo);
+			url = urlOrApiInfo;
+		} else {
+			({ endpoint: url, custom_header, region, service } = urlOrApiInfo);
+			parsed_url = this._parseUrl(urlOrApiInfo.endpoint);
+		}
+
+		const params = {
+			method,
+			url,
+			host: parsed_url.host,
+			path: parsed_url.path,
+			headers: {},
+			data: null,
+			responseType: &#x27;json&#x27;,
+			timeout: 0,
+			cancelToken: null,
+		};
+
+		let libraryHeaders = {};
+
+		if (Platform.isReactNative) {
+			const userAgent = Platform.userAgent || &#x27;aws-amplify/0.1.x&#x27;;
+			libraryHeaders = {
+				&#x27;User-Agent&#x27;: userAgent,
+			};
+		}
+
+		const initParams = Object.assign({}, init);
+		const isAllResponse = initParams.response;
+		if (initParams.body) {
+			if (
+				typeof FormData === &#x27;function&#x27; &amp;&amp;
+				initParams.body instanceof FormData
+			) {
+				libraryHeaders[&#x27;Content-Type&#x27;] = &#x27;multipart/form-data&#x27;;
+				params.data = initParams.body;
+			} else {
+				libraryHeaders[&#x27;Content-Type&#x27;] = &#x27;application/json; charset=UTF-8&#x27;;
+				params.data = JSON.stringify(initParams.body);
+			}
+		}
+		if (initParams.responseType) {
+			params.responseType = initParams.responseType;
+		}
+		if (initParams.withCredentials) {
+			params[&#x27;withCredentials&#x27;] = initParams.withCredentials;
+		}
+		if (initParams.timeout) {
+			params.timeout = initParams.timeout;
+		}
+		if (initParams.cancellableToken) {
+			params.cancelToken = initParams.cancellableToken.token;
+		}
+
+		params[&#x27;signerServiceInfo&#x27;] = initParams.signerServiceInfo;
+
+		// custom_header callback
+		const custom_header_obj =
+			typeof custom_header === &#x27;function&#x27; ? await custom_header() : undefined;
+
+		params.headers = {
+			...libraryHeaders,
+			...custom_header_obj,
+			...initParams.headers,
+		};
+
+		// Intentionally discarding search
+		const { search, ...parsedUrl } = parse(url, true, true);
+		params.url = format({
+			...parsedUrl,
+			query: {
+				...parsedUrl.query,
+				...(initParams.queryStringParameters || {}),
+			},
+		});
+
+		// Do not sign the request if client has added &#x27;Authorization&#x27; header,
+		// which means custom authorizer.
+		if (typeof params.headers[&#x27;Authorization&#x27;] !== &#x27;undefined&#x27;) {
+			params.headers = Object.keys(params.headers).reduce((acc, k) =&gt; {
+				if (params.headers[k]) {
+					acc[k] = params.headers[k];
+				}
+				return acc;
+				// tslint:disable-next-line:align
+			}, {});
+			return this._request(params, isAllResponse);
+		}
+
+		// Signing the request in case there credentials are available
+		return this.Credentials.get().then(
+			credentials =&gt; {
+				return this._signed({ ...params }, credentials, isAllResponse, {
+					region,
+					service,
+				}).catch(error =&gt; {
+					if (DateUtils.isClockSkewError(error)) {
+						const { headers } = error.response;
+						const dateHeader = headers &amp;&amp; (headers.date || headers.Date);
+						const responseDate = new Date(dateHeader);
+						const requestDate = DateUtils.getDateFromHeaderString(
+							params.headers[&#x27;x-amz-date&#x27;]
+						);
+
+						// Compare local clock to the server clock
+						if (DateUtils.isClockSkewed(responseDate)) {
+							DateUtils.setClockOffset(
+								responseDate.getTime() - requestDate.getTime()
+							);
+
+							return this.ajax(urlOrApiInfo, method, init);
+						}
+					}
+
+					throw error;
+				});
+			},
+			err =&gt; {
+				logger.debug(&#x27;No credentials available, the request will be unsigned&#x27;);
+				return this._request(params, isAllResponse);
+			}
+		);
+	}
+
+	/**
+	 * GET HTTP request
+	 * @param {string | ApiInfo } urlOrApiInfo - Full request URL or Api information
+	 * @param {JSON} init - Request extra params
+	 * @return {Promise} - A promise that resolves to an object with response status and JSON data, if successful.
+	 */
+	get(urlOrApiInfo: string | ApiInfo, init) {
+		return this.ajax(urlOrApiInfo, &#x27;GET&#x27;, init);
+	}
+
+	/**
+	 * PUT HTTP request
+	 * @param {string | ApiInfo } urlOrApiInfo - Full request URL or Api information
+	 * @param {json} init - Request extra params
+	 * @return {Promise} - A promise that resolves to an object with response status and JSON data, if successful.
+	 */
+	put(urlOrApiInfo: string | ApiInfo, init) {
+		return this.ajax(urlOrApiInfo, &#x27;PUT&#x27;, init);
+	}
+
+	/**
+	 * PATCH HTTP request
+	 * @param {string | ApiInfo } urlOrApiInfo - Full request URL or Api information
+	 * @param {json} init - Request extra params
+	 * @return {Promise} - A promise that resolves to an object with response status and JSON data, if successful.
+	 */
+	patch(urlOrApiInfo: string | ApiInfo, init) {
+		return this.ajax(urlOrApiInfo, &#x27;PATCH&#x27;, init);
+	}
+
+	/**
+	 * POST HTTP request
+	 * @param {string | ApiInfo } urlOrApiInfo - Full request URL or Api information
+	 * @param {json} init - Request extra params
+	 * @return {Promise} - A promise that resolves to an object with response status and JSON data, if successful.
+	 */
+	post(urlOrApiInfo: string | ApiInfo, init) {
+		return this.ajax(urlOrApiInfo, &#x27;POST&#x27;, init);
+	}
+
+	/**
+	 * DELETE HTTP request
+	 * @param {string | ApiInfo } urlOrApiInfo - Full request URL or Api information
+	 * @param {json} init - Request extra params
+	 * @return {Promise} - A promise that resolves to an object with response status and JSON data, if successful.
+	 */
+	del(urlOrApiInfo: string | ApiInfo, init) {
+		return this.ajax(urlOrApiInfo, &#x27;DELETE&#x27;, init);
+	}
+
+	/**
+	 * HEAD HTTP request
+	 * @param {string | ApiInfo } urlOrApiInfo - Full request URL or Api information
+	 * @param {json} init - Request extra params
+	 * @return {Promise} - A promise that resolves to an object with response status and JSON data, if successful.
+	 */
+	head(urlOrApiInfo: string | ApiInfo, init) {
+		return this.ajax(urlOrApiInfo, &#x27;HEAD&#x27;, init);
+	}
+
+	/**
+	 * Cancel an inflight API request
+	 * @param {Promise&lt;any&gt;} request - The request promise to cancel
+	 * @param {string} [message] - A message to include in the cancelation exception
+	 */
+	cancel(request: Promise&lt;any&gt;, message?: string) {
+		const source = this._cancelTokenMap.get(request);
+		if (source) {
+			source.cancel(message);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Check if the request has a corresponding cancel token in the WeakMap.
+	 * @params request - The request promise
+	 * @return if the request has a corresponding cancel token.
+	 */
+	hasCancelToken(request: Promise&lt;any&gt;) {
+		return this._cancelTokenMap.has(request);
+	}
+
+	/**
+	 * Checks to see if an error thrown is from an api request cancellation
+	 * @param {any} error - Any error
+	 * @return {boolean} - A boolean indicating if the error was from an api request cancellation
+	 */
+	isCancel(error): boolean {
+		return axios.isCancel(error);
+	}
+
+	/**
+	 * Retrieves a new and unique cancel token which can be
+	 * provided in an axios request to be cancelled later.
+	 */
+	getCancellableToken(): CancelTokenSource {
+		return axios.CancelToken.source();
+	}
+
+	/**
+	 * Updates the weakmap with a response promise and its
+	 * cancel token such that the cancel token can be easily
+	 * retrieved (and used for cancelling the request)
+	 */
+	updateRequestToBeCancellable(
+		promise: Promise&lt;any&gt;,
+		cancelTokenSource: CancelTokenSource
+	) {
+		this._cancelTokenMap.set(promise, cancelTokenSource);
+	}
+
+	/**
+	 * Getting endpoint for API
+	 * @param {string} apiName - The name of the api
+	 * @return {string} - The endpoint of the api
+	 */
+	endpoint(apiName: string) {
+		const cloud_logic_array = this._options.endpoints;
+		let response = &#x27;&#x27;;
+
+		if (!Array.isArray(cloud_logic_array)) {
+			return response;
+		}
+
+		cloud_logic_array.forEach(v =&gt; {
+			if (v.name === apiName) {
+				response = v.endpoint;
+				if (typeof v.region === &#x27;string&#x27;) {
+					this._region = v.region;
+				} else if (typeof this._options.region === &#x27;string&#x27;) {
+					this._region = this._options.region;
+				}
+				if (typeof v.service === &#x27;string&#x27;) {
+					this._service = v.service || &#x27;execute-api&#x27;;
+				} else {
+					this._service = &#x27;execute-api&#x27;;
+				}
+				if (typeof v.custom_header === &#x27;function&#x27;) {
+					this._custom_header = v.custom_header;
+				} else {
+					this._custom_header = undefined;
+				}
+			}
+		});
+		return response;
+	}
+
+	/** private methods **/
+
+	private _signed(params, credentials, isAllResponse, { service, region }) {
+		const { signerServiceInfo: signerServiceInfoParams, ...otherParams } =
+			params;
+
+		const endpoint_region: string =
+			region || this._region || this._options.region;
+		const endpoint_service: string =
+			service || this._service || this._options.service;
+
+		const creds = {
+			secret_key: credentials.secretAccessKey,
+			access_key: credentials.accessKeyId,
+			session_token: credentials.sessionToken,
+		};
+
+		const endpointInfo = {
+			region: endpoint_region,
+			service: endpoint_service,
+		};
+
+		const signerServiceInfo = Object.assign(
+			endpointInfo,
+			signerServiceInfoParams
+		);
+
+		const signed_params = Signer.sign(otherParams, creds, signerServiceInfo);
+
+		if (signed_params.data) {
+			signed_params.body = signed_params.data;
+		}
+
+		logger.debug(&#x27;Signed Request: &#x27;, signed_params);
+
+		delete signed_params.headers[&#x27;host&#x27;];
+
+		return axios(signed_params)
+			.then(response =&gt; (isAllResponse ? response : response.data))
+			.catch(error =&gt; {
+				logger.debug(error);
+				throw error;
+			});
+	}
+
+	private _request(params, isAllResponse = false) {
+		return axios(params)
+			.then(response =&gt; (isAllResponse ? response : response.data))
+			.catch(error =&gt; {
+				logger.debug(error);
+				throw error;
+			});
+	}
+
+	private _parseUrl(url) {
+		const parts = url.split(&#x27;/&#x27;);
+
+		return {
+			host: parts[2],
+			path: &#x27;/&#x27; + parts.slice(3).join(&#x27;/&#x27;),
+		};
+	}
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:16,&quot;character&quot;:1,&quot;text&quot;:&quot;DateUtils&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:41,&quot;character&quot;:9,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:44,&quot;character&quot;:9,&quot;text&quot;:&quot;_custom_header&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:68,&quot;character&quot;:7,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:69,&quot;character&quot;:35,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:90,&quot;character&quot;:60,&quot;text&quot;:&quot;init&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:93,&quot;character&quot;:6,&quot;text&quot;:&quot;parsed_url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:102,&quot;character&quot;:3,&quot;text&quot;:&quot;parsed_url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:106,&quot;character&quot;:3,&quot;text&quot;:&quot;parsed_url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:112,&quot;character&quot;:3,&quot;text&quot;:&quot;host&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:112,&quot;character&quot;:9,&quot;text&quot;:&quot;parsed_url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:112,&quot;character&quot;:20,&quot;text&quot;:&quot;host&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:113,&quot;character&quot;:3,&quot;text&quot;:&quot;path&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:113,&quot;character&quot;:9,&quot;text&quot;:&quot;parsed_url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:113,&quot;character&quot;:20,&quot;text&quot;:&quot;path&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:130,&quot;character&quot;:8,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:130,&quot;character&quot;:39,&quot;text&quot;:&quot;init&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:8,&quot;text&quot;:&quot;isAllResponse&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:24,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:35,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:132,&quot;character&quot;:6,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:132,&quot;character&quot;:17,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:135,&quot;character&quot;:4,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:135,&quot;character&quot;:15,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:138,&quot;character&quot;:11,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:138,&quot;character&quot;:18,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:138,&quot;character&quot;:29,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:141,&quot;character&quot;:11,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:141,&quot;character&quot;:33,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:141,&quot;character&quot;:44,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:144,&quot;character&quot;:6,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:144,&quot;character&quot;:17,&quot;text&quot;:&quot;responseType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:145,&quot;character&quot;:25,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:145,&quot;character&quot;:36,&quot;text&quot;:&quot;responseType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:147,&quot;character&quot;:6,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:147,&quot;character&quot;:17,&quot;text&quot;:&quot;withCredentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:31,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:42,&quot;text&quot;:&quot;withCredentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:150,&quot;character&quot;:6,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:150,&quot;character&quot;:17,&quot;text&quot;:&quot;timeout&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:151,&quot;character&quot;:20,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:151,&quot;character&quot;:31,&quot;text&quot;:&quot;timeout&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:153,&quot;character&quot;:6,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:153,&quot;character&quot;:17,&quot;text&quot;:&quot;cancellableToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:154,&quot;character&quot;:10,&quot;text&quot;:&quot;cancelToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:154,&quot;character&quot;:24,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:154,&quot;character&quot;:35,&quot;text&quot;:&quot;cancellableToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:154,&quot;character&quot;:52,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:157,&quot;character&quot;:32,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:157,&quot;character&quot;:43,&quot;text&quot;:&quot;signerServiceInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:166,&quot;character&quot;:6,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:166,&quot;character&quot;:17,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:8,&quot;text&quot;:&quot;initParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:19,&quot;text&quot;:&quot;queryStringParameters&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:193,&quot;character&quot;:32,&quot;text&quot;:&quot;then&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:194,&quot;character&quot;:3,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:195,&quot;character&quot;:39,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:195,&quot;character&quot;:52,&quot;text&quot;:&quot;isAllResponse&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:198,&quot;character&quot;:13,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:199,&quot;character&quot;:9,&quot;text&quot;:&quot;DateUtils&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:199,&quot;character&quot;:19,&quot;text&quot;:&quot;isClockSkewError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:199,&quot;character&quot;:36,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:200,&quot;character&quot;:14,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:200,&quot;character&quot;:26,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:200,&quot;character&quot;:32,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:201,&quot;character&quot;:12,&quot;text&quot;:&quot;dateHeader&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:201,&quot;character&quot;:25,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:201,&quot;character&quot;:37,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:201,&quot;character&quot;:45,&quot;text&quot;:&quot;date&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:201,&quot;character&quot;:53,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:201,&quot;character&quot;:61,&quot;text&quot;:&quot;Date&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:203,&quot;character&quot;:12,&quot;text&quot;:&quot;requestDate&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:203,&quot;character&quot;:26,&quot;text&quot;:&quot;DateUtils&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:203,&quot;character&quot;:36,&quot;text&quot;:&quot;getDateFromHeaderString&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:208,&quot;character&quot;:10,&quot;text&quot;:&quot;DateUtils&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:208,&quot;character&quot;:20,&quot;text&quot;:&quot;isClockSkewed&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:209,&quot;character&quot;:7,&quot;text&quot;:&quot;DateUtils&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:209,&quot;character&quot;:17,&quot;text&quot;:&quot;setClockOffset&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:210,&quot;character&quot;:33,&quot;text&quot;:&quot;requestDate&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:210,&quot;character&quot;:45,&quot;text&quot;:&quot;getTime&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:213,&quot;character&quot;:46,&quot;text&quot;:&quot;init&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:217,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:220,&quot;character&quot;:3,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:233,&quot;character&quot;:37,&quot;text&quot;:&quot;init&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:234,&quot;character&quot;:40,&quot;text&quot;:&quot;init&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:243,&quot;character&quot;:37,&quot;text&quot;:&quot;init&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:244,&quot;character&quot;:40,&quot;text&quot;:&quot;init&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:253,&quot;character&quot;:39,&quot;text&quot;:&quot;init&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:254,&quot;character&quot;:42,&quot;text&quot;:&quot;init&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:263,&quot;character&quot;:38,&quot;text&quot;:&quot;init&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:264,&quot;character&quot;:41,&quot;text&quot;:&quot;init&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:37,&quot;text&quot;:&quot;init&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:274,&quot;character&quot;:43,&quot;text&quot;:&quot;init&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:38,&quot;text&quot;:&quot;init&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:284,&quot;character&quot;:41,&quot;text&quot;:&quot;init&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:315,&quot;character&quot;:10,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:316,&quot;character&quot;:24,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:345,&quot;character&quot;:8,&quot;text&quot;:&quot;cloud_logic_array&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:345,&quot;character&quot;:33,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:345,&quot;character&quot;:42,&quot;text&quot;:&quot;endpoints&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:348,&quot;character&quot;:21,&quot;text&quot;:&quot;cloud_logic_array&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:352,&quot;character&quot;:28,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:353,&quot;character&quot;:7,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:353,&quot;character&quot;:9,&quot;text&quot;:&quot;name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:354,&quot;character&quot;:15,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:354,&quot;character&quot;:17,&quot;text&quot;:&quot;endpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:355,&quot;character&quot;:15,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:355,&quot;character&quot;:17,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:356,&quot;character&quot;:20,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:356,&quot;character&quot;:22,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:357,&quot;character&quot;:27,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:357,&quot;character&quot;:36,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:358,&quot;character&quot;:25,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:358,&quot;character&quot;:34,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:360,&quot;character&quot;:15,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:360,&quot;character&quot;:17,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:361,&quot;character&quot;:21,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:361,&quot;character&quot;:23,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:365,&quot;character&quot;:15,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:365,&quot;character&quot;:17,&quot;text&quot;:&quot;custom_header&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:366,&quot;character&quot;:10,&quot;text&quot;:&quot;_custom_header&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:366,&quot;character&quot;:27,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:366,&quot;character&quot;:29,&quot;text&quot;:&quot;custom_header&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:368,&quot;character&quot;:10,&quot;text&quot;:&quot;_custom_header&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:377,&quot;character&quot;:17,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:377,&quot;character&quot;:25,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:377,&quot;character&quot;:38,&quot;text&quot;:&quot;isAllResponse&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:377,&quot;character&quot;:55,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:377,&quot;character&quot;:64,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:378,&quot;character&quot;:29,&quot;text&quot;:&quot;signerServiceInfoParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:378,&quot;character&quot;:57,&quot;text&quot;:&quot;otherParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:382,&quot;character&quot;:34,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:382,&quot;character&quot;:43,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:384,&quot;character&quot;:36,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:384,&quot;character&quot;:45,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:387,&quot;character&quot;:3,&quot;text&quot;:&quot;secret_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:387,&quot;character&quot;:15,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:387,&quot;character&quot;:27,&quot;text&quot;:&quot;secretAccessKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:388,&quot;character&quot;:3,&quot;text&quot;:&quot;access_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:388,&quot;character&quot;:15,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:388,&quot;character&quot;:27,&quot;text&quot;:&quot;accessKeyId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:389,&quot;character&quot;:3,&quot;text&quot;:&quot;session_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:389,&quot;character&quot;:18,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:389,&quot;character&quot;:30,&quot;text&quot;:&quot;sessionToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:397,&quot;character&quot;:8,&quot;text&quot;:&quot;signerServiceInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:399,&quot;character&quot;:3,&quot;text&quot;:&quot;signerServiceInfoParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:402,&quot;character&quot;:8,&quot;text&quot;:&quot;signed_params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:402,&quot;character&quot;:36,&quot;text&quot;:&quot;otherParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:402,&quot;character&quot;:56,&quot;text&quot;:&quot;signerServiceInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:404,&quot;character&quot;:6,&quot;text&quot;:&quot;signed_params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:404,&quot;character&quot;:20,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:405,&quot;character&quot;:3,&quot;text&quot;:&quot;signed_params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:405,&quot;character&quot;:17,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:405,&quot;character&quot;:24,&quot;text&quot;:&quot;signed_params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:405,&quot;character&quot;:38,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:408,&quot;character&quot;:35,&quot;text&quot;:&quot;signed_params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:410,&quot;character&quot;:9,&quot;text&quot;:&quot;signed_params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:410,&quot;character&quot;:23,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:413,&quot;character&quot;:22,&quot;text&quot;:&quot;isAllResponse&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:413,&quot;character&quot;:58,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:414,&quot;character&quot;:10,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:415,&quot;character&quot;:17,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:416,&quot;character&quot;:10,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:420,&quot;character&quot;:18,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:422,&quot;character&quot;:58,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:423,&quot;character&quot;:10,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:424,&quot;character&quot;:17,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:425,&quot;character&quot;:10,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:429,&quot;character&quot;:19,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:430,&quot;character&quot;:8,&quot;text&quot;:&quot;parts&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:430,&quot;character&quot;:16,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:430,&quot;character&quot;:20,&quot;text&quot;:&quot;split&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:433,&quot;character&quot;:3,&quot;text&quot;:&quot;host&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:433,&quot;character&quot;:9,&quot;text&quot;:&quot;parts&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:434,&quot;character&quot;:15,&quot;text&quot;:&quot;parts&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:434,&quot;character&quot;:21,&quot;text&quot;:&quot;slice&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/RestClient.ts&quot;,&quot;line&quot;:434,&quot;character&quot;:30,&quot;text&quot;:&quot;join&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:22 GMT</p>
+    </body>
+  </html>
+  

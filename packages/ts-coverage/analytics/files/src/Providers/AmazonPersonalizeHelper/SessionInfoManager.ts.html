@@ -1,0 +1,151 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>SessionInfoManager.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts</td><td class="">92.04%</td><td class="">0%</td><td class="">201</td><td class="">185</td><td class="">16</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2019-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import { SessionInfo } from &#x27;./DataType&#x27;;
+import isEmpty from &#x27;lodash/isEmpty&#x27;;
+import isEqual from &#x27;lodash/isEqual&#x27;;
+import { v1 as uuid } from &#x27;uuid&#x27;;
+import { ConsoleLogger as Logger, JS } from &#x27;@aws-amplify/core&#x27;;
+
+import Cache from &#x27;@aws-amplify/cache&#x27;;
+
+const PERSONALIZE_CACHE = &#x27;_awsct&#x27;;
+const PERSONALIZE_CACHE_USERID = &#x27;_awsct_uid&#x27;;
+const PERSONALIZE_CACHE_SESSIONID = &#x27;_awsct_sid&#x27;;
+const DEFAULT_CACHE_PREFIX = &#x27;peronslize&#x27;;
+const TIMER_INTERVAL = 30 * 1000;
+const DELIMITER = &#x27;.&#x27;;
+const CACHE_EXPIRY_IN_DAYS = 7;
+const logger = new Logger(&#x27;AmazonPersonalizeProvider&#x27;);
+
+export class SessionInfoManager {
+	private _isBrowser;
+	private _cache;
+	private _timer;
+	private _timerKey;
+
+	constructor(prefixKey = &#x27;&#x27;) {
+		this._isBrowser = JS.browserOrNode().isBrowser;
+		this._timerKey = uuid().substr(0, 15);
+		this._refreshTimer();
+	}
+
+	private _refreshTimer() {
+		if (this._timer) {
+			clearInterval(this._timer);
+		}
+		const that = this;
+		this._timer = setInterval(() =&gt; {
+			that._timerKey = uuid().substr(0, 15);
+		}, TIMER_INTERVAL);
+	}
+
+	private storeValue(key: string, value: any): void {
+		const today = new Date();
+		const expire = new Date();
+		expire.setTime(today.getTime() + 3600000 * 24 * CACHE_EXPIRY_IN_DAYS);
+		Cache.setItem(this._getCachePrefix(key), value, {
+			expires: expire.getTime(),
+		});
+	}
+
+	private retrieveValue(key: string): any {
+		return Cache.getItem(this._getCachePrefix(key));
+	}
+
+	private _getCachePrefix(key): string {
+		if (this._isBrowser) {
+			return key + DELIMITER + window.location.host;
+		}
+		return DEFAULT_CACHE_PREFIX;
+	}
+
+	public getTimerKey() {
+		return this._timerKey;
+	}
+
+	public updateSessionInfo(userId: string, sessionInfo: SessionInfo) {
+		const existUserId = sessionInfo.userId;
+		const existSessionId = sessionInfo.sessionId;
+		if (this._isRequireNewSession(userId, existUserId, existSessionId)) {
+			const newSessionId = uuid();
+			this.storeValue(PERSONALIZE_CACHE_USERID, userId);
+			this.storeValue(PERSONALIZE_CACHE_SESSIONID, newSessionId);
+			sessionInfo.sessionId = newSessionId;
+		} else if (
+			this._isRequireUpdateSessionInfo(userId, existUserId, existSessionId)
+		) {
+			this.storeValue(PERSONALIZE_CACHE_USERID, userId);
+		}
+		sessionInfo.userId = userId;
+	}
+
+	private _isRequireUpdateSessionInfo(
+		userId: string,
+		cachedSessionUserId: string,
+		cachedSessionSessionId: string
+	): boolean {
+		// anonymouse =&gt; sign in : hasSession &amp;&amp; s_userId == null &amp;&amp; curr_userId !=null
+		const isNoCachedSession: boolean = isEmpty(cachedSessionSessionId);
+		return (
+			!isNoCachedSession &amp;&amp; isEmpty(cachedSessionUserId) &amp;&amp; !isEmpty(userId)
+		);
+	}
+
+	public retrieveSessionInfo(trackingId: string): SessionInfo {
+		const sessionInfo = &lt;SessionInfo&gt;{};
+		sessionInfo.trackingId = trackingId;
+		sessionInfo.sessionId = this.retrieveValue(PERSONALIZE_CACHE_SESSIONID);
+		sessionInfo.userId = this.retrieveValue(PERSONALIZE_CACHE_USERID);
+		if (isEmpty(sessionInfo.sessionId)) {
+			sessionInfo.sessionId = uuid();
+			this.storeValue(PERSONALIZE_CACHE_SESSIONID, sessionInfo.sessionId);
+		}
+		this.storeValue(PERSONALIZE_CACHE, trackingId);
+		return sessionInfo;
+	}
+
+	private _isRequireNewSession(
+		userId: string,
+		cachedSessionUserId: string,
+		cachedSessionSessionId: string
+	): boolean {
+		// new session =&gt; 1. no cached session info 2. signOut: s_userId !=null &amp;&amp; curr_userId ==null
+		// 3. switch account: s_userId !=null &amp;&amp; curr_userId !=null &amp;&amp; s_userId != curr_userId
+		const isNoCachedSession: boolean = isEmpty(cachedSessionSessionId);
+		const isSignoutCase: boolean =
+			isEmpty(userId) &amp;&amp; !isEmpty(cachedSessionUserId);
+		const isSwitchUserCase: boolean =
+			!isEmpty(userId) &amp;&amp;
+			!isEmpty(cachedSessionUserId) &amp;&amp;
+			!isEqual(userId, cachedSessionUserId);
+		return isNoCachedSession || isSignoutCase || isSwitchUserCase;
+	}
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts&quot;,&quot;line&quot;:30,&quot;character&quot;:9,&quot;text&quot;:&quot;_isBrowser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts&quot;,&quot;line&quot;:31,&quot;character&quot;:9,&quot;text&quot;:&quot;_cache&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts&quot;,&quot;line&quot;:32,&quot;character&quot;:9,&quot;text&quot;:&quot;_timer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts&quot;,&quot;line&quot;:33,&quot;character&quot;:9,&quot;text&quot;:&quot;_timerKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts&quot;,&quot;line&quot;:36,&quot;character&quot;:7,&quot;text&quot;:&quot;_isBrowser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts&quot;,&quot;line&quot;:37,&quot;character&quot;:7,&quot;text&quot;:&quot;_timerKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts&quot;,&quot;line&quot;:42,&quot;character&quot;:11,&quot;text&quot;:&quot;_timer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:22,&quot;text&quot;:&quot;_timer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts&quot;,&quot;line&quot;:46,&quot;character&quot;:7,&quot;text&quot;:&quot;_timer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts&quot;,&quot;line&quot;:47,&quot;character&quot;:8,&quot;text&quot;:&quot;_timerKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts&quot;,&quot;line&quot;:51,&quot;character&quot;:33,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts&quot;,&quot;line&quot;:55,&quot;character&quot;:43,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts&quot;,&quot;line&quot;:64,&quot;character&quot;:25,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:11,&quot;text&quot;:&quot;_isBrowser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts&quot;,&quot;line&quot;:66,&quot;character&quot;:10,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonPersonalizeHelper/SessionInfoManager.ts&quot;,&quot;line&quot;:72,&quot;character&quot;:14,&quot;text&quot;:&quot;_timerKey&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:24 GMT</p>
+    </body>
+  </html>
+  

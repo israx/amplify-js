@@ -1,0 +1,464 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Signer.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Signer.ts</td><td class="">52.88%</td><td class="">0%</td><td class="">469</td><td class="">248</td><td class="">221</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import { ConsoleLogger as Logger } from &#x27;./Logger&#x27;;
+import { Sha256 as jsSha256 } from &#x27;@aws-crypto/sha256-js&#x27;;
+import { toHex } from &#x27;@aws-sdk/util-hex-encoding&#x27;;
+import { parse, format } from &#x27;url&#x27;;
+import { DateUtils } from &#x27;./Util&#x27;;
+
+const logger = new Logger(&#x27;Signer&#x27;);
+
+const DEFAULT_ALGORITHM = &#x27;AWS4-HMAC-SHA256&#x27;;
+const IOT_SERVICE_NAME = &#x27;iotdevicegateway&#x27;;
+
+const encrypt = function(key, src) {
+	const hash = new jsSha256(key);
+	hash.update(src);
+	return hash.digestSync();
+};
+
+const hash = function(src) {
+	const arg = src || &#x27;&#x27;;
+	const hash = new jsSha256();
+	hash.update(arg);
+	return toHex(hash.digestSync());
+};
+
+/**
+ * @private
+ * RFC 3986 compliant version of encodeURIComponent
+ */
+const escape_RFC3986 = function(component) {
+	return component.replace(/[!&#x27;()*]/g, function(c) {
+		return &#x27;%&#x27; + c.charCodeAt(0).toString(16).toUpperCase();
+	});
+};
+
+/**
+ * @private
+ * Create canonical query string
+ *
+ */
+const canonical_query = function(query) {
+	if (!query || query.length === 0) {
+		return &#x27;&#x27;;
+	}
+
+	return query
+		.split(&#x27;&amp;&#x27;)
+		.map(e =&gt; {
+			const key_val = e.split(&#x27;=&#x27;);
+
+			if (key_val.length === 1) {
+				return e;
+			} else {
+				const reencoded_val = escape_RFC3986(key_val[1]);
+				return key_val[0] + &#x27;=&#x27; + reencoded_val;
+			}
+		})
+		.sort((a, b) =&gt; {
+			const key_a = a.split(&#x27;=&#x27;)[0];
+			const key_b = b.split(&#x27;=&#x27;)[0];
+			if (key_a === key_b) {
+				return a &lt; b ? -1 : 1;
+			} else {
+				return key_a &lt; key_b ? -1 : 1;
+			}
+		})
+		.join(&#x27;&amp;&#x27;);
+};
+
+/**
+* @private
+* Create canonical headers
+*
+&lt;pre&gt;
+CanonicalHeaders =
+    CanonicalHeadersEntry0 + CanonicalHeadersEntry1 + ... + CanonicalHeadersEntryN
+CanonicalHeadersEntry =
+    Lowercase(HeaderName) + &#x27;:&#x27; + Trimall(HeaderValue) + &#x27;\n&#x27;
+&lt;/pre&gt;
+*/
+const canonical_headers = function(headers) {
+	if (!headers || Object.keys(headers).length === 0) {
+		return &#x27;&#x27;;
+	}
+
+	return (
+		Object.keys(headers)
+			.map(function(key) {
+				return {
+					key: key.toLowerCase(),
+					value: headers[key] ? headers[key].trim().replace(/\s+/g, &#x27; &#x27;) : &#x27;&#x27;,
+				};
+			})
+			.sort(function(a, b) {
+				return a.key &lt; b.key ? -1 : 1;
+			})
+			.map(function(item) {
+				return item.key + &#x27;:&#x27; + item.value;
+			})
+			.join(&#x27;\n&#x27;) + &#x27;\n&#x27;
+	);
+};
+
+/**
+ * List of header keys included in the canonical headers.
+ * @access private
+ */
+const signed_headers = function(headers) {
+	return Object.keys(headers)
+		.map(function(key) {
+			return key.toLowerCase();
+		})
+		.sort()
+		.join(&#x27;;&#x27;);
+};
+
+/**
+* @private
+* Create canonical request
+* Refer to
+* {@link http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html|Create a Canonical Request}
+*
+&lt;pre&gt;
+CanonicalRequest =
+    HTTPRequestMethod + &#x27;\n&#x27; +
+    CanonicalURI + &#x27;\n&#x27; +
+    CanonicalQueryString + &#x27;\n&#x27; +
+    CanonicalHeaders + &#x27;\n&#x27; +
+    SignedHeaders + &#x27;\n&#x27; +
+    HexEncode(Hash(RequestPayload))
+&lt;/pre&gt;
+*/
+const canonical_request = function(request) {
+	const url_info = parse(request.url);
+
+	return [
+		request.method || &#x27;/&#x27;,
+		encodeURIComponent(url_info.pathname).replace(/%2F/gi, &#x27;/&#x27;),
+		canonical_query(url_info.query),
+		canonical_headers(request.headers),
+		signed_headers(request.headers),
+		hash(request.data),
+	].join(&#x27;\n&#x27;);
+};
+
+const parse_service_info = function(request) {
+	const url_info = parse(request.url),
+		host = url_info.host;
+
+	const matched = host.match(/([^\.]+)\.(?:([^\.]*)\.)?amazonaws\.com$/);
+	let parsed = (matched || []).slice(1, 3);
+
+	if (parsed[1] === &#x27;es&#x27;) {
+		// Elastic Search
+		parsed = parsed.reverse();
+	}
+
+	return {
+		service: request.service || parsed[0],
+		region: request.region || parsed[1],
+	};
+};
+
+const credential_scope = function(d_str, region, service) {
+	return [d_str, region, service, &#x27;aws4_request&#x27;].join(&#x27;/&#x27;);
+};
+
+/**
+* @private
+* Create a string to sign
+* Refer to
+* {@link http://docs.aws.amazon.com/general/latest/gr/sigv4-create-string-to-sign.html|Create String to Sign}
+*
+&lt;pre&gt;
+StringToSign =
+    Algorithm + \n +
+    RequestDateTime + \n +
+    CredentialScope + \n +
+    HashedCanonicalRequest
+&lt;/pre&gt;
+*/
+const string_to_sign = function(algorithm, canonical_request, dt_str, scope) {
+	return [algorithm, dt_str, scope, hash(canonical_request)].join(&#x27;\n&#x27;);
+};
+
+/**
+* @private
+* Create signing key
+* Refer to
+* {@link http://docs.aws.amazon.com/general/latest/gr/sigv4-calculate-signature.html|Calculate Signature}
+*
+&lt;pre&gt;
+kSecret = your secret access key
+kDate = HMAC(&quot;AWS4&quot; + kSecret, Date)
+kRegion = HMAC(kDate, Region)
+kService = HMAC(kRegion, Service)
+kSigning = HMAC(kService, &quot;aws4_request&quot;)
+&lt;/pre&gt;
+*/
+const get_signing_key = function(secret_key, d_str, service_info) {
+	logger.debug(service_info);
+	const k = &#x27;AWS4&#x27; + secret_key,
+		k_date = encrypt(k, d_str),
+		k_region = encrypt(k_date, service_info.region),
+		k_service = encrypt(k_region, service_info.service),
+		k_signing = encrypt(k_service, &#x27;aws4_request&#x27;);
+
+	return k_signing;
+};
+
+const get_signature = function(signing_key, str_to_sign) {
+	return toHex(encrypt(signing_key, str_to_sign));
+};
+
+/**
+ * @private
+ * Create authorization header
+ * Refer to
+ * {@link http://docs.aws.amazon.com/general/latest/gr/sigv4-add-signature-to-request.html|Add the Signing Information}
+ */
+const get_authorization_header = function(
+	algorithm,
+	access_key,
+	scope,
+	signed_headers,
+	signature
+) {
+	return [
+		algorithm + &#x27; &#x27; + &#x27;Credential=&#x27; + access_key + &#x27;/&#x27; + scope,
+		&#x27;SignedHeaders=&#x27; + signed_headers,
+		&#x27;Signature=&#x27; + signature,
+	].join(&#x27;, &#x27;);
+};
+
+export class Signer {
+	/**
+    * Sign a HTTP request, add &#x27;Authorization&#x27; header to request param
+    * @method sign
+    * @memberof Signer
+    * @static
+    *
+    * @param {object} request - HTTP request object
+    &lt;pre&gt;
+    request: {
+        method: GET | POST | PUT ...
+        url: ...,
+        headers: {
+            header1: ...
+        },
+        data: data
+    }
+    &lt;/pre&gt;
+    * @param {object} access_info - AWS access credential info
+    &lt;pre&gt;
+    access_info: {
+        access_key: ...,
+        secret_key: ...,
+        session_token: ...
+    }
+    &lt;/pre&gt;
+    * @param {object} [service_info] - AWS service type and region, optional,
+    *                                  if not provided then parse out from url
+    &lt;pre&gt;
+    service_info: {
+        service: ...,
+        region: ...
+    }
+    &lt;/pre&gt;
+    *
+    * @returns {object} Signed HTTP request
+    */
+	static sign(request, access_info, service_info = null) {
+		request.headers = request.headers || {};
+
+		if (request.body &amp;&amp; !request.data) {
+			throw new Error(
+				&#x27;The attribute &quot;body&quot; was found on the request object. Please use the attribute &quot;data&quot; instead.&#x27;
+			);
+		}
+
+		// datetime string and date string
+		const dt = DateUtils.getDateWithClockOffset(),
+			dt_str = dt.toISOString().replace(/[:\-]|\.\d{3}/g, &#x27;&#x27;),
+			d_str = dt_str.substr(0, 8);
+
+		const url_info = parse(request.url);
+		request.headers[&#x27;host&#x27;] = url_info.host;
+		request.headers[&#x27;x-amz-date&#x27;] = dt_str;
+		if (access_info.session_token) {
+			request.headers[&#x27;X-Amz-Security-Token&#x27;] = access_info.session_token;
+		}
+
+		// Task 1: Create a Canonical Request
+		const request_str = canonical_request(request);
+		logger.debug(request_str);
+
+		// Task 2: Create a String to Sign
+		const serviceInfo = service_info || parse_service_info(request),
+			scope = credential_scope(d_str, serviceInfo.region, serviceInfo.service),
+			str_to_sign = string_to_sign(
+				DEFAULT_ALGORITHM,
+				request_str,
+				dt_str,
+				scope
+			);
+
+		// Task 3: Calculate the Signature
+		const signing_key = get_signing_key(
+				access_info.secret_key,
+				d_str,
+				serviceInfo
+			),
+			signature = get_signature(signing_key, str_to_sign);
+
+		// Task 4: Adding the Signing information to the Request
+		const authorization_header = get_authorization_header(
+			DEFAULT_ALGORITHM,
+			access_info.access_key,
+			scope,
+			signed_headers(request.headers),
+			signature
+		);
+		request.headers[&#x27;Authorization&#x27;] = authorization_header;
+
+		return request;
+	}
+
+	static signUrl(
+		urlToSign: string,
+		accessInfo: any,
+		serviceInfo?: any,
+		expiration?: number
+	): string;
+	static signUrl(
+		request: any,
+		accessInfo: any,
+		serviceInfo?: any,
+		expiration?: number
+	): string;
+	static signUrl(
+		urlOrRequest: string | any,
+		accessInfo: any,
+		serviceInfo?: any,
+		expiration?: number
+	): string {
+		const urlToSign: string =
+			typeof urlOrRequest === &#x27;object&#x27; ? urlOrRequest.url : urlOrRequest;
+		const method: string =
+			typeof urlOrRequest === &#x27;object&#x27; ? urlOrRequest.method : &#x27;GET&#x27;;
+		const body: any =
+			typeof urlOrRequest === &#x27;object&#x27; ? urlOrRequest.body : undefined;
+
+		const now = DateUtils.getDateWithClockOffset()
+			.toISOString()
+			.replace(/[:\-]|\.\d{3}/g, &#x27;&#x27;);
+		const today = now.substr(0, 8);
+		// Intentionally discarding search
+		const { search, ...parsedUrl } = parse(urlToSign, true, true);
+		const { host } = parsedUrl;
+		const signedHeaders = { host };
+
+		const { region, service } =
+			serviceInfo || parse_service_info({ url: format(parsedUrl) });
+		const credentialScope = credential_scope(today, region, service);
+
+		// IoT service does not allow the session token in the canonical request
+		// https://docs.aws.amazon.com/general/latest/gr/sigv4-add-signature-to-request.html
+		const sessionTokenRequired =
+			accessInfo.session_token &amp;&amp; service !== IOT_SERVICE_NAME;
+		const queryParams = {
+			&#x27;X-Amz-Algorithm&#x27;: DEFAULT_ALGORITHM,
+			&#x27;X-Amz-Credential&#x27;: [accessInfo.access_key, credentialScope].join(&#x27;/&#x27;),
+			&#x27;X-Amz-Date&#x27;: now.substr(0, 16),
+			...(sessionTokenRequired
+				? { &#x27;X-Amz-Security-Token&#x27;: `${accessInfo.session_token}` }
+				: {}),
+			...(expiration ? { &#x27;X-Amz-Expires&#x27;: `${expiration}` } : {}),
+			&#x27;X-Amz-SignedHeaders&#x27;: Object.keys(signedHeaders).join(&#x27;,&#x27;),
+		};
+
+		const canonicalRequest = canonical_request({
+			method,
+			url: format({
+				...parsedUrl,
+				query: {
+					...parsedUrl.query,
+					...queryParams,
+				},
+			}),
+			headers: signedHeaders,
+			data: body,
+		});
+
+		const stringToSign = string_to_sign(
+			DEFAULT_ALGORITHM,
+			canonicalRequest,
+			now,
+			credentialScope
+		);
+
+		const signing_key = get_signing_key(accessInfo.secret_key, today, {
+			region,
+			service,
+		});
+		const signature = get_signature(signing_key, stringToSign);
+
+		const additionalQueryParams = {
+			&#x27;X-Amz-Signature&#x27;: signature,
+			...(accessInfo.session_token &amp;&amp; {
+				&#x27;X-Amz-Security-Token&#x27;: accessInfo.session_token,
+			}),
+		};
+
+		const result = format({
+			protocol: parsedUrl.protocol,
+			slashes: true,
+			hostname: parsedUrl.hostname,
+			port: parsedUrl.port,
+			pathname: parsedUrl.pathname,
+			query: {
+				...parsedUrl.query,
+				...queryParams,
+				...additionalQueryParams,
+			},
+		});
+
+		return result;
+	}
+}
+
+/**
+ * @deprecated use per-function import
+ */
+export default Signer;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:17,&quot;character&quot;:9,&quot;text&quot;:&quot;DateUtils&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:24,&quot;character&quot;:25,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:24,&quot;character&quot;:30,&quot;text&quot;:&quot;src&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:30,&quot;character&quot;:22,&quot;text&quot;:&quot;src&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:31,&quot;character&quot;:7,&quot;text&quot;:&quot;arg&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:31,&quot;character&quot;:13,&quot;text&quot;:&quot;src&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:41,&quot;character&quot;:32,&quot;text&quot;:&quot;component&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:42,&quot;character&quot;:8,&quot;text&quot;:&quot;component&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:42,&quot;character&quot;:18,&quot;text&quot;:&quot;replace&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:42,&quot;character&quot;:47,&quot;text&quot;:&quot;c&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:15,&quot;text&quot;:&quot;c&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:17,&quot;text&quot;:&quot;charCodeAt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:44,&quot;text&quot;:&quot;toUpperCase&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:52,&quot;character&quot;:33,&quot;text&quot;:&quot;query&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:53,&quot;character&quot;:6,&quot;text&quot;:&quot;query&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:53,&quot;character&quot;:15,&quot;text&quot;:&quot;query&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:53,&quot;character&quot;:21,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:57,&quot;character&quot;:8,&quot;text&quot;:&quot;query&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:58,&quot;character&quot;:3,&quot;text&quot;:&quot;split&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:3,&quot;text&quot;:&quot;map&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:7,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:9,&quot;text&quot;:&quot;key_val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:19,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:21,&quot;text&quot;:&quot;split&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:7,&quot;text&quot;:&quot;key_val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:15,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:63,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:10,&quot;text&quot;:&quot;reencoded_val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:41,&quot;text&quot;:&quot;key_val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:66,&quot;character&quot;:11,&quot;text&quot;:&quot;key_val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:66,&quot;character&quot;:30,&quot;text&quot;:&quot;reencoded_val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:69,&quot;character&quot;:3,&quot;text&quot;:&quot;sort&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:69,&quot;character&quot;:9,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:69,&quot;character&quot;:12,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:70,&quot;character&quot;:9,&quot;text&quot;:&quot;key_a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:70,&quot;character&quot;:17,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:70,&quot;character&quot;:19,&quot;text&quot;:&quot;split&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:9,&quot;text&quot;:&quot;key_b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:17,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:19,&quot;text&quot;:&quot;split&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:72,&quot;character&quot;:7,&quot;text&quot;:&quot;key_a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:72,&quot;character&quot;:17,&quot;text&quot;:&quot;key_b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:11,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:15,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:75,&quot;character&quot;:11,&quot;text&quot;:&quot;key_a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:75,&quot;character&quot;:19,&quot;text&quot;:&quot;key_b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:78,&quot;character&quot;:3,&quot;text&quot;:&quot;join&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:35,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:93,&quot;character&quot;:6,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:102,&quot;character&quot;:5,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:102,&quot;character&quot;:12,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:102,&quot;character&quot;:27,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:102,&quot;character&quot;:40,&quot;text&quot;:&quot;trim&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:102,&quot;character&quot;:47,&quot;text&quot;:&quot;replace&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:109,&quot;character&quot;:33,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:119,&quot;character&quot;:32,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:144,&quot;character&quot;:35,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:145,&quot;character&quot;:24,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:145,&quot;character&quot;:32,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:2,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:10,&quot;text&quot;:&quot;method&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:151,&quot;character&quot;:20,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:151,&quot;character&quot;:28,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:152,&quot;character&quot;:17,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:152,&quot;character&quot;:25,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:153,&quot;character&quot;:7,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:153,&quot;character&quot;:15,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:157,&quot;character&quot;:36,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:158,&quot;character&quot;:24,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:158,&quot;character&quot;:32,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:170,&quot;character&quot;:2,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:170,&quot;character&quot;:11,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:170,&quot;character&quot;:19,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:171,&quot;character&quot;:2,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:171,&quot;character&quot;:10,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:171,&quot;character&quot;:18,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:34,&quot;text&quot;:&quot;d_str&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:41,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:49,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:176,&quot;character&quot;:9,&quot;text&quot;:&quot;d_str&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:176,&quot;character&quot;:16,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:176,&quot;character&quot;:24,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:193,&quot;character&quot;:32,&quot;text&quot;:&quot;algorithm&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:193,&quot;character&quot;:43,&quot;text&quot;:&quot;canonical_request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:193,&quot;character&quot;:62,&quot;text&quot;:&quot;dt_str&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:193,&quot;character&quot;:70,&quot;text&quot;:&quot;scope&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:194,&quot;character&quot;:9,&quot;text&quot;:&quot;algorithm&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:194,&quot;character&quot;:20,&quot;text&quot;:&quot;dt_str&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:194,&quot;character&quot;:28,&quot;text&quot;:&quot;scope&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:194,&quot;character&quot;:40,&quot;text&quot;:&quot;canonical_request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:33,&quot;text&quot;:&quot;secret_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:45,&quot;text&quot;:&quot;d_str&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:52,&quot;text&quot;:&quot;service_info&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:212,&quot;character&quot;:14,&quot;text&quot;:&quot;service_info&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:213,&quot;character&quot;:20,&quot;text&quot;:&quot;secret_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:214,&quot;character&quot;:22,&quot;text&quot;:&quot;d_str&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:215,&quot;character&quot;:29,&quot;text&quot;:&quot;service_info&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:215,&quot;character&quot;:42,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:216,&quot;character&quot;:32,&quot;text&quot;:&quot;service_info&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:216,&quot;character&quot;:45,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:222,&quot;character&quot;:31,&quot;text&quot;:&quot;signing_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:222,&quot;character&quot;:44,&quot;text&quot;:&quot;str_to_sign&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:223,&quot;character&quot;:22,&quot;text&quot;:&quot;signing_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:223,&quot;character&quot;:35,&quot;text&quot;:&quot;str_to_sign&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:233,&quot;character&quot;:1,&quot;text&quot;:&quot;algorithm&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:234,&quot;character&quot;:1,&quot;text&quot;:&quot;access_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:235,&quot;character&quot;:1,&quot;text&quot;:&quot;scope&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:236,&quot;character&quot;:1,&quot;text&quot;:&quot;signed_headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:237,&quot;character&quot;:1,&quot;text&quot;:&quot;signature&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:240,&quot;character&quot;:2,&quot;text&quot;:&quot;algorithm&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:240,&quot;character&quot;:36,&quot;text&quot;:&quot;access_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:240,&quot;character&quot;:55,&quot;text&quot;:&quot;scope&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:241,&quot;character&quot;:21,&quot;text&quot;:&quot;signed_headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:242,&quot;character&quot;:17,&quot;text&quot;:&quot;signature&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:13,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:22,&quot;text&quot;:&quot;access_info&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:35,&quot;text&quot;:&quot;service_info&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:284,&quot;character&quot;:2,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:284,&quot;character&quot;:10,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:284,&quot;character&quot;:20,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:284,&quot;character&quot;:28,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:286,&quot;character&quot;:6,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:286,&quot;character&quot;:14,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:286,&quot;character&quot;:23,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:286,&quot;character&quot;:31,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:293,&quot;character&quot;:8,&quot;text&quot;:&quot;dt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:293,&quot;character&quot;:13,&quot;text&quot;:&quot;DateUtils&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:293,&quot;character&quot;:23,&quot;text&quot;:&quot;getDateWithClockOffset&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:294,&quot;character&quot;:3,&quot;text&quot;:&quot;dt_str&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:294,&quot;character&quot;:12,&quot;text&quot;:&quot;dt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:294,&quot;character&quot;:15,&quot;text&quot;:&quot;toISOString&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:294,&quot;character&quot;:29,&quot;text&quot;:&quot;replace&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:295,&quot;character&quot;:3,&quot;text&quot;:&quot;d_str&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:295,&quot;character&quot;:11,&quot;text&quot;:&quot;dt_str&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:295,&quot;character&quot;:18,&quot;text&quot;:&quot;substr&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:297,&quot;character&quot;:25,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:297,&quot;character&quot;:33,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:298,&quot;character&quot;:2,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:298,&quot;character&quot;:10,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:299,&quot;character&quot;:2,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:299,&quot;character&quot;:10,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:299,&quot;character&quot;:34,&quot;text&quot;:&quot;dt_str&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:300,&quot;character&quot;:6,&quot;text&quot;:&quot;access_info&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:300,&quot;character&quot;:18,&quot;text&quot;:&quot;session_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:301,&quot;character&quot;:3,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:301,&quot;character&quot;:11,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:301,&quot;character&quot;:45,&quot;text&quot;:&quot;access_info&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:301,&quot;character&quot;:57,&quot;text&quot;:&quot;session_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:305,&quot;character&quot;:40,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:309,&quot;character&quot;:8,&quot;text&quot;:&quot;serviceInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:309,&quot;character&quot;:22,&quot;text&quot;:&quot;service_info&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:309,&quot;character&quot;:57,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:310,&quot;character&quot;:28,&quot;text&quot;:&quot;d_str&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:310,&quot;character&quot;:35,&quot;text&quot;:&quot;serviceInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:310,&quot;character&quot;:47,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:310,&quot;character&quot;:55,&quot;text&quot;:&quot;serviceInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:310,&quot;character&quot;:67,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:314,&quot;character&quot;:4,&quot;text&quot;:&quot;dt_str&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:320,&quot;character&quot;:4,&quot;text&quot;:&quot;access_info&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:320,&quot;character&quot;:16,&quot;text&quot;:&quot;secret_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:321,&quot;character&quot;:4,&quot;text&quot;:&quot;d_str&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:322,&quot;character&quot;:4,&quot;text&quot;:&quot;serviceInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:329,&quot;character&quot;:3,&quot;text&quot;:&quot;access_info&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:329,&quot;character&quot;:15,&quot;text&quot;:&quot;access_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:331,&quot;character&quot;:18,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:331,&quot;character&quot;:26,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:334,&quot;character&quot;:2,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:334,&quot;character&quot;:10,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:336,&quot;character&quot;:9,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:341,&quot;character&quot;:2,&quot;text&quot;:&quot;accessInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:342,&quot;character&quot;:2,&quot;text&quot;:&quot;serviceInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:346,&quot;character&quot;:2,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:347,&quot;character&quot;:2,&quot;text&quot;:&quot;accessInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:348,&quot;character&quot;:2,&quot;text&quot;:&quot;serviceInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:352,&quot;character&quot;:2,&quot;text&quot;:&quot;urlOrRequest&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:353,&quot;character&quot;:2,&quot;text&quot;:&quot;accessInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:354,&quot;character&quot;:2,&quot;text&quot;:&quot;serviceInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:358,&quot;character&quot;:10,&quot;text&quot;:&quot;urlOrRequest&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:358,&quot;character&quot;:38,&quot;text&quot;:&quot;urlOrRequest&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:358,&quot;character&quot;:51,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:360,&quot;character&quot;:10,&quot;text&quot;:&quot;urlOrRequest&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:360,&quot;character&quot;:38,&quot;text&quot;:&quot;urlOrRequest&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:360,&quot;character&quot;:51,&quot;text&quot;:&quot;method&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:361,&quot;character&quot;:8,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:362,&quot;character&quot;:10,&quot;text&quot;:&quot;urlOrRequest&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:362,&quot;character&quot;:38,&quot;text&quot;:&quot;urlOrRequest&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:362,&quot;character&quot;:51,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:364,&quot;character&quot;:8,&quot;text&quot;:&quot;now&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:364,&quot;character&quot;:14,&quot;text&quot;:&quot;DateUtils&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:364,&quot;character&quot;:24,&quot;text&quot;:&quot;getDateWithClockOffset&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:365,&quot;character&quot;:4,&quot;text&quot;:&quot;toISOString&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:366,&quot;character&quot;:4,&quot;text&quot;:&quot;replace&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:367,&quot;character&quot;:8,&quot;text&quot;:&quot;today&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:367,&quot;character&quot;:16,&quot;text&quot;:&quot;now&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:367,&quot;character&quot;:20,&quot;text&quot;:&quot;substr&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:373,&quot;character&quot;:10,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:373,&quot;character&quot;:18,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:375,&quot;character&quot;:43,&quot;text&quot;:&quot;today&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:375,&quot;character&quot;:50,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:375,&quot;character&quot;:58,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:380,&quot;character&quot;:3,&quot;text&quot;:&quot;accessInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:380,&quot;character&quot;:14,&quot;text&quot;:&quot;session_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:380,&quot;character&quot;:31,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:383,&quot;character&quot;:24,&quot;text&quot;:&quot;accessInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:383,&quot;character&quot;:35,&quot;text&quot;:&quot;access_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:384,&quot;character&quot;:17,&quot;text&quot;:&quot;now&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:384,&quot;character&quot;:21,&quot;text&quot;:&quot;substr&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:386,&quot;character&quot;:35,&quot;text&quot;:&quot;accessInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:386,&quot;character&quot;:46,&quot;text&quot;:&quot;session_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:402,&quot;character&quot;:3,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:402,&quot;character&quot;:9,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:408,&quot;character&quot;:3,&quot;text&quot;:&quot;now&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:412,&quot;character&quot;:38,&quot;text&quot;:&quot;accessInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:412,&quot;character&quot;:49,&quot;text&quot;:&quot;secret_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:412,&quot;character&quot;:61,&quot;text&quot;:&quot;today&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:413,&quot;character&quot;:3,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:414,&quot;character&quot;:3,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:420,&quot;character&quot;:7,&quot;text&quot;:&quot;accessInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:420,&quot;character&quot;:18,&quot;text&quot;:&quot;session_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:421,&quot;character&quot;:28,&quot;text&quot;:&quot;accessInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Signer.ts&quot;,&quot;line&quot;:421,&quot;character&quot;:39,&quot;text&quot;:&quot;session_token&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:20 GMT</p>
+    </body>
+  </html>
+  

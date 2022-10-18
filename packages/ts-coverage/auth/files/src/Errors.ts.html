@@ -1,0 +1,137 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Errors.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Errors.ts</td><td class="">100.00%</td><td class="">0%</td><td class="">113</td><td class="">113</td><td class="">0</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2019-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import { AuthErrorMessages, AuthErrorTypes } from &#x27;./types&#x27;;
+import { ConsoleLogger as Logger } from &#x27;@aws-amplify/core&#x27;;
+import { AuthErrorStrings } from &#x27;./common/AuthErrorStrings&#x27;;
+
+const logger = new Logger(&#x27;AuthError&#x27;);
+
+export class AuthError extends Error {
+	public log: string;
+	constructor(type: AuthErrorTypes) {
+		const { message, log } = authErrorMessages[type];
+		super(message);
+
+		// Hack for making the custom error class work when transpiled to es5
+		// TODO: Delete the following 2 lines after we change the build target to &gt;= es2015
+		this.constructor = AuthError;
+		Object.setPrototypeOf(this, AuthError.prototype);
+
+		this.name = &#x27;AuthError&#x27;;
+		this.log = log || message;
+
+		logger.error(this.log);
+	}
+}
+
+export class NoUserPoolError extends AuthError {
+	constructor(type: AuthErrorTypes) {
+		super(type);
+
+		// Hack for making the custom error class work when transpiled to es5
+		// TODO: Delete the following 2 lines after we change the build target to &gt;= es2015
+		this.constructor = NoUserPoolError;
+		Object.setPrototypeOf(this, NoUserPoolError.prototype);
+
+		this.name = &#x27;NoUserPoolError&#x27;;
+	}
+}
+
+export const authErrorMessages: AuthErrorMessages = {
+	noConfig: {
+		message: AuthErrorStrings.DEFAULT_MSG,
+		log: `
+            Error: Amplify has not been configured correctly.
+            This error is typically caused by one of the following scenarios:
+
+            1. Make sure you&#x27;re passing the awsconfig object to Amplify.configure() in your app&#x27;s entry point
+                See https://aws-amplify.github.io/docs/js/authentication#configure-your-app for more information
+            
+            2. There might be multiple conflicting versions of amplify packages in your node_modules.
+				Refer to our docs site for help upgrading Amplify packages (https://docs.amplify.aws/lib/troubleshooting/upgrading/q/platform/js)
+        `,
+	},
+	missingAuthConfig: {
+		message: AuthErrorStrings.DEFAULT_MSG,
+		log: `
+            Error: Amplify has not been configured correctly. 
+            The configuration object is missing required auth properties.
+            This error is typically caused by one of the following scenarios:
+
+            1. Did you run \`amplify push\` after adding auth via \`amplify add auth\`?
+                See https://aws-amplify.github.io/docs/js/authentication#amplify-project-setup for more information
+
+            2. This could also be caused by multiple conflicting versions of amplify packages, see (https://docs.amplify.aws/lib/troubleshooting/upgrading/q/platform/js) for help upgrading Amplify packages.
+        `,
+	},
+	emptyUsername: {
+		message: AuthErrorStrings.EMPTY_USERNAME,
+	},
+	// TODO: should include a list of valid sign-in types
+	invalidUsername: {
+		message: AuthErrorStrings.INVALID_USERNAME,
+	},
+	emptyPassword: {
+		message: AuthErrorStrings.EMPTY_PASSWORD,
+	},
+	emptyCode: {
+		message: AuthErrorStrings.EMPTY_CODE,
+	},
+	signUpError: {
+		message: AuthErrorStrings.SIGN_UP_ERROR,
+		log: &#x27;The first parameter should either be non-null string or object&#x27;,
+	},
+	noMFA: {
+		message: AuthErrorStrings.NO_MFA,
+	},
+	invalidMFA: {
+		message: AuthErrorStrings.INVALID_MFA,
+	},
+	emptyChallengeResponse: {
+		message: AuthErrorStrings.EMPTY_CHALLENGE,
+	},
+	noUserSession: {
+		message: AuthErrorStrings.NO_USER_SESSION,
+	},
+	deviceConfig: {
+		message: AuthErrorStrings.DEVICE_CONFIG,
+	},
+	networkError: {
+		message: AuthErrorStrings.NETWORK_ERROR,
+	},
+	autoSignInError: {
+		message: AuthErrorStrings.AUTOSIGNIN_ERROR,
+	},
+	default: {
+		message: AuthErrorStrings.DEFAULT_MSG,
+	},
+};
+</textarea><pre id="annotations" style="display:none">[]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:24 GMT</p>
+    </body>
+  </html>
+  

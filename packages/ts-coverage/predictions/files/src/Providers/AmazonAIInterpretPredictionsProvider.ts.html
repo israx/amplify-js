@@ -1,0 +1,309 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>AmazonAIInterpretPredictionsProvider.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Providers/AmazonAIInterpretPredictionsProvider.ts</td><td class="">70.03%</td><td class="">0%</td><td class="">377</td><td class="">264</td><td class="">113</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import { Credentials, getAmplifyUserAgent } from &#x27;@aws-amplify/core&#x27;;
+import { AbstractInterpretPredictionsProvider } from &#x27;../types/Providers&#x27;;
+
+import {
+	InterpretTextInput,
+	InterpretTextOutput,
+	InterpretTextCategories,
+	TextEntities,
+	TextSentiment,
+	TextSyntax,
+	KeyPhrases,
+} from &#x27;../types&#x27;;
+import {
+	ComprehendClient,
+	DetectSyntaxCommand,
+	DetectEntitiesCommand,
+	DetectDominantLanguageCommand,
+	DetectKeyPhrasesCommand,
+	DetectSentimentCommand,
+} from &#x27;@aws-sdk/client-comprehend&#x27;;
+
+export class AmazonAIInterpretPredictionsProvider extends AbstractInterpretPredictionsProvider {
+	constructor() {
+		super();
+	}
+
+	getProviderName() {
+		return &#x27;AmazonAIInterpretPredictionsProvider&#x27;;
+	}
+
+	interpretText(input: InterpretTextInput): Promise&lt;InterpretTextOutput&gt; {
+		return new Promise(async (res, rej) =&gt; {
+			const credentials = await Credentials.get();
+			if (!credentials) return rej(&#x27;No credentials&#x27;);
+			const {
+				interpretText: {
+					region = &#x27;&#x27;,
+					defaults: { type: interpretTypeConfig = &#x27;&#x27; } = {},
+				} = {},
+			} = this._config;
+			const {
+				text: {
+					source: { text = &#x27;&#x27; } = {},
+					type: interpretType = interpretTypeConfig,
+				} = {},
+			} = ({} = input);
+
+			const {
+				text: { source: { language = undefined } = {} } = {},
+			} = ({} = input as any); // language is only required for specific interpret types
+
+			const comprehendClient = new ComprehendClient({
+				credentials,
+				region,
+				customUserAgent: getAmplifyUserAgent(),
+			});
+
+			const doAll = interpretType === InterpretTextCategories.ALL;
+
+			let languagePromise: Promise&lt;string&gt;;
+			if (doAll || interpretType === InterpretTextCategories.LANGUAGE) {
+				const languageDetectionParams = {
+					Text: text,
+				};
+				languagePromise = this.detectLanguage(
+					languageDetectionParams,
+					comprehendClient
+				);
+			}
+
+			let entitiesPromise: Promise&lt;Array&lt;TextEntities&gt;&gt;;
+			if (doAll || interpretType === InterpretTextCategories.ENTITIES) {
+				const LanguageCode = language || (await languagePromise);
+				if (!LanguageCode) {
+					return rej(&#x27;language code is required on source for this selection&#x27;);
+				}
+				const entitiesDetectionParams = {
+					Text: text,
+					LanguageCode,
+				};
+				entitiesPromise = this.detectEntities(
+					entitiesDetectionParams,
+					comprehendClient
+				);
+			}
+
+			let sentimentPromise: Promise&lt;TextSentiment&gt;;
+			if (doAll || interpretType === InterpretTextCategories.SENTIMENT) {
+				const LanguageCode = language || (await languagePromise);
+				if (!LanguageCode) {
+					return rej(&#x27;language code is required on source for this selection&#x27;);
+				}
+				const sentimentParams = {
+					Text: text,
+					LanguageCode,
+				};
+				sentimentPromise = this.detectSentiment(
+					sentimentParams,
+					comprehendClient
+				);
+			}
+
+			let syntaxPromise: Promise&lt;Array&lt;TextSyntax&gt;&gt;;
+			if (doAll || interpretType === InterpretTextCategories.SYNTAX) {
+				const LanguageCode = language || (await languagePromise);
+				if (!LanguageCode) {
+					return rej(&#x27;language code is required on source for this selection&#x27;);
+				}
+				const syntaxParams = {
+					Text: text,
+					LanguageCode,
+				};
+				syntaxPromise = this.detectSyntax(syntaxParams, comprehendClient);
+			}
+
+			let keyPhrasesPromise: Promise&lt;Array&lt;KeyPhrases&gt;&gt;;
+			if (doAll || interpretType === InterpretTextCategories.KEY_PHRASES) {
+				const LanguageCode = language || (await languagePromise);
+				if (!LanguageCode) {
+					return rej(&#x27;language code is required on source for this selection&#x27;);
+				}
+				const keyPhrasesParams = {
+					Text: text,
+					LanguageCode,
+				};
+				keyPhrasesPromise = this.detectKeyPhrases(
+					keyPhrasesParams,
+					comprehendClient
+				);
+			}
+			try {
+				const results = await Promise.all([
+					languagePromise,
+					entitiesPromise,
+					sentimentPromise,
+					syntaxPromise,
+					keyPhrasesPromise,
+				]);
+				res({
+					textInterpretation: {
+						keyPhrases: results[4] || [],
+						language: results[0] || &#x27;&#x27;,
+						sentiment: results[2],
+						syntax: &lt;TextSyntax[]&gt;results[3] || [],
+						textEntities: &lt;TextEntities[]&gt;results[1] || [],
+					},
+				});
+			} catch (err) {
+				rej(err);
+			}
+		});
+	}
+
+	private async detectKeyPhrases(
+		params,
+		comprehend
+	): Promise&lt;Array&lt;KeyPhrases&gt;&gt; {
+		try {
+			const detectKeyPhrasesCommand = new DetectKeyPhrasesCommand(params);
+			const data = await comprehend.send(detectKeyPhrasesCommand);
+			const { KeyPhrases = [] } = data || {};
+			return KeyPhrases.map(({ Text: text }) =&gt; {
+				return { text };
+			});
+		} catch (err) {
+			if (err.code === &#x27;AccessDeniedException&#x27;) {
+				Promise.reject(
+					&#x27;Not authorized, did you enable Interpret Text on predictions category Amplify CLI? try: &#x27; +
+						&#x27;amplify predictions add&#x27;
+				);
+			} else {
+				Promise.reject(err.message);
+			}
+		}
+	}
+
+	private async detectSyntax(params, comprehend): Promise&lt;Array&lt;TextSyntax&gt;&gt; {
+		try {
+			const detectSyntaxCommand = new DetectSyntaxCommand(params);
+			const data = await comprehend.send(detectSyntaxCommand);
+			const { SyntaxTokens = [] } = data || {};
+			return this.serializeSyntaxFromComprehend(SyntaxTokens);
+		} catch (err) {
+			if (err.code === &#x27;AccessDeniedException&#x27;) {
+				Promise.reject(
+					&#x27;Not authorized, did you enable Interpret Text on predictions category Amplify CLI? try: &#x27; +
+						&#x27;amplify predictions add&#x27;
+				);
+			} else {
+				Promise.reject(err.message);
+			}
+		}
+	}
+
+	private serializeSyntaxFromComprehend(tokens): Array&lt;TextSyntax&gt; {
+		let response = [];
+		if (tokens &amp;&amp; Array.isArray(tokens)) {
+			response = tokens.map(
+				({ Text: text = &#x27;&#x27;, PartOfSpeech: { Tag: syntax = &#x27;&#x27; } = {} }) =&gt; {
+					return { text, syntax };
+				}
+			);
+		}
+		return response;
+	}
+
+	private async detectSentiment(params, comprehend): Promise&lt;TextSentiment&gt; {
+		try {
+			const detectSentimentCommand = new DetectSentimentCommand(params);
+			const data = await comprehend.send(detectSentimentCommand);
+			const {
+				Sentiment: predominant = &#x27;&#x27;,
+				SentimentScore: {
+					Positive: positive = 0,
+					Negative: negative = 0,
+					Neutral: neutral = 0,
+					Mixed: mixed = 0,
+				} = {},
+			} = ({} = data);
+			return { predominant, positive, negative, neutral, mixed };
+		} catch (err) {
+			if (err.code === &#x27;AccessDeniedException&#x27;) {
+				Promise.reject(
+					&#x27;Not authorized, did you enable Interpret Text on predictions category Amplify CLI? try: &#x27; +
+						&#x27;amplify predictions add&#x27;
+				);
+			} else {
+				Promise.reject(err.message);
+			}
+		}
+	}
+
+	private async detectEntities(
+		params,
+		comprehend
+	): Promise&lt;Array&lt;TextEntities&gt;&gt; {
+		try {
+			const detectEntitiesCommand = new DetectEntitiesCommand(params);
+			const data = await comprehend.send(detectEntitiesCommand);
+			const { Entities = [] } = data || {};
+			return this.serializeEntitiesFromComprehend(Entities);
+		} catch (err) {
+			if (err.code === &#x27;AccessDeniedException&#x27;) {
+				Promise.reject(
+					&#x27;Not authorized, did you enable Interpret Text on predictions category Amplify CLI? try: &#x27; +
+						&#x27;amplify predictions add&#x27;
+				);
+			} else {
+				Promise.reject(err.message);
+			}
+		}
+	}
+
+	private serializeEntitiesFromComprehend(data): Array&lt;TextEntities&gt; {
+		let response = [];
+		if (data &amp;&amp; Array.isArray(data)) {
+			response = data.map(({ Type: type, Text: text }) =&gt; {
+				return { type, text };
+			});
+		}
+		return response;
+	}
+
+	private async detectLanguage(params, comprehend): Promise&lt;string&gt; {
+		try {
+			const detectDominantLanguageCommand = new DetectDominantLanguageCommand(
+				params
+			);
+			const data = await comprehend.send(detectDominantLanguageCommand);
+			const { Languages: [{ LanguageCode }] = [&#x27;&#x27;] } = ({} = data || {});
+			if (!LanguageCode) {
+				Promise.reject(&#x27;Language not detected&#x27;);
+			}
+			return data.Languages[0].LanguageCode;
+		} catch (err) {
+			if (err.code === &#x27;AccessDeniedException&#x27;) {
+				Promise.reject(
+					&#x27;Not authorized, did you enable Interpret Text on predictions category Amplify CLI? try: &#x27; +
+						&#x27;amplify predictions add&#x27;
+				);
+			} else {
+				Promise.reject(err.message);
+			}
+		}
+	}
+}
+
+/**
+ * @deprecated use named import
+ */
+export default AmazonAIInterpretPredictionsProvider;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:32,&quot;character&quot;:9,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:33,&quot;character&quot;:8,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:36,&quot;character&quot;:5,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:37,&quot;character&quot;:23,&quot;text&quot;:&quot;interpretTypeConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:11,&quot;text&quot;:&quot;interpretType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:48,&quot;character&quot;:22,&quot;text&quot;:&quot;language&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:57,&quot;character&quot;:17,&quot;text&quot;:&quot;interpretType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:16,&quot;text&quot;:&quot;interpretType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:16,&quot;text&quot;:&quot;interpretType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:72,&quot;character&quot;:10,&quot;text&quot;:&quot;LanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:72,&quot;character&quot;:25,&quot;text&quot;:&quot;language&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:9,&quot;text&quot;:&quot;LanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:78,&quot;character&quot;:5,&quot;text&quot;:&quot;LanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:87,&quot;character&quot;:16,&quot;text&quot;:&quot;interpretType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:88,&quot;character&quot;:10,&quot;text&quot;:&quot;LanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:88,&quot;character&quot;:25,&quot;text&quot;:&quot;language&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:89,&quot;character&quot;:9,&quot;text&quot;:&quot;LanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:94,&quot;character&quot;:5,&quot;text&quot;:&quot;LanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:103,&quot;character&quot;:16,&quot;text&quot;:&quot;interpretType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:104,&quot;character&quot;:10,&quot;text&quot;:&quot;LanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:104,&quot;character&quot;:25,&quot;text&quot;:&quot;language&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:105,&quot;character&quot;:9,&quot;text&quot;:&quot;LanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:110,&quot;character&quot;:5,&quot;text&quot;:&quot;LanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:16,&quot;text&quot;:&quot;interpretType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:117,&quot;character&quot;:10,&quot;text&quot;:&quot;LanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:117,&quot;character&quot;:25,&quot;text&quot;:&quot;language&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:118,&quot;character&quot;:9,&quot;text&quot;:&quot;LanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:123,&quot;character&quot;:5,&quot;text&quot;:&quot;LanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:8,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:147,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:154,&quot;character&quot;:2,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:155,&quot;character&quot;:2,&quot;text&quot;:&quot;comprehend&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:159,&quot;character&quot;:9,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:159,&quot;character&quot;:22,&quot;text&quot;:&quot;comprehend&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:159,&quot;character&quot;:33,&quot;text&quot;:&quot;send&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:160,&quot;character&quot;:11,&quot;text&quot;:&quot;KeyPhrases&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:161,&quot;character&quot;:10,&quot;text&quot;:&quot;KeyPhrases&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:161,&quot;character&quot;:21,&quot;text&quot;:&quot;map&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:161,&quot;character&quot;:34,&quot;text&quot;:&quot;text&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:162,&quot;character&quot;:13,&quot;text&quot;:&quot;text&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:165,&quot;character&quot;:7,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:165,&quot;character&quot;:11,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:171,&quot;character&quot;:19,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:171,&quot;character&quot;:23,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:164,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:176,&quot;character&quot;:28,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:176,&quot;character&quot;:36,&quot;text&quot;:&quot;comprehend&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:179,&quot;character&quot;:9,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:179,&quot;character&quot;:22,&quot;text&quot;:&quot;comprehend&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:179,&quot;character&quot;:33,&quot;text&quot;:&quot;send&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:180,&quot;character&quot;:11,&quot;text&quot;:&quot;SyntaxTokens&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:181,&quot;character&quot;:45,&quot;text&quot;:&quot;SyntaxTokens&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:183,&quot;character&quot;:7,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:183,&quot;character&quot;:11,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:189,&quot;character&quot;:19,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:189,&quot;character&quot;:23,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:182,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:194,&quot;character&quot;:39,&quot;text&quot;:&quot;tokens&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:196,&quot;character&quot;:6,&quot;text&quot;:&quot;tokens&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:196,&quot;character&quot;:30,&quot;text&quot;:&quot;tokens&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:198,&quot;character&quot;:13,&quot;text&quot;:&quot;text&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:198,&quot;character&quot;:45,&quot;text&quot;:&quot;syntax&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:199,&quot;character&quot;:14,&quot;text&quot;:&quot;text&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:199,&quot;character&quot;:20,&quot;text&quot;:&quot;syntax&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:206,&quot;character&quot;:31,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:206,&quot;character&quot;:39,&quot;text&quot;:&quot;comprehend&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:209,&quot;character&quot;:9,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:209,&quot;character&quot;:22,&quot;text&quot;:&quot;comprehend&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:209,&quot;character&quot;:33,&quot;text&quot;:&quot;send&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:15,&quot;text&quot;:&quot;predominant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:213,&quot;character&quot;:15,&quot;text&quot;:&quot;positive&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:214,&quot;character&quot;:15,&quot;text&quot;:&quot;negative&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:215,&quot;character&quot;:14,&quot;text&quot;:&quot;neutral&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:216,&quot;character&quot;:12,&quot;text&quot;:&quot;mixed&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:221,&quot;character&quot;:7,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:221,&quot;character&quot;:11,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:227,&quot;character&quot;:19,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:227,&quot;character&quot;:23,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:220,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:233,&quot;character&quot;:2,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:234,&quot;character&quot;:2,&quot;text&quot;:&quot;comprehend&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:238,&quot;character&quot;:9,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:238,&quot;character&quot;:22,&quot;text&quot;:&quot;comprehend&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:238,&quot;character&quot;:33,&quot;text&quot;:&quot;send&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:239,&quot;character&quot;:11,&quot;text&quot;:&quot;Entities&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:240,&quot;character&quot;:47,&quot;text&quot;:&quot;Entities&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:242,&quot;character&quot;:7,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:242,&quot;character&quot;:11,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:248,&quot;character&quot;:19,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:248,&quot;character&quot;:23,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:241,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:253,&quot;character&quot;:41,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:255,&quot;character&quot;:6,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:255,&quot;character&quot;:28,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:256,&quot;character&quot;:32,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:256,&quot;character&quot;:44,&quot;text&quot;:&quot;text&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:257,&quot;character&quot;:13,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:257,&quot;character&quot;:19,&quot;text&quot;:&quot;text&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:263,&quot;character&quot;:30,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:263,&quot;character&quot;:38,&quot;text&quot;:&quot;comprehend&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:268,&quot;character&quot;:9,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:268,&quot;character&quot;:22,&quot;text&quot;:&quot;comprehend&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:268,&quot;character&quot;:33,&quot;text&quot;:&quot;send&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:269,&quot;character&quot;:25,&quot;text&quot;:&quot;LanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:270,&quot;character&quot;:8,&quot;text&quot;:&quot;LanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:10,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:15,&quot;text&quot;:&quot;Languages&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:28,&quot;text&quot;:&quot;LanguageCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:275,&quot;character&quot;:7,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:275,&quot;character&quot;:11,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:281,&quot;character&quot;:19,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:281,&quot;character&quot;:23,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonAIInterpretPredictionsProvider.ts&quot;,&quot;line&quot;:274,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:25 GMT</p>
+    </body>
+  </html>
+  

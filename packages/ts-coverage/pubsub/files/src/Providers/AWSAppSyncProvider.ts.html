@@ -1,0 +1,222 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>AWSAppSyncProvider.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Providers/AWSAppSyncProvider.ts</td><td class="">86.13%</td><td class="">0%</td><td class="">310</td><td class="">267</td><td class="">43</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import { Client } from &#x27;paho-mqtt&#x27;;
+import Observable from &#x27;zen-observable-ts&#x27;;
+import { ConsoleLogger as Logger } from &#x27;@aws-amplify/core&#x27;;
+
+import { MqttOverWSProvider } from &#x27;./MqttOverWSProvider&#x27;;
+
+const logger = new Logger(&#x27;AWSAppSyncProvider&#x27;);
+
+/**
+ * @deprecated Unused, all usecases have migrated to AWSAppSyncRealtimeProvider
+ */
+export class AWSAppSyncProvider extends MqttOverWSProvider {
+	protected get endpoint() {
+		throw new Error(&#x27;Not supported&#x27;);
+	}
+
+	getProviderName() {
+		return &#x27;AWSAppSyncProvider&#x27;;
+	}
+
+	public async publish(topics: string[] | string, msg: any, options?: any) {
+		throw new Error(&#x27;Operation not supported&#x27;);
+	}
+
+	private _cleanUp(clientId: string) {
+		const topicsForClient = Array.from(this._topicClient.entries())
+			.filter(([, c]) =&gt; c.clientId === clientId)
+			.map(([t]) =&gt; t);
+
+		topicsForClient.forEach(t =&gt; this._cleanUpForTopic(t));
+	}
+
+	private _cleanUpForTopic(topic) {
+		this._topicClient.delete(topic);
+		this._topicAlias.delete(topic);
+	}
+
+	public onDisconnect({ clientId, errorCode, ...args }) {
+		if (errorCode !== 0) {
+			const topicsForClient = Array.from(this._topicClient.entries())
+				.filter(([, c]) =&gt; c.clientId === clientId)
+				.map(([t]) =&gt; t);
+
+			topicsForClient.forEach(topic =&gt; {
+				if (this._topicObservers.has(topic)) {
+					this._topicObservers.get(topic).forEach(obs =&gt; {
+						if (!obs.closed) {
+							obs.error(args);
+						}
+					});
+
+					this._topicObservers.delete(topic);
+				}
+			});
+
+			this._cleanUp(clientId);
+		}
+	}
+
+	private _topicClient: Map&lt;string, Client&gt; = new Map();
+
+	private _topicAlias: Map&lt;string, string&gt; = new Map();
+
+	protected async disconnect(clientId: string): Promise&lt;void&gt; {
+		const client = await this.clientsQueue.get(clientId, () =&gt; null);
+
+		await super.disconnect(clientId);
+
+		this._cleanUp(clientId);
+	}
+
+	subscribe(topics: string[] | string, options: any = {}): Observable&lt;any&gt; {
+		const result = new Observable&lt;any&gt;(observer =&gt; {
+			const targetTopics = ([] as string[]).concat(topics);
+			logger.debug(&#x27;Subscribing to topic(s)&#x27;, targetTopics.join(&#x27;,&#x27;));
+
+			(async () =&gt; {
+				// Add these topics to map
+				targetTopics.forEach(t =&gt; {
+					if (!this._topicObservers.has(t)) {
+						this._topicObservers.set(t, new Set());
+					}
+
+					this._topicObservers.get(t).add(observer);
+				});
+
+				const { mqttConnections = [], newSubscriptions } = options;
+
+				// creates a map of {&quot;topic&quot;: &quot;alias&quot;}
+				const newAliases = Object.entries(newSubscriptions).map(
+					([alias, v]: [string, { topic: string }]) =&gt; [v.topic, alias]
+				);
+
+				// Merge new aliases with old ones
+				this._topicAlias = new Map([
+					...Array.from(this._topicAlias.entries()),
+					...(newAliases as [string, string][]),
+				]);
+
+				// group by urls
+				const map: [string, { url: string; topics: Set&lt;string&gt; }][] =
+					Object.entries(
+						targetTopics.reduce((acc, elem) =&gt; {
+							const connectionInfoForTopic = mqttConnections.find(
+								c =&gt; c.topics.indexOf(elem) &gt; -1
+							);
+
+							if (connectionInfoForTopic) {
+								const { client: clientId, url } = connectionInfoForTopic;
+
+								if (!acc[clientId]) {
+									acc[clientId] = {
+										url,
+										topics: new Set(),
+									};
+								}
+
+								acc[clientId].topics.add(elem);
+							}
+
+							return acc;
+						}, {})
+					);
+
+				// reconnect everything we have in the map
+				await Promise.all(
+					map.map(async ([clientId, { url, topics }]) =&gt; {
+						// connect to new client
+						let client = null;
+						try {
+							client = await this.connect(clientId, {
+								clientId,
+								url,
+							});
+						} catch (err) {
+							observer.error({ message: &#x27;Failed to connect&#x27;, error: err });
+							observer.complete();
+							return undefined;
+						}
+
+						// subscribe to all topics for this client
+						// store topic-client mapping
+						topics.forEach(topic =&gt; {
+							if (client.isConnected()) {
+								client.subscribe(topic);
+
+								this._topicClient.set(topic, client);
+							}
+						});
+
+						return client;
+					})
+				);
+			})();
+
+			return () =&gt; {
+				logger.debug(&#x27;Unsubscribing from topic(s)&#x27;, targetTopics.join(&#x27;,&#x27;));
+
+				targetTopics.forEach(t =&gt; {
+					const client = this._topicClient.get(t);
+
+					if (client &amp;&amp; client.isConnected()) {
+						client.unsubscribe(t);
+						this._topicClient.delete(t);
+
+						if (
+							!Array.from(this._topicClient.values()).some(c =&gt; c === client)
+						) {
+							this.disconnect(client.clientId);
+						}
+					}
+
+					this._topicObservers.delete(t);
+				});
+			};
+		});
+
+		return Observable.from(result).map(value =&gt; {
+			const topic = this.getTopicForValue(value);
+			const alias = this._topicAlias.get(topic);
+
+			value.data = Object.entries(value.data).reduce(
+				(obj, [origKey, val]) =&gt; (
+					(obj[(alias || origKey) as string] = val), obj
+				),
+				{}
+			);
+
+			return value;
+		});
+	}
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:32,&quot;character&quot;:49,&quot;text&quot;:&quot;msg&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:32,&quot;character&quot;:59,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:44,&quot;character&quot;:26,&quot;text&quot;:&quot;topic&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:49,&quot;character&quot;:23,&quot;text&quot;:&quot;clientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:49,&quot;character&quot;:33,&quot;text&quot;:&quot;errorCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:50,&quot;character&quot;:6,&quot;text&quot;:&quot;errorCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:52,&quot;character&quot;:38,&quot;text&quot;:&quot;clientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:76,&quot;character&quot;:8,&quot;text&quot;:&quot;client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:83,&quot;character&quot;:38,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:98,&quot;character&quot;:12,&quot;text&quot;:&quot;mqttConnections&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:98,&quot;character&quot;:34,&quot;text&quot;:&quot;newSubscriptions&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:115,&quot;character&quot;:13,&quot;text&quot;:&quot;connectionInfoForTopic&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:115,&quot;character&quot;:38,&quot;text&quot;:&quot;mqttConnections&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:115,&quot;character&quot;:54,&quot;text&quot;:&quot;find&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:8,&quot;text&quot;:&quot;c&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:13,&quot;text&quot;:&quot;c&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:15,&quot;text&quot;:&quot;topics&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:22,&quot;text&quot;:&quot;indexOf&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:119,&quot;character&quot;:11,&quot;text&quot;:&quot;connectionInfoForTopic&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:120,&quot;character&quot;:24,&quot;text&quot;:&quot;clientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:120,&quot;character&quot;:34,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:122,&quot;character&quot;:17,&quot;text&quot;:&quot;clientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:123,&quot;character&quot;:13,&quot;text&quot;:&quot;clientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:124,&quot;character&quot;:10,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:129,&quot;character&quot;:12,&quot;text&quot;:&quot;clientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:140,&quot;character&quot;:10,&quot;text&quot;:&quot;client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:142,&quot;character&quot;:7,&quot;text&quot;:&quot;client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:147,&quot;character&quot;:54,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:147,&quot;character&quot;:61,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:146,&quot;character&quot;:15,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:155,&quot;character&quot;:11,&quot;text&quot;:&quot;client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:155,&quot;character&quot;:18,&quot;text&quot;:&quot;isConnected&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:156,&quot;character&quot;:8,&quot;text&quot;:&quot;client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:156,&quot;character&quot;:15,&quot;text&quot;:&quot;subscribe&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:162,&quot;character&quot;:13,&quot;text&quot;:&quot;client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:189,&quot;character&quot;:37,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:190,&quot;character&quot;:9,&quot;text&quot;:&quot;topic&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:190,&quot;character&quot;:39,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:193,&quot;character&quot;:3,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:193,&quot;character&quot;:9,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:193,&quot;character&quot;:31,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:193,&quot;character&quot;:37,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSAppSyncProvider.ts&quot;,&quot;line&quot;:200,&quot;character&quot;:10,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:25 GMT</p>
+    </body>
+  </html>
+  

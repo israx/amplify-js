@@ -1,0 +1,177 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>AWSTypes.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/types/AWSTypes.ts</td><td class="">100.00%</td><td class="">0%</td><td class="">59</td><td class="">59</td><td class="">0</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import { Geometry, Relationship } from &#x27;./Predictions&#x27;;
+
+export type BlockList = Block[];
+export interface Block {
+	/**
+	 * &lt;p&gt;The type of text that&#x27;s recognized in a block. In text-detection operations, the following types are returned:&lt;/p&gt; &lt;ul&gt; &lt;li&gt; &lt;p&gt; &lt;i&gt;PAGE&lt;/i&gt; - Contains a list of the LINE Block objects that are detected on a document page.&lt;/p&gt; &lt;/li&gt; &lt;li&gt; &lt;p&gt; &lt;i&gt;WORD&lt;/i&gt; - A word detected on a document page. A word is one or more ISO basic Latin script characters that aren&#x27;t separated by spaces.&lt;/p&gt; &lt;/li&gt; &lt;li&gt; &lt;p&gt; &lt;i&gt;LINE&lt;/i&gt; - A string of tab-delimited, contiguous words that&#x27;s detected on a document page.&lt;/p&gt; &lt;/li&gt; &lt;/ul&gt; &lt;p&gt;In text analysis operations, the following types are returned:&lt;/p&gt; &lt;ul&gt; &lt;li&gt; &lt;p&gt; &lt;i&gt;PAGE&lt;/i&gt; - Contains a list of child Block objects that are detected on a document page.&lt;/p&gt; &lt;/li&gt; &lt;li&gt; &lt;p&gt; &lt;i&gt;KEY_VALUE_SET&lt;/i&gt; - Stores the KEY and VALUE Block objects for a field that&#x27;s detected on a document page. Use the &lt;code&gt;EntityType&lt;/code&gt; field to determine if a KEY_VALUE_SET object is a KEY Block object or a VALUE Block object. &lt;/p&gt; &lt;/li&gt; &lt;li&gt; &lt;p&gt; &lt;i&gt;WORD&lt;/i&gt; - A word detected on a document page. A word is one or more ISO basic Latin script characters that aren&#x27;t separated by spaces that&#x27;s detected on a document page.&lt;/p&gt; &lt;/li&gt; &lt;li&gt; &lt;p&gt; &lt;i&gt;LINE&lt;/i&gt; - A string of tab-delimited, contiguous words that&#x27;s detected on a document page.&lt;/p&gt; &lt;/li&gt; &lt;li&gt; &lt;p&gt; &lt;i&gt;TABLE&lt;/i&gt; - A table that&#x27;s detected on a document page. A table is any grid-based information with 2 or more rows or columns with a cell span of 1 row and 1 column each. &lt;/p&gt; &lt;/li&gt; &lt;li&gt; &lt;p&gt; &lt;i&gt;CELL&lt;/i&gt; - A cell within a detected table. The cell is the parent of the block that contains the text in the cell.&lt;/p&gt; &lt;/li&gt; &lt;li&gt; &lt;p&gt; &lt;i&gt;SELECTION_ELEMENT&lt;/i&gt; - A selectable element such as a radio button or checkbox that&#x27;s detected on a document page. Use the value of &lt;code&gt;SelectionStatus&lt;/code&gt; to determine the status of the selection element.&lt;/p&gt; &lt;/li&gt; &lt;/ul&gt;
+	 */
+	BlockType?:
+		| &#x27;KEY_VALUE_SET&#x27;
+		| &#x27;PAGE&#x27;
+		| &#x27;LINE&#x27;
+		| &#x27;WORD&#x27;
+		| &#x27;TABLE&#x27;
+		| &#x27;CELL&#x27;
+		| &#x27;SELECTION_ELEMENT&#x27;
+		| string;
+
+	/**
+	 * &lt;p&gt;The confidence that Amazon Textract has in the accuracy of the recognized text and the accuracy of the geometry points around the recognized text.&lt;/p&gt;
+	 */
+	Confidence?: number;
+
+	/**
+	 * &lt;p&gt;The word or line of text that&#x27;s recognized by Amazon Textract. &lt;/p&gt;
+	 */
+	Text?: string;
+
+	/**
+	 * &lt;p&gt;The row in which a table cell is located. The first row position is 1. &lt;code&gt;RowIndex&lt;/code&gt; isn&#x27;t returned by &lt;code&gt;DetectDocumentText&lt;/code&gt; and &lt;code&gt;GetDocumentTextDetection&lt;/code&gt;.&lt;/p&gt;
+	 */
+	RowIndex?: number;
+
+	/**
+	 * &lt;p&gt;The column in which a table cell appears. The first column position is 1. &lt;code&gt;ColumnIndex&lt;/code&gt; isn&#x27;t returned by &lt;code&gt;DetectDocumentText&lt;/code&gt; and &lt;code&gt;GetDocumentTextDetection&lt;/code&gt;.&lt;/p&gt;
+	 */
+	ColumnIndex?: number;
+
+	/**
+	 * &lt;p&gt;The number of rows that a table spans. &lt;code&gt;RowSpan&lt;/code&gt; isn&#x27;t returned by &lt;code&gt;DetectDocumentText&lt;/code&gt; and &lt;code&gt;GetDocumentTextDetection&lt;/code&gt;.&lt;/p&gt;
+	 */
+	RowSpan?: number;
+
+	/**
+	 * &lt;p&gt;The number of columns that a table cell spans. &lt;code&gt;ColumnSpan&lt;/code&gt; isn&#x27;t returned by &lt;code&gt;DetectDocumentText&lt;/code&gt; and &lt;code&gt;GetDocumentTextDetection&lt;/code&gt;. &lt;/p&gt;
+	 */
+	ColumnSpan?: number;
+
+	/**
+	 * &lt;p&gt;The location of the recognized text on the image. It includes an axis-aligned, coarse bounding box that surrounds the text, and a finer-grain polygon for more accurate spatial information. &lt;/p&gt;
+	 */
+	Geometry?: Geometry;
+
+	/**
+	 * &lt;p&gt;The identifier for the recognized text. The identifier is only unique for a single operation. &lt;/p&gt;
+	 */
+	Id?: string;
+
+	/**
+	 * &lt;p&gt;A list of child blocks of the current block. For example a LINE object has child blocks for each WORD block that&#x27;s part of the line of text. There aren&#x27;t Relationship objects in the list for relationships that don&#x27;t exist, such as when the current block has no child blocks. The list size can be the following:&lt;/p&gt; &lt;ul&gt; &lt;li&gt; &lt;p&gt;0 - The block has no child blocks.&lt;/p&gt; &lt;/li&gt; &lt;li&gt; &lt;p&gt;1 - The block has child blocks.&lt;/p&gt; &lt;/li&gt; &lt;/ul&gt;
+	 */
+	Relationships?: Array&lt;Relationship&gt; | Iterable&lt;Relationship&gt;;
+
+	/**
+	 * &lt;p&gt;The type of entity. The following can be returned:&lt;/p&gt; &lt;ul&gt; &lt;li&gt; &lt;p&gt; &lt;i&gt;KEY&lt;/i&gt; - An identifier for a field on the document.&lt;/p&gt; &lt;/li&gt; &lt;li&gt; &lt;p&gt; &lt;i&gt;VALUE&lt;/i&gt; - The field text.&lt;/p&gt; &lt;/li&gt; &lt;/ul&gt; &lt;p&gt; &lt;code&gt;EntityTypes&lt;/code&gt; isn&#x27;t returned by &lt;code&gt;DetectDocumentText&lt;/code&gt; and &lt;code&gt;GetDocumentTextDetection&lt;/code&gt;.&lt;/p&gt;
+	 */
+	EntityTypes?:
+		| Array&lt;&#x27;KEY&#x27; | &#x27;VALUE&#x27; | string&gt;
+		| Iterable&lt;&#x27;KEY&#x27; | &#x27;VALUE&#x27; | string&gt;;
+
+	/**
+	 * &lt;p&gt;The selection status of a selectable element such as a radio button or checkbox. &lt;/p&gt;
+	 */
+	SelectionStatus?: &#x27;SELECTED&#x27; | &#x27;NOT_SELECTED&#x27; | string;
+
+	/**
+	 * &lt;p&gt;The page in which a block was detected. &lt;code&gt;Page&lt;/code&gt; is returned by asynchronous operations. Page values greater than 1 are only returned for multi-page documents that are in PDF format. A scanned image (JPG/PNG), even if it contains multiple document pages, is always considered to be a single-page document and the value of &lt;code&gt;Page&lt;/code&gt; is always 1. Synchronous operations don&#x27;t return &lt;code&gt;Page&lt;/code&gt; as every input document is considered to be a single-page document.&lt;/p&gt;
+	 */
+	Page?: number;
+}
+
+export type TextDetectionList = TextDetection[];
+
+export interface TextDetection {
+	/**
+	 * &lt;p&gt;The word or line of text recognized by Amazon Rekognition. &lt;/p&gt;
+	 */
+	DetectedText?: string;
+
+	/**
+	 * &lt;p&gt;The type of text that was detected.&lt;/p&gt;
+	 */
+	Type?: &#x27;LINE&#x27; | &#x27;WORD&#x27; | string;
+
+	/**
+	 * &lt;p&gt;The identifier for the detected text. The identifier is only unique for a single call to &lt;code&gt;DetectText&lt;/code&gt;. &lt;/p&gt;
+	 */
+	Id?: number;
+
+	/**
+	 * &lt;p&gt;The Parent identifier for the detected text identified by the value of &lt;code&gt;ID&lt;/code&gt;. If the type of detected text is &lt;code&gt;LINE&lt;/code&gt;, the value of &lt;code&gt;ParentId&lt;/code&gt; is &lt;code&gt;Null&lt;/code&gt;. &lt;/p&gt;
+	 */
+	ParentId?: number;
+
+	/**
+	 * &lt;p&gt;The confidence that Amazon Rekognition has in the accuracy of the detected text and the accuracy of the geometry points around the detected text.&lt;/p&gt;
+	 */
+	Confidence?: number;
+
+	/**
+	 * &lt;p&gt;The location of the detected text on the image. Includes an axis aligned coarse bounding box surrounding the text and a finer grain polygon for more accurate spatial information.&lt;/p&gt;
+	 */
+	Geometry?: Geometry;
+}
+
+export interface Image {
+	/**
+	 * &lt;p&gt;Blob of image bytes up to 5 MBs.&lt;/p&gt;
+	 */
+	Bytes?: Uint8Array;
+
+	/**
+	 * &lt;p&gt;Identifies an S3 object as the image source.&lt;/p&gt;
+	 */
+	S3Object?: S3Object;
+}
+
+export type ImageBlob = Buffer | Uint8Array | Blob | string;
+export type S3Bucket = string;
+export interface S3Object {
+	/**
+	 * Name of the S3 bucket.
+	 */
+	Bucket?: S3Bucket;
+	/**
+	 * S3 object key name.
+	 */
+	Name?: S3ObjectName;
+	/**
+	 * If the bucket is versioning enabled, you can specify the object version.
+	 */
+	Version?: S3ObjectVersion;
+}
+export type S3ObjectName = string;
+export type S3ObjectVersion = string;
+
+/**
+ * &lt;p&gt;The input document, either as bytes or as an S3 object.&lt;/p&gt; &lt;p&gt;You pass image bytes to an Amazon Textract API operation by using the &lt;code&gt;Bytes&lt;/code&gt; property. For example, you would use the &lt;code&gt;Bytes&lt;/code&gt; property to pass a document loaded from a local file system. Image bytes passed by using the &lt;code&gt;Bytes&lt;/code&gt; property must be base64 encoded. Your code might not need to encode document file bytes if you&#x27;re using an AWS SDK to call Amazon Textract API operations. &lt;/p&gt; &lt;p&gt;You pass images stored in an S3 bucket to an Amazon Textract API operation by using the &lt;code&gt;S3Object&lt;/code&gt; property. Documents stored in an S3 bucket don&#x27;t need to be base64 encoded.&lt;/p&gt; &lt;p&gt;The AWS Region for the S3 bucket that contains the S3 object must match the AWS Region that you use for Amazon Textract operations.&lt;/p&gt; &lt;p&gt;If you use the AWS CLI to call Amazon Textract operations, passing image bytes using the Bytes property isn&#x27;t supported. You must first upload the document to an Amazon S3 bucket, and then call the operation using the S3Object property.&lt;/p&gt; &lt;p&gt;For Amazon Textract to process an S3 object, the user must have permission to access the S3 object. &lt;/p&gt;
+ */
+export interface Document {
+	/**
+	 * &lt;p&gt;A blob of base-64 encoded documents bytes. The maximum size of a document that&#x27;s provided in a blob of bytes is 5 MB. The document bytes must be in PNG or JPG format.&lt;/p&gt; &lt;p&gt;If you are using an AWS SDK to call Amazon Textract, you might not need to base64-encode image bytes passed using the &lt;code&gt;Bytes&lt;/code&gt; field. &lt;/p&gt;
+	 */
+	Bytes?: Uint8Array;
+
+	/**
+	 * &lt;p&gt;Identifies an S3 object as the document source. The maximum size of a document stored in an S3 bucket is 5 MB.&lt;/p&gt;
+	 */
+	S3Object?: S3Object;
+}
+</textarea><pre id="annotations" style="display:none">[]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:25 GMT</p>
+    </body>
+  </html>
+  

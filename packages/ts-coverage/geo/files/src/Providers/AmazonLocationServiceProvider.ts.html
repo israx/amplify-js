@@ -1,0 +1,854 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>AmazonLocationServiceProvider.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Providers/AmazonLocationServiceProvider.ts</td><td class="">79.02%</td><td class="">0%</td><td class="">963</td><td class="">761</td><td class="">202</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import camelcaseKeys from &#x27;camelcase-keys&#x27;;
+
+import {
+	ConsoleLogger as Logger,
+	Credentials,
+	getAmplifyUserAgent,
+} from &#x27;@aws-amplify/core&#x27;;
+import {
+	Place as PlaceResult,
+	LocationClient,
+	SearchPlaceIndexForTextCommand,
+	SearchPlaceIndexForTextCommandInput,
+	SearchPlaceIndexForSuggestionsCommand,
+	SearchPlaceIndexForSuggestionsCommandInput,
+	SearchPlaceIndexForPositionCommand,
+	SearchPlaceIndexForPositionCommandInput,
+	BatchPutGeofenceCommand,
+	BatchPutGeofenceCommandInput,
+	BatchPutGeofenceRequestEntry,
+	BatchPutGeofenceCommandOutput,
+	GetPlaceCommand,
+	GetPlaceCommandInput,
+	GetPlaceCommandOutput,
+	GetGeofenceCommand,
+	GetGeofenceCommandInput,
+	GetGeofenceCommandOutput,
+	ListGeofencesCommand,
+	ListGeofencesCommandInput,
+	ListGeofencesCommandOutput,
+	BatchDeleteGeofenceCommand,
+	BatchDeleteGeofenceCommandInput,
+	BatchDeleteGeofenceCommandOutput,
+} from &#x27;@aws-sdk/client-location&#x27;;
+
+import {
+	mapSearchOptions,
+	validateGeofenceId,
+	validateGeofencesInput,
+} from &#x27;../util&#x27;;
+
+import {
+	GeoConfig,
+	SearchByTextOptions,
+	SearchByCoordinatesOptions,
+	GeoProvider,
+	Place,
+	AmazonLocationServiceMapStyle,
+	Coordinates,
+	SearchForSuggestionsResults,
+	GeofenceId,
+	GeofenceInput,
+	AmazonLocationServiceGeofenceOptions,
+	AmazonLocationServiceListGeofenceOptions,
+	ListGeofenceResults,
+	AmazonLocationServiceGeofenceStatus,
+	SaveGeofencesResults,
+	AmazonLocationServiceGeofence,
+	GeofencePolygon,
+	AmazonLocationServiceDeleteGeofencesResults,
+	searchByPlaceIdOptions,
+} from &#x27;../types&#x27;;
+
+const logger = new Logger(&#x27;AmazonLocationServiceProvider&#x27;);
+
+export class AmazonLocationServiceProvider implements GeoProvider {
+	static CATEGORY = &#x27;Geo&#x27;;
+	static PROVIDER_NAME = &#x27;AmazonLocationService&#x27;;
+
+	/**
+	 * @private
+	 */
+	private _config;
+
+	/**
+	 * Initialize Geo with AWS configurations
+	 * @param {Object} config - Configuration object for Geo
+	 */
+	constructor(config?: GeoConfig) {
+		this._config = config ? config : {};
+		logger.debug(&#x27;Geo Options&#x27;, this._config);
+	}
+
+	/**
+	 * get the category of the plugin
+	 * @returns {string} name of the category
+	 */
+	public getCategory(): string {
+		return AmazonLocationServiceProvider.CATEGORY;
+	}
+
+	/**
+	 * get provider name of the plugin
+	 * @returns {string} name of the provider
+	 */
+	public getProviderName(): string {
+		return AmazonLocationServiceProvider.PROVIDER_NAME;
+	}
+
+	/**
+	 * Configure Geo part with aws configuration
+	 * @param {Object} config - Configuration of the Geo
+	 * @return {Object} - Current configuration
+	 */
+	public configure(config?): object {
+		logger.debug(&#x27;configure Amazon Location Service Provider&#x27;, config);
+		if (!config) return this._config;
+		this._config = Object.assign({}, this._config, config);
+		return this._config;
+	}
+
+	/**
+	 * Get the map resources that are currently available through the provider
+	 * @returns {AmazonLocationServiceMapStyle[]}- Array of available map resources
+	 */
+	public getAvailableMaps(): AmazonLocationServiceMapStyle[] {
+		this._verifyMapResources();
+
+		const mapStyles: AmazonLocationServiceMapStyle[] = [];
+		const availableMaps = this._config.maps.items;
+		const region = this._config.region;
+
+		for (const mapName in availableMaps) {
+			const style = availableMaps[mapName].style;
+			mapStyles.push({ mapName, style, region });
+		}
+
+		return mapStyles;
+	}
+
+	/**
+	 * Get the map resource set as default in amplify config
+	 * @returns {AmazonLocationServiceMapStyle} - Map resource set as the default in amplify config
+	 */
+	public getDefaultMap(): AmazonLocationServiceMapStyle {
+		this._verifyMapResources();
+
+		const mapName = this._config.maps.default;
+		const style = this._config.maps.items[mapName].style;
+		const region = this._config.region;
+
+		return { mapName, style, region };
+	}
+
+	/**
+	 * Search by text input with optional parameters
+	 * @param  {string} text - The text string that is to be searched for
+	 * @param  {SearchByTextOptions} options? - Optional parameters to the search
+	 * @returns {Promise&lt;Place[]&gt;} - Promise resolves to a list of Places that match search parameters
+	 */
+	public async searchByText(
+		text: string,
+		options?: SearchByTextOptions
+	): Promise&lt;Place[]&gt; {
+		const credentialsOK = await this._ensureCredentials();
+		if (!credentialsOK) {
+			throw new Error(&#x27;No credentials&#x27;);
+		}
+
+		this._verifySearchIndex(options?.searchIndexName);
+
+		/**
+		 * Setup the searchInput
+		 */
+		let locationServiceInput: SearchPlaceIndexForTextCommandInput = {
+			Text: text,
+			IndexName: this._config.search_indices.default,
+		};
+
+		/**
+		 * Map search options to Amazon Location Service input object
+		 */
+		if (options) {
+			locationServiceInput = {
+				...locationServiceInput,
+				...mapSearchOptions(options, locationServiceInput),
+			};
+		}
+
+		const client = new LocationClient({
+			credentials: this._config.credentials,
+			region: this._config.region,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+		const command = new SearchPlaceIndexForTextCommand(locationServiceInput);
+
+		let response;
+		try {
+			response = await client.send(command);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+
+		/**
+		 * The response from Amazon Location Service is a &quot;Results&quot; array of objects with a single `Place` item,
+		 * which are Place objects in PascalCase.
+		 * Here we want to flatten that to an array of results and change them to camelCase
+		 */
+		const PascalResults: PlaceResult[] = response.Results.map(
+			result =&gt; result.Place
+		);
+		const results: Place[] = camelcaseKeys(PascalResults, {
+			deep: true,
+		}) as undefined as Place[];
+
+		return results;
+	}
+
+	/**
+	 * Search for suggestions based on the input text
+	 * @param  {string} text - The text string that is to be searched for
+	 * @param  {SearchByTextOptions} options? - Optional parameters to the search
+	 * @returns {Promise&lt;SearchForSuggestionsResults&gt;} - Resolves to an array of search suggestion strings
+	 */
+
+	public async searchForSuggestions(
+		text: string,
+		options?: SearchByTextOptions
+	): Promise&lt;SearchForSuggestionsResults&gt; {
+		const credentialsOK = await this._ensureCredentials();
+		if (!credentialsOK) {
+			throw new Error(&#x27;No credentials&#x27;);
+		}
+
+		this._verifySearchIndex(options?.searchIndexName);
+
+		/**
+		 * Setup the searchInput
+		 */
+		let locationServiceInput: SearchPlaceIndexForSuggestionsCommandInput = {
+			Text: text,
+			IndexName: this._config.search_indices.default,
+		};
+
+		/**
+		 * Map search options to Amazon Location Service input object
+		 */
+		if (options) {
+			locationServiceInput = {
+				...locationServiceInput,
+				...mapSearchOptions(options, locationServiceInput),
+			};
+		}
+
+		const client = new LocationClient({
+			credentials: this._config.credentials,
+			region: this._config.region,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+		const command = new SearchPlaceIndexForSuggestionsCommand(
+			locationServiceInput
+		);
+
+		let response;
+		try {
+			response = await client.send(command);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+
+		/**
+		 * The response from Amazon Location Service is a &quot;Results&quot; array of objects with `Text` and `PlaceId`.
+		 */
+		const results = response.Results.map(result =&gt; ({
+			text: result.Text,
+			placeId: result.PlaceId,
+		}));
+
+		return results;
+	}
+
+	private _verifyPlaceId(placeId: string) {
+		if (placeId.length === 0) {
+			const errorString = &#x27;PlaceId cannot be an empty string.&#x27;;
+			logger.debug(errorString);
+			throw new Error(errorString);
+		}
+	}
+
+	public async searchByPlaceId(
+		placeId: string,
+		options?: searchByPlaceIdOptions
+	): Promise&lt;Place | undefined&gt; {
+		const credentialsOK = await this._ensureCredentials();
+		if (!credentialsOK) {
+			throw new Error(&#x27;No credentials&#x27;);
+		}
+
+		this._verifySearchIndex(options?.searchIndexName);
+		this._verifyPlaceId(placeId);
+
+		const client = new LocationClient({
+			credentials: this._config.credentials,
+			region: this._config.region,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+
+		const searchByPlaceIdInput: GetPlaceCommandInput = {
+			PlaceId: placeId,
+			IndexName:
+				options?.searchIndexName || this._config.search_indices.default,
+		};
+		const command = new GetPlaceCommand(searchByPlaceIdInput);
+
+		let response: GetPlaceCommandOutput;
+		try {
+			response = await client.send(command);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+
+		const place: PlaceResult | undefined = response.Place;
+
+		if (place) {
+			return camelcaseKeys(place, { deep: true }) as unknown as Place;
+		}
+		return;
+	}
+
+	/**
+	 * Reverse geocoding search via a coordinate point on the map
+	 * @param coordinates - Coordinates array for the search input
+	 * @param options - Options parameters for the search
+	 * @returns {Promise&lt;Place&gt;} - Promise that resolves to a place matching search coordinates
+	 */
+	public async searchByCoordinates(
+		coordinates: Coordinates,
+		options?: SearchByCoordinatesOptions
+	): Promise&lt;Place&gt; {
+		const credentialsOK = await this._ensureCredentials();
+		if (!credentialsOK) {
+			throw new Error(&#x27;No credentials&#x27;);
+		}
+
+		this._verifySearchIndex(options?.searchIndexName);
+
+		const locationServiceInput: SearchPlaceIndexForPositionCommandInput = {
+			Position: coordinates,
+			IndexName: this._config.search_indices.default,
+		};
+
+		if (options) {
+			if (options.searchIndexName) {
+				locationServiceInput.IndexName = options.searchIndexName;
+			}
+			locationServiceInput.MaxResults = options.maxResults;
+		}
+
+		const client = new LocationClient({
+			credentials: this._config.credentials,
+			region: this._config.region,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+		const command = new SearchPlaceIndexForPositionCommand(
+			locationServiceInput
+		);
+
+		let response;
+		try {
+			response = await client.send(command);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+
+		/**
+		 * The response from Amazon Location Service is a &quot;Results&quot; array with a single `Place` object
+		 * which are Place objects in PascalCase.
+		 * Here we want to flatten that to an array of results and change them to camelCase
+		 */
+		const PascalResults = response.Results.map(result =&gt; result.Place);
+		const results: Place = camelcaseKeys(PascalResults[0], {
+			deep: true,
+		}) as any as Place;
+
+		return results;
+	}
+
+	/**
+	 * Create geofences inside of a geofence collection
+	 * @param geofences - Array of geofence objects to create
+	 * @param options? - Optional parameters for creating geofences
+	 * @returns {Promise&lt;AmazonLocationServiceSaveGeofencesResults&gt;} - Promise that resolves to an object with:
+	 *   successes: list of geofences successfully created
+	 *   errors: list of geofences that failed to create
+	 */
+	public async saveGeofences(
+		geofences: GeofenceInput[],
+		options?: AmazonLocationServiceGeofenceOptions
+	): Promise&lt;SaveGeofencesResults&gt; {
+		if (geofences.length &lt; 1) {
+			throw new Error(&#x27;Geofence input array is empty&#x27;);
+		}
+
+		const credentialsOK = await this._ensureCredentials();
+		if (!credentialsOK) {
+			throw new Error(&#x27;No credentials&#x27;);
+		}
+
+		// Verify geofence collection exists in aws-config.js
+		try {
+			this._verifyGeofenceCollections(options?.collectionName);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+
+		validateGeofencesInput(geofences);
+
+		// Convert geofences to PascalCase for Amazon Location Service format
+		const PascalGeofences: BatchPutGeofenceRequestEntry[] = geofences.map(
+			({ geofenceId, geometry: { polygon } }) =&gt; {
+				return {
+					GeofenceId: geofenceId,
+					Geometry: {
+						Polygon: polygon,
+					},
+				};
+			}
+		);
+		const results: SaveGeofencesResults = {
+			successes: [],
+			errors: [],
+		};
+
+		const geofenceBatches: BatchPutGeofenceRequestEntry[][] = [];
+
+		while (PascalGeofences.length &gt; 0) {
+			// Splice off 10 geofences from input clone due to Amazon Location Service API limit
+			const apiLimit = 10;
+			geofenceBatches.push(PascalGeofences.splice(0, apiLimit));
+		}
+
+		await Promise.all(
+			geofenceBatches.map(async batch =&gt; {
+				// Make API call for the 10 geofences
+				let response: BatchPutGeofenceCommandOutput;
+				try {
+					response = await this._AmazonLocationServiceBatchPutGeofenceCall(
+						batch,
+						options?.collectionName || this._config.geofenceCollections.default
+					);
+				} catch (error) {
+					// If the API call fails, add the geofences to the errors array and move to next batch
+					batch.forEach(geofence =&gt; {
+						results.errors.push({
+							geofenceId: geofence.GeofenceId,
+							error: {
+								code: &#x27;APIConnectionError&#x27;,
+								message: error.message,
+							},
+						});
+					});
+					return;
+				}
+
+				// Push all successes to results
+				response.Successes.forEach(success =&gt; {
+					const { GeofenceId, CreateTime, UpdateTime } = success;
+					results.successes.push({
+						geofenceId: GeofenceId,
+						createTime: CreateTime,
+						updateTime: UpdateTime,
+					});
+				});
+
+				// Push all errors to results
+				response.Errors.forEach(error =&gt; {
+					const {
+						Error: { Code, Message },
+						GeofenceId,
+					} = error;
+					results.errors.push({
+						error: {
+							code: Code,
+							message: Message,
+						},
+						geofenceId: GeofenceId,
+					});
+				});
+			})
+		);
+
+		return results;
+	}
+
+	/**
+	 * Get geofence from a geofence collection
+	 * @param geofenceId:string
+	 * @param options?: Optional parameters for getGeofence
+	 * @returns {Promise&lt;AmazonLocationServiceGeofence&gt;} - Promise that resolves to a geofence object
+	 */
+	public async getGeofence(
+		geofenceId: GeofenceId,
+		options?: AmazonLocationServiceGeofenceOptions
+	): Promise&lt;AmazonLocationServiceGeofence&gt; {
+		const credentialsOK = await this._ensureCredentials();
+		if (!credentialsOK) {
+			throw new Error(&#x27;No credentials&#x27;);
+		}
+
+		// Verify geofence collection exists in aws-config.js
+		try {
+			this._verifyGeofenceCollections(options?.collectionName);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+
+		validateGeofenceId(geofenceId);
+
+		// Create Amazon Location Service Client
+		const client = new LocationClient({
+			credentials: this._config.credentials,
+			region: this._config.region,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+
+		// Create Amazon Location Service command
+		const commandInput: GetGeofenceCommandInput = {
+			GeofenceId: geofenceId,
+			CollectionName:
+				options?.collectionName || this._config.geofenceCollections.default,
+		};
+		const command = new GetGeofenceCommand(commandInput);
+
+		// Make API call
+		let response: GetGeofenceCommandOutput;
+		try {
+			response = await client.send(command);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+
+		// Convert response to camelCase for return
+		const { GeofenceId, CreateTime, UpdateTime, Status, Geometry } = response;
+		const geofence: AmazonLocationServiceGeofence = {
+			createTime: CreateTime,
+			geofenceId: GeofenceId,
+			geometry: {
+				polygon: Geometry.Polygon as GeofencePolygon,
+			},
+			status: Status as AmazonLocationServiceGeofenceStatus,
+			updateTime: UpdateTime,
+		};
+
+		return geofence;
+	}
+
+	/**
+	 * List geofences from a geofence collection
+	 * @param  options?: ListGeofenceOptions
+	 * @returns {Promise&lt;ListGeofencesResults&gt;} - Promise that resolves to an object with:
+	 *   entries: list of geofences - 100 geofences are listed per page
+	 *   nextToken: token for next page of geofences
+	 */
+	public async listGeofences(
+		options?: AmazonLocationServiceListGeofenceOptions
+	): Promise&lt;ListGeofenceResults&gt; {
+		const credentialsOK = await this._ensureCredentials();
+		if (!credentialsOK) {
+			throw new Error(&#x27;No credentials&#x27;);
+		}
+
+		// Verify geofence collection exists in aws-config.js
+		try {
+			this._verifyGeofenceCollections(options?.collectionName);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+
+		// Create Amazon Location Service Client
+		const client = new LocationClient({
+			credentials: this._config.credentials,
+			region: this._config.region,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+
+		// Create Amazon Location Service input
+		const listGeofencesInput: ListGeofencesCommandInput = {
+			NextToken: options?.nextToken,
+			CollectionName:
+				options?.collectionName || this._config.geofenceCollections.default,
+		};
+
+		// Create Amazon Location Service command
+		const command: ListGeofencesCommand = new ListGeofencesCommand(
+			listGeofencesInput
+		);
+
+		// Make API call
+		let response: ListGeofencesCommandOutput;
+		try {
+			response = await client.send(command);
+		} catch (error) {
+			logger.debug(error);
+			throw error;
+		}
+
+		// Convert response to camelCase for return
+		const { NextToken, Entries } = response;
+
+		const results: ListGeofenceResults = {
+			entries: Entries.map(
+				({
+					GeofenceId,
+					CreateTime,
+					UpdateTime,
+					Status,
+					Geometry: { Polygon },
+				}) =&gt; {
+					return {
+						geofenceId: GeofenceId,
+						createTime: CreateTime,
+						updateTime: UpdateTime,
+						status: Status,
+						geometry: {
+							polygon: Polygon as GeofencePolygon,
+						},
+					};
+				}
+			),
+			nextToken: NextToken,
+		};
+
+		return results;
+	}
+
+	/**
+	 * Delete geofences from a geofence collection
+	 * @param geofenceIds: string|string[]
+	 * @param options?: GeofenceOptions
+	 * @returns {Promise&lt;DeleteGeofencesResults&gt;} - Promise that resolves to an object with:
+	 *  successes: list of geofences successfully deleted
+	 *  errors: list of geofences that failed to delete
+	 */
+	public async deleteGeofences(
+		geofenceIds: string[],
+		options?: AmazonLocationServiceGeofenceOptions
+	): Promise&lt;AmazonLocationServiceDeleteGeofencesResults&gt; {
+		if (geofenceIds.length &lt; 1) {
+			throw new Error(&#x27;GeofenceId input array is empty&#x27;);
+		}
+
+		const credentialsOK = await this._ensureCredentials();
+		if (!credentialsOK) {
+			throw new Error(&#x27;No credentials&#x27;);
+		}
+
+		this._verifyGeofenceCollections(options?.collectionName);
+
+		// Validate all geofenceIds are valid
+		const badGeofenceIds = geofenceIds.filter(geofenceId =&gt; {
+			try {
+				validateGeofenceId(geofenceId);
+			} catch (error) {
+				return true;
+			}
+		});
+		if (badGeofenceIds.length &gt; 0) {
+			throw new Error(`Invalid geofence ids: ${badGeofenceIds.join(&#x27;, &#x27;)}`);
+		}
+
+		const results: AmazonLocationServiceDeleteGeofencesResults = {
+			successes: [],
+			errors: [],
+		};
+
+		const geofenceIdBatches: string[][] = [];
+
+		let count = 0;
+		while (count &lt; geofenceIds.length) {
+			geofenceIdBatches.push(geofenceIds.slice(count, (count += 10)));
+		}
+
+		await Promise.all(
+			geofenceIdBatches.map(async batch =&gt; {
+				let response;
+				try {
+					response = await this._AmazonLocationServiceBatchDeleteGeofenceCall(
+						batch,
+						options?.collectionName || this._config.geofenceCollections.default
+					);
+				} catch (error) {
+					// If the API call fails, add the geofences to the errors array and move to next batch
+					batch.forEach(geofenceId =&gt; {
+						const errorObject = {
+							geofenceId,
+							error: {
+								code: error.message,
+								message: error.message,
+							},
+						};
+						results.errors.push(errorObject);
+					});
+					return;
+				}
+
+				const badGeofenceIds = response.Errors.map(
+					({ geofenceId }) =&gt; geofenceId
+				);
+				results.successes.push(
+					...batch.filter(Id =&gt; !badGeofenceIds.includes(Id))
+				);
+			})
+		);
+		return results;
+	}
+
+	/**
+	 * @private
+	 */
+	private async _ensureCredentials(): Promise&lt;boolean&gt; {
+		try {
+			const credentials = await Credentials.get();
+			if (!credentials) return false;
+			const cred = Credentials.shear(credentials);
+			logger.debug(&#x27;Set credentials for storage. Credentials are:&#x27;, cred);
+			this._config.credentials = cred;
+			return true;
+		} catch (error) {
+			logger.debug(&#x27;Ensure credentials error. Credentials are:&#x27;, error);
+			return false;
+		}
+	}
+
+	private _verifyMapResources() {
+		if (!this._config.maps) {
+			const errorString =
+				&quot;No map resources found in amplify config, run &#x27;amplify add geo&#x27; to create one and run `amplify push` after&quot;;
+			logger.debug(errorString);
+			throw new Error(errorString);
+		}
+		if (!this._config.maps.default) {
+			const errorString =
+				&quot;No default map resource found in amplify config, run &#x27;amplify add geo&#x27; to create one and run `amplify push` after&quot;;
+			logger.debug(errorString);
+			throw new Error(errorString);
+		}
+	}
+
+	private _verifySearchIndex(optionalSearchIndex?: string) {
+		if (
+			(!this._config.search_indices || !this._config.search_indices.default) &amp;&amp;
+			!optionalSearchIndex
+		) {
+			const errorString =
+				&#x27;No Search Index found in amplify config, please run `amplify add geo` to create one and run `amplify push` after.&#x27;;
+			logger.debug(errorString);
+			throw new Error(errorString);
+		}
+	}
+
+	private _verifyGeofenceCollections(optionalGeofenceCollectionName?: string) {
+		if (
+			(!this._config.geofenceCollections ||
+				!this._config.geofenceCollections.default) &amp;&amp;
+			!optionalGeofenceCollectionName
+		) {
+			const errorString =
+				&#x27;No Geofence Collections found, please run `amplify add geo` to create one and run `amplify push` after.&#x27;;
+			logger.debug(errorString);
+			throw new Error(errorString);
+		}
+	}
+
+	private async _AmazonLocationServiceBatchPutGeofenceCall(
+		PascalGeofences: BatchPutGeofenceRequestEntry[],
+		collectionName?: string
+	) {
+		// Create the BatchPutGeofence input
+		const geofenceInput: BatchPutGeofenceCommandInput = {
+			Entries: PascalGeofences,
+			CollectionName:
+				collectionName || this._config.geofenceCollections.default,
+		};
+
+		const client = new LocationClient({
+			credentials: this._config.credentials,
+			region: this._config.region,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+		const command = new BatchPutGeofenceCommand(geofenceInput);
+
+		let response: BatchPutGeofenceCommandOutput;
+		try {
+			response = await client.send(command);
+		} catch (error) {
+			throw error;
+		}
+		return response;
+	}
+
+	private async _AmazonLocationServiceBatchDeleteGeofenceCall(
+		geofenceIds: string[],
+		collectionName?: string
+	): Promise&lt;BatchDeleteGeofenceCommandOutput&gt; {
+		// Create the BatchDeleteGeofence input
+		const deleteGeofencesInput: BatchDeleteGeofenceCommandInput = {
+			GeofenceIds: geofenceIds,
+			CollectionName:
+				collectionName || this._config.geofenceCollections.default,
+		};
+
+		const client = new LocationClient({
+			credentials: this._config.credentials,
+			region: this._config.region,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+		const command = new BatchDeleteGeofenceCommand(deleteGeofencesInput);
+
+		let response: BatchDeleteGeofenceCommandOutput;
+		try {
+			response = await client.send(command);
+		} catch (error) {
+			throw error;
+		}
+		return response;
+	}
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:83,&quot;character&quot;:9,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:90,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:35,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:115,&quot;character&quot;:18,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:61,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:117,&quot;character&quot;:7,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:117,&quot;character&quot;:27,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:118,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:118,&quot;character&quot;:40,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:118,&quot;character&quot;:49,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:119,&quot;character&quot;:14,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:130,&quot;character&quot;:8,&quot;text&quot;:&quot;availableMaps&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:130,&quot;character&quot;:29,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:130,&quot;character&quot;:37,&quot;text&quot;:&quot;maps&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:130,&quot;character&quot;:42,&quot;text&quot;:&quot;items&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:8,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:22,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:30,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:133,&quot;character&quot;:24,&quot;text&quot;:&quot;availableMaps&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:134,&quot;character&quot;:9,&quot;text&quot;:&quot;style&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:134,&quot;character&quot;:17,&quot;text&quot;:&quot;availableMaps&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:134,&quot;character&quot;:40,&quot;text&quot;:&quot;style&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:8,&quot;text&quot;:&quot;mapName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:23,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:31,&quot;text&quot;:&quot;maps&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:36,&quot;text&quot;:&quot;default&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:149,&quot;character&quot;:8,&quot;text&quot;:&quot;style&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:149,&quot;character&quot;:21,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:149,&quot;character&quot;:29,&quot;text&quot;:&quot;maps&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:149,&quot;character&quot;:34,&quot;text&quot;:&quot;items&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:149,&quot;character&quot;:40,&quot;text&quot;:&quot;mapName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:149,&quot;character&quot;:49,&quot;text&quot;:&quot;style&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:150,&quot;character&quot;:8,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:150,&quot;character&quot;:22,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:150,&quot;character&quot;:30,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:177,&quot;character&quot;:19,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:177,&quot;character&quot;:27,&quot;text&quot;:&quot;search_indices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:177,&quot;character&quot;:42,&quot;text&quot;:&quot;default&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:191,&quot;character&quot;:21,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:191,&quot;character&quot;:29,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:192,&quot;character&quot;:16,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:192,&quot;character&quot;:24,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:197,&quot;character&quot;:6,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:199,&quot;character&quot;:3,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:201,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:202,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:200,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:210,&quot;character&quot;:39,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:210,&quot;character&quot;:48,&quot;text&quot;:&quot;Results&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:210,&quot;character&quot;:56,&quot;text&quot;:&quot;map&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:3,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:13,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:20,&quot;text&quot;:&quot;Place&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:243,&quot;character&quot;:19,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:243,&quot;character&quot;:27,&quot;text&quot;:&quot;search_indices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:243,&quot;character&quot;:42,&quot;text&quot;:&quot;default&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:257,&quot;character&quot;:21,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:257,&quot;character&quot;:29,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:258,&quot;character&quot;:16,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:258,&quot;character&quot;:24,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:265,&quot;character&quot;:6,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:267,&quot;character&quot;:3,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:269,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:270,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:268,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:276,&quot;character&quot;:8,&quot;text&quot;:&quot;results&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:276,&quot;character&quot;:18,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:276,&quot;character&quot;:27,&quot;text&quot;:&quot;Results&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:276,&quot;character&quot;:35,&quot;text&quot;:&quot;map&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:276,&quot;character&quot;:39,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:277,&quot;character&quot;:3,&quot;text&quot;:&quot;text&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:277,&quot;character&quot;:9,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:277,&quot;character&quot;:16,&quot;text&quot;:&quot;Text&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:278,&quot;character&quot;:3,&quot;text&quot;:&quot;placeId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:278,&quot;character&quot;:12,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:278,&quot;character&quot;:19,&quot;text&quot;:&quot;PlaceId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:305,&quot;character&quot;:21,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:305,&quot;character&quot;:29,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:306,&quot;character&quot;:16,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:306,&quot;character&quot;:24,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:313,&quot;character&quot;:37,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:313,&quot;character&quot;:45,&quot;text&quot;:&quot;search_indices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:313,&quot;character&quot;:60,&quot;text&quot;:&quot;default&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:321,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:322,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:320,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:352,&quot;character&quot;:19,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:352,&quot;character&quot;:27,&quot;text&quot;:&quot;search_indices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:352,&quot;character&quot;:42,&quot;text&quot;:&quot;default&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:363,&quot;character&quot;:21,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:363,&quot;character&quot;:29,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:364,&quot;character&quot;:16,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:364,&quot;character&quot;:24,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:371,&quot;character&quot;:6,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:373,&quot;character&quot;:3,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:375,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:376,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:374,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:384,&quot;character&quot;:8,&quot;text&quot;:&quot;PascalResults&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:384,&quot;character&quot;:24,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:384,&quot;character&quot;:33,&quot;text&quot;:&quot;Results&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:384,&quot;character&quot;:41,&quot;text&quot;:&quot;map&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:384,&quot;character&quot;:45,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:384,&quot;character&quot;:55,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:384,&quot;character&quot;:62,&quot;text&quot;:&quot;Place&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:385,&quot;character&quot;:39,&quot;text&quot;:&quot;PascalResults&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:417,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:418,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:416,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:454,&quot;character&quot;:38,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:454,&quot;character&quot;:46,&quot;text&quot;:&quot;geofenceCollections&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:454,&quot;character&quot;:66,&quot;text&quot;:&quot;default&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:463,&quot;character&quot;:17,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:463,&quot;character&quot;:23,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:456,&quot;character&quot;:13,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:519,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:520,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:518,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:527,&quot;character&quot;:21,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:527,&quot;character&quot;:29,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:528,&quot;character&quot;:16,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:528,&quot;character&quot;:24,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:536,&quot;character&quot;:36,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:536,&quot;character&quot;:44,&quot;text&quot;:&quot;geofenceCollections&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:536,&quot;character&quot;:64,&quot;text&quot;:&quot;default&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:545,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:546,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:544,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:583,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:584,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:582,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:589,&quot;character&quot;:21,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:589,&quot;character&quot;:29,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:590,&quot;character&quot;:16,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:590,&quot;character&quot;:24,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:598,&quot;character&quot;:36,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:598,&quot;character&quot;:44,&quot;text&quot;:&quot;geofenceCollections&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:598,&quot;character&quot;:64,&quot;text&quot;:&quot;default&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:611,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:612,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:610,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:671,&quot;character&quot;:12,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:693,&quot;character&quot;:8,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:695,&quot;character&quot;:5,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:697,&quot;character&quot;:38,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:697,&quot;character&quot;:46,&quot;text&quot;:&quot;geofenceCollections&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:697,&quot;character&quot;:66,&quot;text&quot;:&quot;default&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:705,&quot;character&quot;:8,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:705,&quot;character&quot;:14,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:705,&quot;character&quot;:20,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:706,&quot;character&quot;:8,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:706,&quot;character&quot;:17,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:706,&quot;character&quot;:23,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:699,&quot;character&quot;:13,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:714,&quot;character&quot;:10,&quot;text&quot;:&quot;badGeofenceIds&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:714,&quot;character&quot;:27,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:714,&quot;character&quot;:36,&quot;text&quot;:&quot;Errors&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:714,&quot;character&quot;:43,&quot;text&quot;:&quot;map&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:715,&quot;character&quot;:8,&quot;text&quot;:&quot;geofenceId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:715,&quot;character&quot;:25,&quot;text&quot;:&quot;geofenceId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:718,&quot;character&quot;:28,&quot;text&quot;:&quot;badGeofenceIds&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:718,&quot;character&quot;:43,&quot;text&quot;:&quot;includes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:730,&quot;character&quot;:9,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:731,&quot;character&quot;:8,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:732,&quot;character&quot;:34,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:734,&quot;character&quot;:8,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:734,&quot;character&quot;:16,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:737,&quot;character&quot;:62,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:736,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:743,&quot;character&quot;:12,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:743,&quot;character&quot;:20,&quot;text&quot;:&quot;maps&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:749,&quot;character&quot;:12,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:749,&quot;character&quot;:20,&quot;text&quot;:&quot;maps&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:749,&quot;character&quot;:25,&quot;text&quot;:&quot;default&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:759,&quot;character&quot;:10,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:759,&quot;character&quot;:18,&quot;text&quot;:&quot;search_indices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:759,&quot;character&quot;:42,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:759,&quot;character&quot;:50,&quot;text&quot;:&quot;search_indices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:759,&quot;character&quot;:65,&quot;text&quot;:&quot;default&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:771,&quot;character&quot;:10,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:771,&quot;character&quot;:18,&quot;text&quot;:&quot;geofenceCollections&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:772,&quot;character&quot;:10,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:772,&quot;character&quot;:18,&quot;text&quot;:&quot;geofenceCollections&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:772,&quot;character&quot;:38,&quot;text&quot;:&quot;default&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:790,&quot;character&quot;:27,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:790,&quot;character&quot;:35,&quot;text&quot;:&quot;geofenceCollections&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:790,&quot;character&quot;:55,&quot;text&quot;:&quot;default&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:794,&quot;character&quot;:21,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:794,&quot;character&quot;:29,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:795,&quot;character&quot;:16,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:795,&quot;character&quot;:24,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:804,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:803,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:817,&quot;character&quot;:27,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:817,&quot;character&quot;:35,&quot;text&quot;:&quot;geofenceCollections&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:817,&quot;character&quot;:55,&quot;text&quot;:&quot;default&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:821,&quot;character&quot;:21,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:821,&quot;character&quot;:29,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:822,&quot;character&quot;:16,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:822,&quot;character&quot;:24,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:831,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AmazonLocationServiceProvider.ts&quot;,&quot;line&quot;:830,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:22 GMT</p>
+    </body>
+  </html>
+  

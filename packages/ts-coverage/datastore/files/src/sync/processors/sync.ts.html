@@ -1,0 +1,416 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>sync.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/sync/processors/sync.ts</td><td class="">86.59%</td><td class="">0%</td><td class="">522</td><td class="">452</td><td class="">70</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import API, { GraphQLResult, GRAPHQL_AUTH_MODE } from &#x27;@aws-amplify/api&#x27;;
+import Observable from &#x27;zen-observable-ts&#x27;;
+import {
+	InternalSchema,
+	ModelInstanceMetadata,
+	SchemaModel,
+	ModelPredicate,
+	PredicatesGroup,
+	GraphQLFilter,
+	AuthModeStrategy,
+	ErrorHandler,
+	ProcessName,
+	AmplifyContext,
+} from &#x27;../../types&#x27;;
+import {
+	buildGraphQLOperation,
+	getModelAuthModes,
+	getClientSideAuthError,
+	getForbiddenError,
+	predicateToGraphQLFilter,
+	getTokenForCustomAuth,
+} from &#x27;../utils&#x27;;
+import { USER_AGENT_SUFFIX_DATASTORE } from &#x27;../../util&#x27;;
+import {
+	jitteredExponentialRetry,
+	ConsoleLogger as Logger,
+	Hub,
+	NonRetryableError,
+} from &#x27;@aws-amplify/core&#x27;;
+import { ModelPredicateCreator } from &#x27;../../predicates&#x27;;
+import { getSyncErrorType } from &#x27;./errorMaps&#x27;;
+const opResultDefaults = {
+	items: [],
+	nextToken: null,
+	startedAt: null,
+};
+
+const logger = new Logger(&#x27;DataStore&#x27;);
+
+class SyncProcessor {
+	private readonly typeQuery = new WeakMap&lt;SchemaModel, [string, string]&gt;();
+
+	constructor(
+		private readonly schema: InternalSchema,
+		private readonly syncPredicates: WeakMap&lt;SchemaModel, ModelPredicate&lt;any&gt;&gt;,
+		private readonly amplifyConfig: Record&lt;string, any&gt; = {},
+		private readonly authModeStrategy: AuthModeStrategy,
+		private readonly errorHandler: ErrorHandler,
+		private readonly amplifyContext: AmplifyContext
+	) {
+		amplifyContext.API = amplifyContext.API || API;
+		this.generateQueries();
+	}
+
+	private generateQueries() {
+		Object.values(this.schema.namespaces).forEach(namespace =&gt; {
+			Object.values(namespace.models)
+				.filter(({ syncable }) =&gt; syncable)
+				.forEach(model =&gt; {
+					const [[, ...opNameQuery]] = buildGraphQLOperation(
+						namespace,
+						model,
+						&#x27;LIST&#x27;
+					);
+
+					this.typeQuery.set(model, opNameQuery);
+				});
+		});
+	}
+
+	private graphqlFilterFromPredicate(model: SchemaModel): GraphQLFilter {
+		if (!this.syncPredicates) {
+			return null;
+		}
+		const predicatesGroup: PredicatesGroup&lt;any&gt; =
+			ModelPredicateCreator.getPredicates(
+				this.syncPredicates.get(model),
+				false
+			);
+
+		if (!predicatesGroup) {
+			return null;
+		}
+
+		return predicateToGraphQLFilter(predicatesGroup);
+	}
+
+	private async retrievePage&lt;T extends ModelInstanceMetadata&gt;(
+		modelDefinition: SchemaModel,
+		lastSync: number,
+		nextToken: string,
+		limit: number = null,
+		filter: GraphQLFilter
+	): Promise&lt;{ nextToken: string; startedAt: number; items: T[] }&gt; {
+		const [opName, query] = this.typeQuery.get(modelDefinition);
+
+		const variables = {
+			limit,
+			nextToken,
+			lastSync,
+			filter,
+		};
+
+		const modelAuthModes = await getModelAuthModes({
+			authModeStrategy: this.authModeStrategy,
+			defaultAuthMode: this.amplifyConfig.aws_appsync_authenticationType,
+			modelName: modelDefinition.name,
+			schema: this.schema,
+		});
+
+		// sync only needs the READ auth mode(s)
+		const readAuthModes = modelAuthModes.READ;
+
+		let authModeAttempts = 0;
+		const authModeRetry = async () =&gt; {
+			try {
+				logger.debug(
+					`Attempting sync with authMode: ${readAuthModes[authModeAttempts]}`
+				);
+				const response = await this.jitteredRetry&lt;T&gt;({
+					query,
+					variables,
+					opName,
+					modelDefinition,
+					authMode: readAuthModes[authModeAttempts],
+				});
+				logger.debug(
+					`Sync successful with authMode: ${readAuthModes[authModeAttempts]}`
+				);
+				return response;
+			} catch (error) {
+				authModeAttempts++;
+				if (authModeAttempts &gt;= readAuthModes.length) {
+					const authMode = readAuthModes[authModeAttempts - 1];
+					logger.debug(`Sync failed with authMode: ${authMode}`, error);
+					if (getClientSideAuthError(error) || getForbiddenError(error)) {
+						// return empty list of data so DataStore will continue to sync other models
+						logger.warn(
+							`User is unauthorized to query ${opName} with auth mode ${authMode}. No data could be returned.`
+						);
+
+						return {
+							data: {
+								[opName]: opResultDefaults,
+							},
+						};
+					}
+					throw error;
+				}
+				logger.debug(
+					`Sync failed with authMode: ${
+						readAuthModes[authModeAttempts - 1]
+					}. Retrying with authMode: ${readAuthModes[authModeAttempts]}`
+				);
+				return await authModeRetry();
+			}
+		};
+
+		const { data } = await authModeRetry();
+
+		const { [opName]: opResult } = data;
+
+		const { items, nextToken: newNextToken, startedAt } = opResult;
+
+		return {
+			nextToken: newNextToken,
+			startedAt,
+			items,
+		};
+	}
+
+	private async jitteredRetry&lt;T&gt;({
+		query,
+		variables,
+		opName,
+		modelDefinition,
+		authMode,
+	}: {
+		query: string;
+		variables: { limit: number; lastSync: number; nextToken: string };
+		opName: string;
+		modelDefinition: SchemaModel;
+		authMode: GRAPHQL_AUTH_MODE;
+	}): Promise&lt;
+		GraphQLResult&lt;{
+			[opName: string]: {
+				items: T[];
+				nextToken: string;
+				startedAt: number;
+			};
+		}&gt;
+	&gt; {
+		return await jitteredExponentialRetry(
+			async (query, variables) =&gt; {
+				try {
+					const authToken = await getTokenForCustomAuth(
+						authMode,
+						this.amplifyConfig
+					);
+
+					return await this.amplifyContext.API.graphql({
+						query,
+						variables,
+						authMode,
+						authToken,
+						userAgentSuffix: USER_AGENT_SUFFIX_DATASTORE,
+					});
+				} catch (error) {
+					// Catch client-side (GraphQLAuthError) &amp; 401/403 errors here so that we don&#x27;t continue to retry
+					const clientOrForbiddenErrorMessage =
+						getClientSideAuthError(error) || getForbiddenError(error);
+					if (clientOrForbiddenErrorMessage) {
+						throw new NonRetryableError(clientOrForbiddenErrorMessage);
+					}
+
+					const hasItems = Boolean(error?.data?.[opName]?.items);
+
+					const unauthorized =
+						error?.errors &amp;&amp;
+						(error.errors as [any]).some(
+							err =&gt; err.errorType === &#x27;Unauthorized&#x27;
+						);
+
+					const otherErrors =
+						error?.errors &amp;&amp;
+						(error.errors as [any]).filter(
+							err =&gt; err.errorType !== &#x27;Unauthorized&#x27;
+						);
+
+					const result = error;
+
+					if (hasItems) {
+						result.data[opName].items = result.data[opName].items.filter(
+							item =&gt; item !== null
+						);
+					}
+
+					if (hasItems &amp;&amp; otherErrors?.length) {
+						await Promise.all(
+							otherErrors.map(async err =&gt; {
+								try {
+									await this.errorHandler({
+										recoverySuggestion:
+											&#x27;Ensure app code is up to date, auth directives exist and are correct on each model, and that server-side data has not been invalidated by a schema change. If the problem persists, search for or create an issue: https://github.com/aws-amplify/amplify-js/issues&#x27;,
+										localModel: null,
+										message: err.message,
+										model: modelDefinition.name,
+										operation: opName,
+										errorType: getSyncErrorType(err),
+										process: ProcessName.sync,
+										remoteModel: null,
+										cause: err,
+									});
+								} catch (e) {
+									logger.error(&#x27;Sync error handler failed with:&#x27;, e);
+								}
+							})
+						);
+						Hub.dispatch(&#x27;datastore&#x27;, {
+							event: &#x27;nonApplicableDataReceived&#x27;,
+							data: {
+								errors: otherErrors,
+								modelName: modelDefinition.name,
+							},
+						});
+					}
+
+					if (unauthorized) {
+						logger.warn(
+							&#x27;queryError&#x27;,
+							`User is unauthorized to query ${opName}, some items could not be returned.`
+						);
+
+						result.data = result.data || {};
+
+						result.data[opName] = {
+							...opResultDefaults,
+							...result.data[opName],
+						};
+
+						return result;
+					}
+
+					if (result.data?.[opName].items?.length) {
+						return result;
+					}
+
+					throw error;
+				}
+			},
+			[query, variables]
+		);
+	}
+
+	start(
+		typesLastSync: Map&lt;SchemaModel, [string, number]&gt;
+	): Observable&lt;SyncModelPage&gt; {
+		let processing = true;
+		const { maxRecordsToSync, syncPageSize } = this.amplifyConfig;
+		const parentPromises = new Map&lt;string, Promise&lt;void&gt;&gt;();
+		const observable = new Observable&lt;SyncModelPage&gt;(observer =&gt; {
+			const sortedTypesLastSyncs = Object.values(this.schema.namespaces).reduce(
+				(map, namespace) =&gt; {
+					for (const modelName of Array.from(
+						namespace.modelTopologicalOrdering.keys()
+					)) {
+						const typeLastSync = typesLastSync.get(namespace.models[modelName]);
+						map.set(namespace.models[modelName], typeLastSync);
+					}
+					return map;
+				},
+				new Map&lt;SchemaModel, [string, number]&gt;()
+			);
+
+			const allModelsReady = Array.from(sortedTypesLastSyncs.entries())
+				.filter(([{ syncable }]) =&gt; syncable)
+				.map(async ([modelDefinition, [namespace, lastSync]]) =&gt; {
+					let done = false;
+					let nextToken: string = null;
+					let startedAt: number = null;
+					let items: ModelInstanceMetadata[] = null;
+
+					let recordsReceived = 0;
+					const filter = this.graphqlFilterFromPredicate(modelDefinition);
+
+					const parents = this.schema.namespaces[
+						namespace
+					].modelTopologicalOrdering.get(modelDefinition.name);
+					const promises = parents.map(parent =&gt;
+						parentPromises.get(`${namespace}_${parent}`)
+					);
+
+					const promise = new Promise&lt;void&gt;(async res =&gt; {
+						await Promise.all(promises);
+
+						do {
+							if (!processing) {
+								return;
+							}
+
+							const limit = Math.min(
+								maxRecordsToSync - recordsReceived,
+								syncPageSize
+							);
+
+							({ items, nextToken, startedAt } = await this.retrievePage(
+								modelDefinition,
+								lastSync,
+								nextToken,
+								limit,
+								filter
+							));
+
+							recordsReceived += items.length;
+
+							done = nextToken === null || recordsReceived &gt;= maxRecordsToSync;
+
+							observer.next({
+								namespace,
+								modelDefinition,
+								items,
+								done,
+								startedAt,
+								isFullSync: !lastSync,
+							});
+						} while (!done);
+
+						res();
+					});
+
+					parentPromises.set(`${namespace}_${modelDefinition.name}`, promise);
+
+					await promise;
+				});
+
+			Promise.all(allModelsReady).then(() =&gt; {
+				observer.complete();
+			});
+
+			return () =&gt; {
+				processing = false;
+			};
+		});
+
+		return observable;
+	}
+}
+
+export type SyncModelPage = {
+	namespace: string;
+	modelDefinition: SchemaModel;
+	items: ModelInstanceMetadata[];
+	startedAt: number;
+	done: boolean;
+	isFullSync: boolean;
+};
+
+export { SyncProcessor };
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:105,&quot;character&quot;:39,&quot;text&quot;:&quot;aws_appsync_authenticationType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:134,&quot;character&quot;:60,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:135,&quot;character&quot;:32,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:135,&quot;character&quot;:60,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:147,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:130,&quot;character&quot;:12,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:158,&quot;character&quot;:10,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:160,&quot;character&quot;:20,&quot;text&quot;:&quot;opResult&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:162,&quot;character&quot;:10,&quot;text&quot;:&quot;items&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:162,&quot;character&quot;:28,&quot;text&quot;:&quot;newNextToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:162,&quot;character&quot;:42,&quot;text&quot;:&quot;startedAt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:193,&quot;character&quot;:10,&quot;text&quot;:&quot;query&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:193,&quot;character&quot;:17,&quot;text&quot;:&quot;variables&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:209,&quot;character&quot;:11,&quot;text&quot;:&quot;clientOrForbiddenErrorMessage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:210,&quot;character&quot;:29,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:210,&quot;character&quot;:57,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:9,&quot;text&quot;:&quot;clientOrForbiddenErrorMessage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:215,&quot;character&quot;:30,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:215,&quot;character&quot;:37,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:215,&quot;character&quot;:53,&quot;text&quot;:&quot;items&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:218,&quot;character&quot;:6,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:218,&quot;character&quot;:13,&quot;text&quot;:&quot;errors&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:219,&quot;character&quot;:7,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:219,&quot;character&quot;:13,&quot;text&quot;:&quot;errors&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:220,&quot;character&quot;:7,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:220,&quot;character&quot;:14,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:220,&quot;character&quot;:18,&quot;text&quot;:&quot;errorType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:224,&quot;character&quot;:6,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:224,&quot;character&quot;:13,&quot;text&quot;:&quot;errors&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:225,&quot;character&quot;:7,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:225,&quot;character&quot;:13,&quot;text&quot;:&quot;errors&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:226,&quot;character&quot;:7,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:226,&quot;character&quot;:14,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:226,&quot;character&quot;:18,&quot;text&quot;:&quot;errorType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:229,&quot;character&quot;:11,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:229,&quot;character&quot;:20,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:6,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:13,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:26,&quot;text&quot;:&quot;items&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:34,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:41,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:54,&quot;text&quot;:&quot;items&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:60,&quot;text&quot;:&quot;filter&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:233,&quot;character&quot;:7,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:233,&quot;character&quot;:15,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:239,&quot;character&quot;:29,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:245,&quot;character&quot;:19,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:245,&quot;character&quot;:23,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:254,&quot;character&quot;:57,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:253,&quot;character&quot;:17,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:6,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:13,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:20,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:27,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:275,&quot;character&quot;:6,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:275,&quot;character&quot;:13,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:277,&quot;character&quot;:10,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:277,&quot;character&quot;:17,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:280,&quot;character&quot;:13,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:9,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:16,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:31,&quot;text&quot;:&quot;items&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:38,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:284,&quot;character&quot;:13,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:287,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:207,&quot;character&quot;:13,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:298,&quot;character&quot;:10,&quot;text&quot;:&quot;maxRecordsToSync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:298,&quot;character&quot;:28,&quot;text&quot;:&quot;syncPageSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:341,&quot;character&quot;:8,&quot;text&quot;:&quot;maxRecordsToSync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/sync.ts&quot;,&quot;line&quot;:355,&quot;character&quot;:55,&quot;text&quot;:&quot;maxRecordsToSync&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:29 GMT</p>
+    </body>
+  </html>
+  

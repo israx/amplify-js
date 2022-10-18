@@ -1,0 +1,181 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>AWSS3Provider.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/types/AWSS3Provider.ts</td><td class="">98.40%</td><td class="">0%</td><td class="">188</td><td class="">185</td><td class="">3</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import {
+	GetObjectRequest,
+	GetObjectCommandOutput,
+	PutObjectRequest,
+	CopyObjectRequest,
+	_Object,
+	DeleteObjectCommandOutput,
+} from &#x27;@aws-sdk/client-s3&#x27;;
+import { StorageOptions, StorageAccessLevel } from &#x27;./Storage&#x27;;
+import {
+	UploadTaskCompleteEvent,
+	UploadTaskProgressEvent,
+} from &#x27;../providers/AWSS3UploadTask&#x27;;
+import { UploadTask } from &#x27;./Provider&#x27;;
+import { ICredentials } from &#x27;@aws-amplify/core&#x27;;
+
+type ListObjectsCommandOutputContent = _Object;
+
+export interface FileMetadata {
+	bucket: string;
+	fileName: string;
+	key: string;
+	// Unix timestamp in ms
+	lastTouched: number;
+	uploadId: string;
+}
+
+export type CommonStorageOptions = Omit&lt;
+	StorageOptions,
+	| &#x27;credentials&#x27;
+	| &#x27;region&#x27;
+	| &#x27;bucket&#x27;
+	| &#x27;dangerouslyConnectToHttpEndpointForTesting&#x27;
+&gt;;
+
+export type S3ProviderGetConfig = CommonStorageOptions &amp; {
+	download?: boolean;
+	track?: boolean;
+	expires?: number;
+	provider?: &#x27;AWSS3&#x27;;
+	identityId?: string;
+	progressCallback?: (progress: any) =&gt; any;
+	cacheControl?: GetObjectRequest[&#x27;ResponseCacheControl&#x27;];
+	contentDisposition?: GetObjectRequest[&#x27;ResponseContentDisposition&#x27;];
+	contentEncoding?: GetObjectRequest[&#x27;ResponseContentEncoding&#x27;];
+	contentLanguage?: GetObjectRequest[&#x27;ResponseContentLanguage&#x27;];
+	contentType?: GetObjectRequest[&#x27;ResponseContentType&#x27;];
+	SSECustomerAlgorithm?: GetObjectRequest[&#x27;SSECustomerAlgorithm&#x27;];
+	SSECustomerKey?: GetObjectRequest[&#x27;SSECustomerKey&#x27;];
+	SSECustomerKeyMD5?: GetObjectRequest[&#x27;SSECustomerKeyMD5&#x27;];
+};
+
+export type S3ProviderGetOuput&lt;T&gt; = T extends { download: true }
+	? GetObjectCommandOutput
+	: string;
+
+type _S3ProviderPutConfig = {
+	progressCallback?: (progress: any) =&gt; any;
+	provider?: &#x27;AWSS3&#x27;;
+	track?: boolean;
+	serverSideEncryption?: PutObjectRequest[&#x27;ServerSideEncryption&#x27;];
+	SSECustomerAlgorithm?: PutObjectRequest[&#x27;SSECustomerAlgorithm&#x27;];
+	SSECustomerKey?: PutObjectRequest[&#x27;SSECustomerKey&#x27;];
+	SSECustomerKeyMD5?: PutObjectRequest[&#x27;SSECustomerKeyMD5&#x27;];
+	SSEKMSKeyId?: PutObjectRequest[&#x27;SSEKMSKeyId&#x27;];
+	acl?: PutObjectRequest[&#x27;ACL&#x27;];
+	bucket?: PutObjectRequest[&#x27;Bucket&#x27;];
+	cacheControl?: PutObjectRequest[&#x27;CacheControl&#x27;];
+	contentDisposition?: PutObjectRequest[&#x27;ContentDisposition&#x27;];
+	contentEncoding?: PutObjectRequest[&#x27;ContentEncoding&#x27;];
+	contentType?: PutObjectRequest[&#x27;ContentType&#x27;];
+	expires?: PutObjectRequest[&#x27;Expires&#x27;];
+	metadata?: PutObjectRequest[&#x27;Metadata&#x27;];
+	tagging?: PutObjectRequest[&#x27;Tagging&#x27;];
+	useAccelerateEndpoint?: boolean;
+	resumable?: boolean;
+};
+
+export type ResumableUploadConfig = {
+	resumable: true;
+	progressCallback?: (progress: UploadTaskProgressEvent) =&gt; any;
+	completeCallback?: (event: UploadTaskCompleteEvent) =&gt; any;
+	errorCallback?: (err: any) =&gt; any;
+};
+
+export type S3ProviderPutConfig = CommonStorageOptions &amp;
+	(
+		| _S3ProviderPutConfig
+		// discriminated union so users won&#x27;t be able to add resumable specific callbacks without the resumable flag
+		| (_S3ProviderPutConfig &amp; ResumableUploadConfig)
+	);
+
+export type S3ProviderRemoveConfig = CommonStorageOptions &amp; {
+	bucket?: string;
+	provider?: &#x27;AWSS3&#x27;;
+};
+
+export type S3ProviderListOutputWithToken = {
+	contents: S3ProviderListOutputItem[];
+	nextToken: string;
+};
+
+export type S3ProviderRemoveOutput = DeleteObjectCommandOutput;
+
+export type S3ProviderListConfig = CommonStorageOptions &amp; {
+	bucket?: string;
+	maxKeys?: number | &#x27;ALL&#x27;;
+	provider?: &#x27;AWSS3&#x27;;
+	identityId?: string;
+};
+
+export type S3ClientOptions = StorageOptions &amp; {
+	credentials: ICredentials;
+} &amp; S3ProviderListConfig;
+
+export interface S3ProviderListOutputItem {
+	key: ListObjectsCommandOutputContent[&#x27;Key&#x27;];
+	eTag: ListObjectsCommandOutputContent[&#x27;ETag&#x27;];
+	lastModified: ListObjectsCommandOutputContent[&#x27;LastModified&#x27;];
+	size: ListObjectsCommandOutputContent[&#x27;Size&#x27;];
+}
+
+export type S3ProviderListOutput = S3ProviderListOutputItem[];
+
+export interface S3CopyTarget {
+	key: string;
+	level?: StorageAccessLevel;
+	identityId?: string;
+}
+
+export type S3CopySource = S3CopyTarget;
+
+export type S3CopyDestination = Omit&lt;S3CopyTarget, &#x27;identityId&#x27;&gt;;
+
+export type S3ProviderCopyConfig = Omit&lt;CommonStorageOptions, &#x27;level&#x27;&gt; &amp; {
+	provider?: &#x27;AWSS3&#x27;;
+	bucket?: CopyObjectRequest[&#x27;Bucket&#x27;];
+	cacheControl?: CopyObjectRequest[&#x27;CacheControl&#x27;];
+	contentDisposition?: CopyObjectRequest[&#x27;ContentDisposition&#x27;];
+	contentLanguage?: CopyObjectRequest[&#x27;ContentLanguage&#x27;];
+	contentType?: CopyObjectRequest[&#x27;ContentType&#x27;];
+	expires?: CopyObjectRequest[&#x27;Expires&#x27;];
+	tagging?: CopyObjectRequest[&#x27;Tagging&#x27;];
+	acl?: CopyObjectRequest[&#x27;ACL&#x27;];
+	metadata?: CopyObjectRequest[&#x27;Metadata&#x27;];
+	serverSideEncryption?: CopyObjectRequest[&#x27;ServerSideEncryption&#x27;];
+	SSECustomerAlgorithm?: CopyObjectRequest[&#x27;SSECustomerAlgorithm&#x27;];
+	SSECustomerKey?: CopyObjectRequest[&#x27;SSECustomerKey&#x27;];
+	SSECustomerKeyMD5?: CopyObjectRequest[&#x27;SSECustomerKeyMD5&#x27;];
+	SSEKMSKeyId?: CopyObjectRequest[&#x27;SSEKMSKeyId&#x27;];
+};
+
+export type S3ProviderCopyOutput = {
+	key: string;
+};
+
+export type PutResult = {
+	key: string;
+};
+
+export type S3ProviderPutOutput&lt;T&gt; = T extends { resumable: true }
+	? UploadTask
+	: Promise&lt;PutResult&gt;;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/types/AWSS3Provider.ts&quot;,&quot;line&quot;:41,&quot;character&quot;:21,&quot;text&quot;:&quot;progress&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/AWSS3Provider.ts&quot;,&quot;line&quot;:57,&quot;character&quot;:21,&quot;text&quot;:&quot;progress&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/AWSS3Provider.ts&quot;,&quot;line&quot;:82,&quot;character&quot;:18,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:23 GMT</p>
+    </body>
+  </html>
+  

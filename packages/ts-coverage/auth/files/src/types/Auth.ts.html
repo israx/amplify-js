@@ -1,0 +1,264 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Auth.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/types/Auth.ts</td><td class="">92.31%</td><td class="">0%</td><td class="">169</td><td class="">156</td><td class="">13</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import {
+	ICookieStorageData,
+	ICognitoStorage,
+} from &#x27;amazon-cognito-identity-js&#x27;;
+
+/**
+ * Parameters for user sign up
+ */
+export interface SignUpParams {
+	username: string;
+	password: string;
+	attributes?: object;
+	validationData?: { [key: string]: any };
+	clientMetadata?: { [key: string]: string };
+	autoSignIn?: AutoSignInOptions;
+}
+
+export interface AuthCache {
+	setItem();
+	getItem();
+	removeItem();
+}
+
+/**
+ * Auth instance options
+ */
+export interface AuthOptions {
+	userPoolId?: string;
+	userPoolWebClientId?: string;
+	identityPoolId?: string;
+	region?: string;
+	mandatorySignIn?: boolean;
+	cookieStorage?: ICookieStorageData;
+	oauth?: OAuthOpts;
+	refreshHandlers?: object;
+	storage?: ICognitoStorage;
+	authenticationFlowType?: string;
+	identityPoolRegion?: string;
+	clientMetadata?: any;
+	endpoint?: string;
+	signUpVerificationMethod?: &#x27;code&#x27; | &#x27;link&#x27;;
+}
+
+export enum CognitoHostedUIIdentityProvider {
+	Cognito = &#x27;COGNITO&#x27;,
+	Google = &#x27;Google&#x27;,
+	Facebook = &#x27;Facebook&#x27;,
+	Amazon = &#x27;LoginWithAmazon&#x27;,
+	Apple = &#x27;SignInWithApple&#x27;,
+}
+
+export type LegacyProvider =
+	| &#x27;google&#x27;
+	| &#x27;facebook&#x27;
+	| &#x27;amazon&#x27;
+	| &#x27;developer&#x27;
+	| string;
+
+export type FederatedSignInOptions = {
+	provider: CognitoHostedUIIdentityProvider;
+	customState?: string;
+};
+
+export type FederatedSignInOptionsCustom = {
+	customProvider: string;
+	customState?: string;
+};
+
+export function isFederatedSignInOptions(
+	obj: any
+): obj is FederatedSignInOptions {
+	const keys: (keyof FederatedSignInOptions)[] = [&#x27;provider&#x27;];
+	return obj &amp;&amp; !!keys.find(k =&gt; obj.hasOwnProperty(k));
+}
+
+export function isFederatedSignInOptionsCustom(
+	obj: any
+): obj is FederatedSignInOptionsCustom {
+	const keys: (keyof FederatedSignInOptionsCustom)[] = [&#x27;customProvider&#x27;];
+	return obj &amp;&amp; !!keys.find(k =&gt; obj.hasOwnProperty(k));
+}
+
+export function hasCustomState(obj: any): boolean {
+	const keys: (keyof (
+		| FederatedSignInOptions
+		| FederatedSignInOptionsCustom
+	))[] = [&#x27;customState&#x27;];
+	return obj &amp;&amp; !!keys.find(k =&gt; obj.hasOwnProperty(k));
+}
+
+/**
+ * Details for multi-factor authentication
+ */
+export interface MfaRequiredDetails {
+	challengeName: any;
+	challengeParameters: any;
+}
+
+/**
+ * interface for federatedResponse
+ */
+export interface FederatedResponse {
+	// access token
+	token: string;
+	// identity id
+	identity_id?: string;
+	// the universal time when token expired
+	expires_at: number;
+}
+
+/**
+ * interface for federatedUser
+ */
+export interface FederatedUser {
+	name: string;
+	email?: string;
+	picture?: string;
+}
+
+export interface AwsCognitoOAuthOpts {
+	domain: string;
+	scope: Array&lt;string&gt;;
+	redirectSignIn: string;
+	redirectSignOut: string;
+	responseType: string;
+	options?: object;
+	urlOpener?: (url: string, redirectUrl: string) =&gt; Promise&lt;any&gt;;
+}
+
+export function isCognitoHostedOpts(
+	oauth: OAuthOpts
+): oauth is AwsCognitoOAuthOpts {
+	return (&lt;AwsCognitoOAuthOpts&gt;oauth).redirectSignIn !== undefined;
+}
+
+export interface Auth0OAuthOpts {
+	domain: string;
+	clientID: string;
+	scope: string;
+	redirectUri: string;
+	audience: string;
+	responseType: string;
+	returnTo: string;
+	urlOpener?: (url: string, redirectUrl: string) =&gt; Promise&lt;any&gt;;
+}
+
+// Replacing to fix typings
+// export interface OAuth {
+//     awsCognito?: awsCognitoOAuthOpts,
+//     auth0?: any
+// }
+
+export type OAuthOpts = AwsCognitoOAuthOpts | Auth0OAuthOpts;
+
+export interface ConfirmSignUpOptions {
+	forceAliasCreation?: boolean;
+	clientMetadata?: ClientMetaData;
+}
+
+export interface SignOutOpts {
+	global?: boolean;
+}
+
+export interface CurrentUserOpts {
+	bypassCache: boolean;
+}
+
+export interface GetPreferredMFAOpts {
+	bypassCache: boolean;
+}
+
+export type UsernamePasswordOpts = {
+	username: string;
+	password: string;
+	validationData?: { [key: string]: any };
+};
+
+export enum AuthErrorTypes {
+	NoConfig = &#x27;noConfig&#x27;,
+	MissingAuthConfig = &#x27;missingAuthConfig&#x27;,
+	EmptyUsername = &#x27;emptyUsername&#x27;,
+	InvalidUsername = &#x27;invalidUsername&#x27;,
+	EmptyPassword = &#x27;emptyPassword&#x27;,
+	EmptyCode = &#x27;emptyCode&#x27;,
+	SignUpError = &#x27;signUpError&#x27;,
+	NoMFA = &#x27;noMFA&#x27;,
+	InvalidMFA = &#x27;invalidMFA&#x27;,
+	EmptyChallengeResponse = &#x27;emptyChallengeResponse&#x27;,
+	NoUserSession = &#x27;noUserSession&#x27;,
+	Default = &#x27;default&#x27;,
+	DeviceConfig = &#x27;deviceConfig&#x27;,
+	NetworkError = &#x27;networkError&#x27;,
+	AutoSignInError = &#x27;autoSignInError&#x27;,
+}
+
+export type AuthErrorMessages = { [key in AuthErrorTypes]: AuthErrorMessage };
+
+export interface AuthErrorMessage {
+	message: string;
+	log?: string;
+}
+
+// We can extend this in the future if needed
+export type SignInOpts = UsernamePasswordOpts;
+
+export type ClientMetaData =
+	| {
+			[key: string]: string;
+	  }
+	| undefined;
+
+export function isUsernamePasswordOpts(obj: any): obj is UsernamePasswordOpts {
+	return !!(obj as UsernamePasswordOpts).username;
+}
+
+export interface IAuthDevice {
+	id: string;
+	name: string;
+}
+
+export interface AutoSignInOptions {
+	enabled: boolean;
+	clientMetaData?: ClientMetaData;
+	validationData?: { [key: string]: any };
+}
+
+export enum GRAPHQL_AUTH_MODE {
+	API_KEY = &#x27;API_KEY&#x27;,
+	AWS_IAM = &#x27;AWS_IAM&#x27;,
+	OPENID_CONNECT = &#x27;OPENID_CONNECT&#x27;,
+	AMAZON_COGNITO_USER_POOLS = &#x27;AMAZON_COGNITO_USER_POOLS&#x27;,
+	AWS_LAMBDA = &#x27;AWS_LAMBDA&#x27;,
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/types/Auth.ts&quot;,&quot;line&quot;:51,&quot;character&quot;:1,&quot;text&quot;:&quot;clientMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Auth.ts&quot;,&quot;line&quot;:82,&quot;character&quot;:1,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Auth.ts&quot;,&quot;line&quot;:85,&quot;character&quot;:8,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Auth.ts&quot;,&quot;line&quot;:85,&quot;character&quot;:32,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Auth.ts&quot;,&quot;line&quot;:89,&quot;character&quot;:1,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Auth.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:8,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Auth.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:32,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Auth.ts&quot;,&quot;line&quot;:95,&quot;character&quot;:31,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Auth.ts&quot;,&quot;line&quot;:100,&quot;character&quot;:8,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Auth.ts&quot;,&quot;line&quot;:100,&quot;character&quot;:32,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Auth.ts&quot;,&quot;line&quot;:107,&quot;character&quot;:1,&quot;text&quot;:&quot;challengeName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Auth.ts&quot;,&quot;line&quot;:108,&quot;character&quot;:1,&quot;text&quot;:&quot;challengeParameters&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/types/Auth.ts&quot;,&quot;line&quot;:224,&quot;character&quot;:39,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:24 GMT</p>
+    </body>
+  </html>
+  

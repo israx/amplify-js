@@ -1,0 +1,975 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>index.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/sync/index.ts</td><td class="">97.88%</td><td class="">0%</td><td class="">1182</td><td class="">1157</td><td class="">25</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import { browserOrNode, ConsoleLogger as Logger } from &#x27;@aws-amplify/core&#x27;;
+import { CONTROL_MSG as PUBSUB_CONTROL_MSG } from &#x27;@aws-amplify/pubsub&#x27;;
+import Observable, { ZenObservable } from &#x27;zen-observable-ts&#x27;;
+import { ModelInstanceCreator } from &#x27;../datastore/datastore&#x27;;
+import { ModelPredicateCreator } from &#x27;../predicates&#x27;;
+import { ExclusiveStorage as Storage } from &#x27;../storage/storage&#x27;;
+import {
+	ConflictHandler,
+	ControlMessageType,
+	ErrorHandler,
+	InternalSchema,
+	ModelInit,
+	ModelInstanceMetadata,
+	MutableModel,
+	NamespaceResolver,
+	OpType,
+	PersistentModel,
+	PersistentModelConstructor,
+	SchemaModel,
+	SchemaNamespace,
+	TypeConstructorMap,
+	ModelPredicate,
+	AuthModeStrategy,
+	ManagedIdentifier,
+	OptionallyManagedIdentifier,
+	AmplifyContext,
+} from &#x27;../types&#x27;;
+// tslint:disable:no-duplicate-imports
+import type { __modelMeta__ } from &#x27;../types&#x27;;
+
+import { exhaustiveCheck, getNow, SYNC, USER } from &#x27;../util&#x27;;
+import DataStoreConnectivity from &#x27;./datastoreConnectivity&#x27;;
+import { ModelMerger } from &#x27;./merger&#x27;;
+import { MutationEventOutbox } from &#x27;./outbox&#x27;;
+import { MutationProcessor } from &#x27;./processors/mutation&#x27;;
+import { CONTROL_MSG, SubscriptionProcessor } from &#x27;./processors/subscription&#x27;;
+import { SyncProcessor } from &#x27;./processors/sync&#x27;;
+import {
+	createMutationInstanceFromModelOperation,
+	getIdentifierValue,
+	predicateToGraphQLCondition,
+	TransformerMutationType,
+} from &#x27;./utils&#x27;;
+
+const { isNode } = browserOrNode();
+const logger = new Logger(&#x27;DataStore&#x27;);
+
+const ownSymbol = Symbol(&#x27;sync&#x27;);
+
+type StartParams = {
+	fullSyncInterval: number;
+};
+
+export declare class MutationEvent {
+	readonly [__modelMeta__]: {
+		identifier: OptionallyManagedIdentifier&lt;MutationEvent, &#x27;id&#x27;&gt;;
+	};
+	public readonly id: string;
+	public readonly model: string;
+	public readonly operation: TransformerMutationType;
+	public readonly modelId: string;
+	public readonly condition: string;
+	public readonly data: string;
+	constructor(init: ModelInit&lt;MutationEvent&gt;);
+	static copyOf(
+		src: MutationEvent,
+		mutator: (draft: MutableModel&lt;MutationEvent&gt;) =&gt; void | MutationEvent
+	): MutationEvent;
+}
+
+export declare class ModelMetadata {
+	readonly [__modelMeta__]: {
+		identifier: ManagedIdentifier&lt;ModelMetadata, &#x27;id&#x27;&gt;;
+	};
+	public readonly id: string;
+	public readonly namespace: string;
+	public readonly model: string;
+	public readonly fullSyncInterval: number;
+	public readonly lastSync?: number;
+	public readonly lastFullSync?: number;
+	public readonly lastSyncPredicate?: null | string;
+	constructor(init: ModelInit&lt;ModelMetadata&gt;);
+	static copyOf(
+		src: ModelMetadata,
+		mutator: (draft: MutableModel&lt;ModelMetadata&gt;) =&gt; void | ModelMetadata
+	): ModelMetadata;
+}
+
+export enum ControlMessage {
+	SYNC_ENGINE_STORAGE_SUBSCRIBED = &#x27;storageSubscribed&#x27;,
+	SYNC_ENGINE_SUBSCRIPTIONS_ESTABLISHED = &#x27;subscriptionsEstablished&#x27;,
+	SYNC_ENGINE_SYNC_QUERIES_STARTED = &#x27;syncQueriesStarted&#x27;,
+	SYNC_ENGINE_SYNC_QUERIES_READY = &#x27;syncQueriesReady&#x27;,
+	SYNC_ENGINE_MODEL_SYNCED = &#x27;modelSynced&#x27;,
+	SYNC_ENGINE_OUTBOX_MUTATION_ENQUEUED = &#x27;outboxMutationEnqueued&#x27;,
+	SYNC_ENGINE_OUTBOX_MUTATION_PROCESSED = &#x27;outboxMutationProcessed&#x27;,
+	SYNC_ENGINE_OUTBOX_STATUS = &#x27;outboxStatus&#x27;,
+	SYNC_ENGINE_NETWORK_STATUS = &#x27;networkStatus&#x27;,
+	SYNC_ENGINE_READY = &#x27;ready&#x27;,
+}
+
+export class SyncEngine {
+	private online = false;
+
+	private readonly syncQueriesProcessor: SyncProcessor;
+	private readonly subscriptionsProcessor: SubscriptionProcessor;
+	private readonly mutationsProcessor: MutationProcessor;
+	private readonly modelMerger: ModelMerger;
+	private readonly outbox: MutationEventOutbox;
+	private readonly datastoreConnectivity: DataStoreConnectivity;
+	private readonly modelSyncedStatus: WeakMap&lt;
+		PersistentModelConstructor&lt;any&gt;,
+		boolean
+	&gt; = new WeakMap();
+
+	public getModelSyncedStatus(
+		modelConstructor: PersistentModelConstructor&lt;any&gt;
+	): boolean {
+		return this.modelSyncedStatus.get(modelConstructor);
+	}
+
+	constructor(
+		private readonly schema: InternalSchema,
+		private readonly namespaceResolver: NamespaceResolver,
+		private readonly modelClasses: TypeConstructorMap,
+		private readonly userModelClasses: TypeConstructorMap,
+		private readonly storage: Storage,
+		private readonly modelInstanceCreator: ModelInstanceCreator,
+		conflictHandler: ConflictHandler,
+		errorHandler: ErrorHandler,
+		private readonly syncPredicates: WeakMap&lt;SchemaModel, ModelPredicate&lt;any&gt;&gt;,
+		private readonly amplifyConfig: Record&lt;string, any&gt; = {},
+		private readonly authModeStrategy: AuthModeStrategy,
+		private readonly amplifyContext: AmplifyContext
+	) {
+		const MutationEvent = this.modelClasses[
+			&#x27;MutationEvent&#x27;
+		] as PersistentModelConstructor&lt;MutationEvent&gt;;
+
+		this.outbox = new MutationEventOutbox(
+			this.schema,
+			MutationEvent,
+			modelInstanceCreator,
+			ownSymbol
+		);
+
+		this.modelMerger = new ModelMerger(this.outbox, ownSymbol);
+
+		this.syncQueriesProcessor = new SyncProcessor(
+			this.schema,
+			this.syncPredicates,
+			this.amplifyConfig,
+			this.authModeStrategy,
+			errorHandler,
+			this.amplifyContext
+		);
+
+		this.subscriptionsProcessor = new SubscriptionProcessor(
+			this.schema,
+			this.syncPredicates,
+			this.amplifyConfig,
+			this.authModeStrategy,
+			errorHandler,
+			this.amplifyContext
+		);
+
+		this.mutationsProcessor = new MutationProcessor(
+			this.schema,
+			this.storage,
+			this.userModelClasses,
+			this.outbox,
+			this.modelInstanceCreator,
+			MutationEvent,
+			this.amplifyConfig,
+			this.authModeStrategy,
+			errorHandler,
+			conflictHandler,
+			this.amplifyContext
+		);
+
+		this.datastoreConnectivity = new DataStoreConnectivity();
+	}
+
+	start(params: StartParams) {
+		return new Observable&lt;ControlMessageType&lt;ControlMessage&gt;&gt;(observer =&gt; {
+			logger.log(&#x27;starting sync engine...&#x27;);
+
+			let subscriptions: ZenObservable.Subscription[] = [];
+
+			(async () =&gt; {
+				try {
+					await this.setupModels(params);
+				} catch (err) {
+					observer.error(err);
+					return;
+				}
+
+				const startPromise = new Promise(resolve =&gt; {
+					this.datastoreConnectivity.status().subscribe(async ({ online }) =&gt; {
+						// From offline to online
+						if (online &amp;&amp; !this.online) {
+							this.online = online;
+
+							observer.next({
+								type: ControlMessage.SYNC_ENGINE_NETWORK_STATUS,
+								data: {
+									active: this.online,
+								},
+							});
+
+							let ctlSubsObservable: Observable&lt;CONTROL_MSG&gt;;
+							let dataSubsObservable: Observable&lt;
+								[TransformerMutationType, SchemaModel, PersistentModel]
+							&gt;;
+
+							if (isNode) {
+								logger.warn(
+									&#x27;Realtime disabled when in a server-side environment&#x27;
+								);
+							} else {
+								//#region GraphQL Subscriptions
+								[
+									// const ctlObservable: Observable&lt;CONTROL_MSG&gt;
+									ctlSubsObservable,
+									// const dataObservable: Observable&lt;[TransformerMutationType, SchemaModel, Readonly&lt;{
+									// id: string;
+									// } &amp; Record&lt;string, any&gt;&gt;]&gt;
+									dataSubsObservable,
+								] = this.subscriptionsProcessor.start();
+
+								try {
+									await new Promise((resolve, reject) =&gt; {
+										const ctlSubsSubscription = ctlSubsObservable.subscribe({
+											next: msg =&gt; {
+												if (msg === CONTROL_MSG.CONNECTED) {
+													resolve();
+												}
+											},
+											error: err =&gt; {
+												reject(err);
+												const handleDisconnect = this.disconnectionHandler();
+												handleDisconnect(err);
+											},
+										});
+
+										subscriptions.push(ctlSubsSubscription);
+									});
+								} catch (err) {
+									observer.error(err);
+									return;
+								}
+
+								logger.log(&#x27;Realtime ready&#x27;);
+
+								observer.next({
+									type: ControlMessage.SYNC_ENGINE_SUBSCRIPTIONS_ESTABLISHED,
+								});
+
+								//#endregion
+							}
+
+							//#region Base &amp; Sync queries
+							try {
+								await new Promise((resolve, reject) =&gt; {
+									const syncQuerySubscription =
+										this.syncQueriesObservable().subscribe({
+											next: message =&gt; {
+												const { type } = message;
+
+												if (
+													type === ControlMessage.SYNC_ENGINE_SYNC_QUERIES_READY
+												) {
+													resolve();
+												}
+
+												observer.next(message);
+											},
+											complete: () =&gt; {
+												resolve();
+											},
+											error: error =&gt; {
+												reject(error);
+											},
+										});
+
+									if (syncQuerySubscription) {
+										subscriptions.push(syncQuerySubscription);
+									}
+								});
+							} catch (error) {
+								observer.error(error);
+								return;
+							}
+							//#endregion
+
+							//#region process mutations
+							subscriptions.push(
+								this.mutationsProcessor
+									.start()
+									.subscribe(({ modelDefinition, model: item, hasMore }) =&gt; {
+										const modelConstructor = this.userModelClasses[
+											modelDefinition.name
+										] as PersistentModelConstructor&lt;any&gt;;
+
+										const model = this.modelInstanceCreator(
+											modelConstructor,
+											item
+										);
+
+										this.storage.runExclusive(storage =&gt;
+											this.modelMerger.merge(storage, model, modelDefinition)
+										);
+
+										observer.next({
+											type: ControlMessage.SYNC_ENGINE_OUTBOX_MUTATION_PROCESSED,
+											data: {
+												model: modelConstructor,
+												element: model,
+											},
+										});
+
+										observer.next({
+											type: ControlMessage.SYNC_ENGINE_OUTBOX_STATUS,
+											data: {
+												isEmpty: !hasMore,
+											},
+										});
+									})
+							);
+							//#endregion
+
+							//#region Merge subscriptions buffer
+							// TODO: extract to function
+							if (!isNode) {
+								subscriptions.push(
+									dataSubsObservable.subscribe(
+										([_transformerMutationType, modelDefinition, item]) =&gt; {
+											const modelConstructor = this.userModelClasses[
+												modelDefinition.name
+											] as PersistentModelConstructor&lt;any&gt;;
+
+											const model = this.modelInstanceCreator(
+												modelConstructor,
+												item
+											);
+
+											this.storage.runExclusive(storage =&gt;
+												this.modelMerger.merge(storage, model, modelDefinition)
+											);
+										}
+									)
+								);
+							}
+							//#endregion
+						} else if (!online) {
+							this.online = online;
+
+							observer.next({
+								type: ControlMessage.SYNC_ENGINE_NETWORK_STATUS,
+								data: {
+									active: this.online,
+								},
+							});
+
+							subscriptions.forEach(sub =&gt; sub.unsubscribe());
+							subscriptions = [];
+						}
+
+						resolve();
+					});
+				});
+
+				this.storage
+					.observe(null, null, ownSymbol)
+					.filter(({ model }) =&gt; {
+						const modelDefinition = this.getModelDefinition(model);
+						return modelDefinition.syncable === true;
+					})
+					.subscribe({
+						next: async ({ opType, model, element, condition }) =&gt; {
+							const namespace =
+								this.schema.namespaces[this.namespaceResolver(model)];
+							const MutationEventConstructor = this.modelClasses[
+								&#x27;MutationEvent&#x27;
+							] as PersistentModelConstructor&lt;MutationEvent&gt;;
+							const modelDefinition = this.getModelDefinition(model);
+							const graphQLCondition = predicateToGraphQLCondition(
+								condition,
+								modelDefinition
+							);
+							const mutationEvent = createMutationInstanceFromModelOperation(
+								namespace.relationships,
+								this.getModelDefinition(model),
+								opType,
+								model,
+								element,
+								graphQLCondition,
+								MutationEventConstructor,
+								this.modelInstanceCreator
+							);
+
+							await this.outbox.enqueue(this.storage, mutationEvent);
+
+							observer.next({
+								type: ControlMessage.SYNC_ENGINE_OUTBOX_MUTATION_ENQUEUED,
+								data: {
+									model,
+									element,
+								},
+							});
+
+							observer.next({
+								type: ControlMessage.SYNC_ENGINE_OUTBOX_STATUS,
+								data: {
+									isEmpty: false,
+								},
+							});
+
+							await startPromise;
+
+							if (this.online) {
+								this.mutationsProcessor.resume();
+							}
+						},
+					});
+
+				observer.next({
+					type: ControlMessage.SYNC_ENGINE_STORAGE_SUBSCRIBED,
+				});
+
+				const hasMutationsInOutbox =
+					(await this.outbox.peek(this.storage)) === undefined;
+				observer.next({
+					type: ControlMessage.SYNC_ENGINE_OUTBOX_STATUS,
+					data: {
+						isEmpty: hasMutationsInOutbox,
+					},
+				});
+
+				await startPromise;
+
+				observer.next({
+					type: ControlMessage.SYNC_ENGINE_READY,
+				});
+			})();
+
+			return () =&gt; {
+				subscriptions.forEach(sub =&gt; sub.unsubscribe());
+			};
+		});
+	}
+
+	private async getModelsMetadataWithNextFullSync(
+		currentTimeStamp: number
+	): Promise&lt;Map&lt;SchemaModel, [string, number]&gt;&gt; {
+		const modelLastSync: Map&lt;SchemaModel, [string, number]&gt; = new Map(
+			(await this.getModelsMetadata()).map(
+				({
+					namespace,
+					model,
+					lastSync,
+					lastFullSync,
+					fullSyncInterval,
+					lastSyncPredicate,
+				}) =&gt; {
+					const nextFullSync = lastFullSync + fullSyncInterval;
+					const syncFrom =
+						!lastFullSync || nextFullSync &lt; currentTimeStamp
+							? 0 // perform full sync if expired
+							: lastSync; // perform delta sync
+
+					return [
+						this.schema.namespaces[namespace].models[model],
+						[namespace, syncFrom],
+					];
+				}
+			)
+		);
+
+		return modelLastSync;
+	}
+
+	private syncQueriesObservable(): Observable&lt;
+		ControlMessageType&lt;ControlMessage&gt;
+	&gt; {
+		if (!this.online) {
+			return Observable.of&lt;ControlMessageType&lt;ControlMessage&gt;&gt;();
+		}
+
+		return new Observable&lt;ControlMessageType&lt;ControlMessage&gt;&gt;(observer =&gt; {
+			let syncQueriesSubscription: ZenObservable.Subscription;
+			let waitTimeoutId: ReturnType&lt;typeof setTimeout&gt;;
+
+			(async () =&gt; {
+				while (!observer.closed) {
+					const count: WeakMap&lt;
+						PersistentModelConstructor&lt;any&gt;,
+						{
+							new: number;
+							updated: number;
+							deleted: number;
+						}
+					&gt; = new WeakMap();
+
+					const modelLastSync = await this.getModelsMetadataWithNextFullSync(
+						Date.now()
+					);
+					const paginatingModels = new Set(modelLastSync.keys());
+
+					let newestFullSyncStartedAt: number;
+					let theInterval: number;
+
+					let start: number;
+					let duration: number;
+					let newestStartedAt: number;
+					await new Promise(resolve =&gt; {
+						syncQueriesSubscription = this.syncQueriesProcessor
+							.start(modelLastSync)
+							.subscribe({
+								next: async ({
+									namespace,
+									modelDefinition,
+									items,
+									done,
+									startedAt,
+									isFullSync,
+								}) =&gt; {
+									const modelConstructor = this.userModelClasses[
+										modelDefinition.name
+									] as PersistentModelConstructor&lt;any&gt;;
+
+									if (!count.has(modelConstructor)) {
+										count.set(modelConstructor, {
+											new: 0,
+											updated: 0,
+											deleted: 0,
+										});
+
+										start = getNow();
+										newestStartedAt =
+											newestStartedAt === undefined
+												? startedAt
+												: Math.max(newestStartedAt, startedAt);
+									}
+
+									/**
+									 * If there are mutations in the outbox for a given id, those need to be
+									 * merged individually. Otherwise, we can merge them in batches.
+									 */
+									await this.storage.runExclusive(async storage =&gt; {
+										const idsInOutbox = await this.outbox.getModelIds(storage);
+
+										const oneByOne: ModelInstanceMetadata[] = [];
+										const page = items.filter(item =&gt; {
+											const itemId = getIdentifierValue(modelDefinition, item);
+
+											if (!idsInOutbox.has(itemId)) {
+												return true;
+											}
+
+											oneByOne.push(item);
+											return false;
+										});
+
+										const opTypeCount: [any, OpType][] = [];
+
+										for (const item of oneByOne) {
+											const opType = await this.modelMerger.merge(
+												storage,
+												item,
+												modelDefinition
+											);
+
+											if (opType !== undefined) {
+												opTypeCount.push([item, opType]);
+											}
+										}
+
+										opTypeCount.push(
+											...(await this.modelMerger.mergePage(
+												storage,
+												modelConstructor,
+												page,
+												modelDefinition
+											))
+										);
+
+										const counts = count.get(modelConstructor);
+
+										opTypeCount.forEach(([, opType]) =&gt; {
+											switch (opType) {
+												case OpType.INSERT:
+													counts.new++;
+													break;
+												case OpType.UPDATE:
+													counts.updated++;
+													break;
+												case OpType.DELETE:
+													counts.deleted++;
+													break;
+												default:
+													exhaustiveCheck(opType);
+											}
+										});
+									});
+
+									if (done) {
+										const { name: modelName } = modelDefinition;
+
+										//#region update last sync for type
+										let modelMetadata = await this.getModelMetadata(
+											namespace,
+											modelName
+										);
+
+										const { lastFullSync, fullSyncInterval } = modelMetadata;
+
+										theInterval = fullSyncInterval;
+
+										newestFullSyncStartedAt =
+											newestFullSyncStartedAt === undefined
+												? lastFullSync
+												: Math.max(
+														newestFullSyncStartedAt,
+														isFullSync ? startedAt : lastFullSync
+												  );
+
+										modelMetadata = (
+											this.modelClasses
+												.ModelMetadata as PersistentModelConstructor&lt;ModelMetadata&gt;
+										).copyOf(modelMetadata, draft =&gt; {
+											draft.lastSync = startedAt;
+											draft.lastFullSync = isFullSync
+												? startedAt
+												: modelMetadata.lastFullSync;
+										});
+
+										await this.storage.save(
+											modelMetadata,
+											undefined,
+											ownSymbol
+										);
+										//#endregion
+
+										const counts = count.get(modelConstructor);
+
+										this.modelSyncedStatus.set(modelConstructor, true);
+
+										observer.next({
+											type: ControlMessage.SYNC_ENGINE_MODEL_SYNCED,
+											data: {
+												model: modelConstructor,
+												isFullSync,
+												isDeltaSync: !isFullSync,
+												counts,
+											},
+										});
+
+										paginatingModels.delete(modelDefinition);
+
+										if (paginatingModels.size === 0) {
+											duration = getNow() - start;
+											resolve();
+											observer.next({
+												type: ControlMessage.SYNC_ENGINE_SYNC_QUERIES_READY,
+											});
+											syncQueriesSubscription.unsubscribe();
+										}
+									}
+								},
+								error: error =&gt; {
+									observer.error(error);
+								},
+							});
+
+						observer.next({
+							type: ControlMessage.SYNC_ENGINE_SYNC_QUERIES_STARTED,
+							data: {
+								models: Array.from(paginatingModels).map(({ name }) =&gt; name),
+							},
+						});
+					});
+
+					const msNextFullSync =
+						newestFullSyncStartedAt +
+						theInterval -
+						(newestStartedAt + duration);
+
+					logger.debug(
+						`Next fullSync in ${msNextFullSync / 1000} seconds. (${new Date(
+							Date.now() + msNextFullSync
+						)})`
+					);
+
+					await new Promise(res =&gt; {
+						waitTimeoutId = setTimeout(res, msNextFullSync);
+					});
+				}
+			})();
+
+			return () =&gt; {
+				if (syncQueriesSubscription) {
+					syncQueriesSubscription.unsubscribe();
+				}
+
+				if (waitTimeoutId) {
+					clearTimeout(waitTimeoutId);
+				}
+			};
+		});
+	}
+
+	private disconnectionHandler(): (msg: string) =&gt; void {
+		return (msg: string) =&gt; {
+			// This implementation is tied to AWSAppSyncRealTimeProvider &#x27;Connection closed&#x27;, &#x27;Timeout disconnect&#x27; msg
+			if (
+				PUBSUB_CONTROL_MSG.CONNECTION_CLOSED === msg ||
+				PUBSUB_CONTROL_MSG.TIMEOUT_DISCONNECT === msg
+			) {
+				this.datastoreConnectivity.socketDisconnected();
+			}
+		};
+	}
+
+	public unsubscribeConnectivity() {
+		this.datastoreConnectivity.unsubscribe();
+	}
+
+	private async setupModels(params: StartParams) {
+		const { fullSyncInterval } = params;
+		const ModelMetadataConstructor = this.modelClasses
+			.ModelMetadata as PersistentModelConstructor&lt;ModelMetadata&gt;;
+
+		const models: [string, SchemaModel][] = [];
+		let savedModel;
+
+		Object.values(this.schema.namespaces).forEach(namespace =&gt; {
+			Object.values(namespace.models)
+				.filter(({ syncable }) =&gt; syncable)
+				.forEach(model =&gt; {
+					models.push([namespace.name, model]);
+					if (namespace.name === USER) {
+						const modelConstructor = this.userModelClasses[
+							model.name
+						] as PersistentModelConstructor&lt;any&gt;;
+						this.modelSyncedStatus.set(modelConstructor, false);
+					}
+				});
+		});
+
+		const promises = models.map(async ([namespace, model]) =&gt; {
+			const modelMetadata = await this.getModelMetadata(namespace, model.name);
+			const syncPredicate = ModelPredicateCreator.getPredicates(
+				this.syncPredicates.get(model),
+				false
+			);
+			const lastSyncPredicate = syncPredicate
+				? JSON.stringify(syncPredicate)
+				: null;
+
+			if (modelMetadata === undefined) {
+				[[savedModel]] = await this.storage.save(
+					this.modelInstanceCreator(ModelMetadataConstructor, {
+						model: model.name,
+						namespace,
+						lastSync: null,
+						fullSyncInterval,
+						lastFullSync: null,
+						lastSyncPredicate,
+					}),
+					undefined,
+					ownSymbol
+				);
+			} else {
+				const prevSyncPredicate = modelMetadata.lastSyncPredicate
+					? modelMetadata.lastSyncPredicate
+					: null;
+				const syncPredicateUpdated = prevSyncPredicate !== lastSyncPredicate;
+
+				[[savedModel]] = await this.storage.save(
+					ModelMetadataConstructor.copyOf(modelMetadata, draft =&gt; {
+						draft.fullSyncInterval = fullSyncInterval;
+						// perform a base sync if the syncPredicate changed in between calls to DataStore.start
+						// ensures that the local store contains all the data specified by the syncExpression
+						if (syncPredicateUpdated) {
+							draft.lastSync = null;
+							draft.lastFullSync = null;
+							draft.lastSyncPredicate = lastSyncPredicate;
+						}
+					})
+				);
+			}
+
+			return savedModel;
+		});
+
+		const result: Record&lt;string, ModelMetadata&gt; = {};
+		for (const modelMetadata of await Promise.all(promises)) {
+			const { model: modelName } = modelMetadata;
+
+			result[modelName] = modelMetadata;
+		}
+
+		return result;
+	}
+
+	private async getModelsMetadata(): Promise&lt;ModelMetadata[]&gt; {
+		const ModelMetadata = this.modelClasses
+			.ModelMetadata as PersistentModelConstructor&lt;ModelMetadata&gt;;
+
+		const modelsMetadata = await this.storage.query(ModelMetadata);
+
+		return modelsMetadata;
+	}
+
+	private async getModelMetadata(
+		namespace: string,
+		model: string
+	): Promise&lt;ModelMetadata&gt; {
+		const ModelMetadata = this.modelClasses
+			.ModelMetadata as PersistentModelConstructor&lt;ModelMetadata&gt;;
+
+		const predicate = ModelPredicateCreator.createFromExisting&lt;ModelMetadata&gt;(
+			this.schema.namespaces[SYNC].models[ModelMetadata.name],
+			c =&gt; c.namespace(&#x27;eq&#x27;, namespace).model(&#x27;eq&#x27;, model)
+		);
+
+		const [modelMetadata] = await this.storage.query(ModelMetadata, predicate, {
+			page: 0,
+			limit: 1,
+		});
+
+		return modelMetadata;
+	}
+
+	private getModelDefinition(
+		modelConstructor: PersistentModelConstructor&lt;any&gt;
+	): SchemaModel {
+		const namespaceName = this.namespaceResolver(modelConstructor);
+
+		const modelDefinition =
+			this.schema.namespaces[namespaceName].models[modelConstructor.name];
+
+		return modelDefinition;
+	}
+
+	static getNamespace() {
+		const namespace: SchemaNamespace = {
+			name: SYNC,
+			relationships: {},
+			enums: {
+				OperationType: {
+					name: &#x27;OperationType&#x27;,
+					values: [&#x27;CREATE&#x27;, &#x27;UPDATE&#x27;, &#x27;DELETE&#x27;],
+				},
+			},
+			nonModels: {},
+			models: {
+				MutationEvent: {
+					name: &#x27;MutationEvent&#x27;,
+					pluralName: &#x27;MutationEvents&#x27;,
+					syncable: false,
+					fields: {
+						id: {
+							name: &#x27;id&#x27;,
+							type: &#x27;ID&#x27;,
+							isRequired: true,
+							isArray: false,
+						},
+						model: {
+							name: &#x27;model&#x27;,
+							type: &#x27;String&#x27;,
+							isRequired: true,
+							isArray: false,
+						},
+						data: {
+							name: &#x27;data&#x27;,
+							type: &#x27;String&#x27;,
+							isRequired: true,
+							isArray: false,
+						},
+						modelId: {
+							name: &#x27;modelId&#x27;,
+							type: &#x27;String&#x27;,
+							isRequired: true,
+							isArray: false,
+						},
+						operation: {
+							name: &#x27;operation&#x27;,
+							type: {
+								enum: &#x27;Operationtype&#x27;,
+							},
+							isArray: false,
+							isRequired: true,
+						},
+						condition: {
+							name: &#x27;condition&#x27;,
+							type: &#x27;String&#x27;,
+							isArray: false,
+							isRequired: true,
+						},
+					},
+				},
+				ModelMetadata: {
+					name: &#x27;ModelMetadata&#x27;,
+					pluralName: &#x27;ModelsMetadata&#x27;,
+					syncable: false,
+					fields: {
+						id: {
+							name: &#x27;id&#x27;,
+							type: &#x27;ID&#x27;,
+							isRequired: true,
+							isArray: false,
+						},
+						namespace: {
+							name: &#x27;namespace&#x27;,
+							type: &#x27;String&#x27;,
+							isRequired: true,
+							isArray: false,
+						},
+						model: {
+							name: &#x27;model&#x27;,
+							type: &#x27;String&#x27;,
+							isRequired: true,
+							isArray: false,
+						},
+						lastSync: {
+							name: &#x27;lastSync&#x27;,
+							type: &#x27;Int&#x27;,
+							isRequired: false,
+							isArray: false,
+						},
+						lastFullSync: {
+							name: &#x27;lastFullSync&#x27;,
+							type: &#x27;Int&#x27;,
+							isRequired: false,
+							isArray: false,
+						},
+						fullSyncInterval: {
+							name: &#x27;fullSyncInterval&#x27;,
+							type: &#x27;Int&#x27;,
+							isRequired: true,
+							isArray: false,
+						},
+						lastSyncPredicate: {
+							name: &#x27;lastSyncPredicate&#x27;,
+							type: &#x27;String&#x27;,
+							isRequired: false,
+							isArray: false,
+						},
+					},
+				},
+			},
+		};
+		return namespace;
+	}
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:193,&quot;character&quot;:20,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:192,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:238,&quot;character&quot;:18,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:239,&quot;character&quot;:19,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:248,&quot;character&quot;:24,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:247,&quot;character&quot;:17,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:280,&quot;character&quot;:18,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:281,&quot;character&quot;:19,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:290,&quot;character&quot;:23,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:289,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:304,&quot;character&quot;:16,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:310,&quot;character&quot;:43,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:317,&quot;character&quot;:12,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:317,&quot;character&quot;:21,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:341,&quot;character&quot;:17,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:347,&quot;character&quot;:44,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:670,&quot;character&quot;:15,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:671,&quot;character&quot;:24,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:734,&quot;character&quot;:6,&quot;text&quot;:&quot;savedModel&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:761,&quot;character&quot;:6,&quot;text&quot;:&quot;savedModel&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:779,&quot;character&quot;:6,&quot;text&quot;:&quot;savedModel&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:793,&quot;character&quot;:10,&quot;text&quot;:&quot;savedModel&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:797,&quot;character&quot;:13,&quot;text&quot;:&quot;modelMetadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:798,&quot;character&quot;:18,&quot;text&quot;:&quot;modelName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/index.ts&quot;,&quot;line&quot;:800,&quot;character&quot;:10,&quot;text&quot;:&quot;modelName&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:29 GMT</p>
+    </body>
+  </html>
+  

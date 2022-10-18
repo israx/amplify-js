@@ -1,0 +1,167 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>SessionTracker-rn.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/trackers/SessionTracker-rn.ts</td><td class="">79.66%</td><td class="">0%</td><td class="">177</td><td class="">141</td><td class="">36</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+// the session tracker for react native
+
+import { ConsoleLogger as Logger } from &#x27;@aws-amplify/core&#x27;;
+import { SessionTrackOpts } from &#x27;../types&#x27;;
+import { AppState } from &#x27;react-native&#x27;;
+
+const logger = new Logger(&#x27;SessionTracker&#x27;);
+
+const defaultOpts: SessionTrackOpts = {
+	enable: false,
+	provider: &#x27;AWSPinpoint&#x27;,
+};
+
+let initialEventSent = false;
+
+export class SessionTracker {
+	private _tracker;
+	private _hasEnabled;
+	private _config: SessionTrackOpts;
+	private _currentState;
+
+	constructor(tracker, opts) {
+		this._config = Object.assign({}, defaultOpts, opts);
+		this._tracker = tracker;
+
+		this._hasEnabled = false;
+		this._trackFunc = this._trackFunc.bind(this);
+		this._currentState = AppState.currentState;
+		this.configure(this._config);
+	}
+
+	private _envCheck() {
+		if (!AppState) {
+			logger.debug(&#x27;not in the supported react native environment&#x27;);
+			return false;
+		}
+		return true;
+	}
+
+	private async _trackFunc(nextAppState) {
+		const customAttrs =
+			typeof this._config.attributes === &#x27;function&#x27;
+				? await this._config.attributes()
+				: this._config.attributes;
+		const attributes = Object.assign({}, customAttrs);
+
+		if (
+			this._currentState.match(/inactive|background/) &amp;&amp;
+			nextAppState === &#x27;active&#x27;
+		) {
+			logger.debug(&#x27;App has come to the foreground, recording start session&#x27;);
+			this._tracker(
+				{
+					name: &#x27;_session.start&#x27;,
+					attributes,
+					immediate: false,
+				},
+				this._config.provider
+			).catch(e =&gt; {
+				logger.debug(&#x27;record session start event failed.&#x27;, e);
+			});
+		}
+		if (
+			this._currentState.match(/active/) &amp;&amp;
+			nextAppState.match(/inactive|background/)
+		) {
+			logger.debug(
+				&#x27;App has come to inactive/background, recording stop session&#x27;
+			);
+			this._tracker(
+				{
+					name: &#x27;_session.stop&#x27;,
+					attributes,
+					immediate: false,
+				},
+				this._config.provider
+			).catch(e =&gt; {
+				logger.debug(&#x27;record session stop event failed.&#x27;, e);
+			});
+		}
+
+		this._currentState = nextAppState;
+	}
+
+	// to keep configure a synchronized function
+	private async _sendInitialEvent() {
+		if (initialEventSent) {
+			logger.debug(&#x27;the start session has been sent when the page is loaded&#x27;);
+			return;
+		} else {
+			initialEventSent = true;
+		}
+
+		const customAttrs =
+			typeof this._config.attributes === &#x27;function&#x27;
+				? await this._config.attributes()
+				: this._config.attributes;
+		const attributes = Object.assign({}, customAttrs);
+
+		this._tracker(
+			{
+				name: &#x27;_session.start&#x27;,
+				attributes,
+				immediate: false,
+			},
+			this._config.provider
+		).catch(e =&gt; {
+			logger.debug(&#x27;record session start event failed.&#x27;, e);
+		});
+	}
+
+	configure(opts?: SessionTrackOpts) {
+		if (!this._envCheck()) {
+			return this._config;
+		}
+
+		Object.assign(this._config, opts);
+		if (this._config.enable &amp;&amp; !this._hasEnabled) {
+			// send a start session as soon as it&#x27;s enabled
+			this._sendInitialEvent();
+			// listen on events
+			AppState.addEventListener(&#x27;change&#x27;, this._trackFunc, false);
+			this._hasEnabled = true;
+		} else if (!this._config.enable &amp;&amp; this._hasEnabled) {
+			AppState.removeEventListener(&#x27;change&#x27;, this._trackFunc, false);
+			this._hasEnabled = false;
+		}
+
+		return this._config;
+	}
+}
+
+/**
+ * @deprecated use named import
+ */
+export default SessionTracker;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:29,&quot;character&quot;:9,&quot;text&quot;:&quot;_tracker&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:30,&quot;character&quot;:9,&quot;text&quot;:&quot;_hasEnabled&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:32,&quot;character&quot;:9,&quot;text&quot;:&quot;_currentState&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:34,&quot;character&quot;:13,&quot;text&quot;:&quot;tracker&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:34,&quot;character&quot;:22,&quot;text&quot;:&quot;opts&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:35,&quot;character&quot;:48,&quot;text&quot;:&quot;opts&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:36,&quot;character&quot;:7,&quot;text&quot;:&quot;_tracker&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:36,&quot;character&quot;:18,&quot;text&quot;:&quot;tracker&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:38,&quot;character&quot;:7,&quot;text&quot;:&quot;_hasEnabled&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:40,&quot;character&quot;:7,&quot;text&quot;:&quot;_currentState&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:52,&quot;character&quot;:26,&quot;text&quot;:&quot;nextAppState&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:8,&quot;text&quot;:&quot;_currentState&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:22,&quot;text&quot;:&quot;match&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:61,&quot;character&quot;:3,&quot;text&quot;:&quot;nextAppState&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:64,&quot;character&quot;:8,&quot;text&quot;:&quot;_tracker&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:5,&quot;text&quot;:&quot;catch&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:72,&quot;character&quot;:55,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:76,&quot;character&quot;:8,&quot;text&quot;:&quot;_currentState&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:76,&quot;character&quot;:22,&quot;text&quot;:&quot;match&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:77,&quot;character&quot;:3,&quot;text&quot;:&quot;nextAppState&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:77,&quot;character&quot;:16,&quot;text&quot;:&quot;match&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:82,&quot;character&quot;:8,&quot;text&quot;:&quot;_tracker&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:89,&quot;character&quot;:5,&quot;text&quot;:&quot;catch&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:89,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:90,&quot;character&quot;:54,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:94,&quot;character&quot;:7,&quot;text&quot;:&quot;_currentState&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:94,&quot;character&quot;:23,&quot;text&quot;:&quot;nextAppState&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:112,&quot;character&quot;:7,&quot;text&quot;:&quot;_tracker&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:119,&quot;character&quot;:4,&quot;text&quot;:&quot;catch&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:119,&quot;character&quot;:10,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:120,&quot;character&quot;:54,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:130,&quot;character&quot;:35,&quot;text&quot;:&quot;_hasEnabled&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:135,&quot;character&quot;:8,&quot;text&quot;:&quot;_hasEnabled&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:136,&quot;character&quot;:42,&quot;text&quot;:&quot;_hasEnabled&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/SessionTracker-rn.ts&quot;,&quot;line&quot;:138,&quot;character&quot;:8,&quot;text&quot;:&quot;_hasEnabled&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:24 GMT</p>
+    </body>
+  </html>
+  

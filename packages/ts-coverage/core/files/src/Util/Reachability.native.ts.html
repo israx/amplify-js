@@ -1,0 +1,66 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Reachability.native.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Util/Reachability.native.ts</td><td class="">72.50%</td><td class="">0%</td><td class="">40</td><td class="">29</td><td class="">11</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import Observable from &#x27;zen-observable-ts&#x27;;
+import { ConsoleLogger as Logger } from &#x27;../Logger&#x27;;
+
+const logger = new Logger(&#x27;Reachability&#x27;, &#x27;DEBUG&#x27;);
+
+type NetworkStatus = {
+	online: boolean;
+};
+
+export default class ReachabilityNavigator implements Reachability {
+	networkMonitor(netInfo?: any): Observable&lt;NetworkStatus&gt; {
+		/**
+		 * Here netinfo refers to @react-native-community/netinfo
+		 * This is needed in React Native to enable network detection
+		 * We do not import it in Core so that Apps that do not use DataStore
+		 * Do not need to install and link this dependency
+		 * When using Reachability in React Native, pass NetInfo as a param to networkMonitor
+		 */
+		if (!(netInfo &amp;&amp; netInfo.addEventListener)) {
+			throw new Error(
+				&#x27;NetInfo must be passed to networkMonitor to enable reachability in React Native&#x27;
+			);
+		}
+		return new Observable(observer =&gt; {
+			logger.log(&#x27;subscribing to reachability in React Native&#x27;);
+
+			const unsubscribe = netInfo.addEventListener(
+				({ isInternetReachable }) =&gt; {
+					// `isInternetReachable` can sometimes be `null` initially, so we want
+					// to make sure it is a boolean first before sending it to the observer.
+					if (typeof isInternetReachable === &#x27;boolean&#x27;) {
+						const online = isInternetReachable;
+						logger.log(&#x27;Notifying reachability change&#x27;, online);
+						observer.next({ online });
+					}
+				}
+			);
+
+			return () =&gt; {
+				unsubscribe();
+			};
+		});
+	}
+}
+
+interface Reachability {
+	networkMonitor(netInfo?: any): Observable&lt;NetworkStatus&gt;;
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Util/Reachability.native.ts&quot;,&quot;line&quot;:10,&quot;character&quot;:16,&quot;text&quot;:&quot;netInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/Reachability.native.ts&quot;,&quot;line&quot;:18,&quot;character&quot;:8,&quot;text&quot;:&quot;netInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/Reachability.native.ts&quot;,&quot;line&quot;:18,&quot;character&quot;:19,&quot;text&quot;:&quot;netInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/Reachability.native.ts&quot;,&quot;line&quot;:18,&quot;character&quot;:27,&quot;text&quot;:&quot;addEventListener&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/Reachability.native.ts&quot;,&quot;line&quot;:26,&quot;character&quot;:9,&quot;text&quot;:&quot;unsubscribe&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/Reachability.native.ts&quot;,&quot;line&quot;:26,&quot;character&quot;:23,&quot;text&quot;:&quot;netInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/Reachability.native.ts&quot;,&quot;line&quot;:26,&quot;character&quot;:31,&quot;text&quot;:&quot;addEventListener&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/Reachability.native.ts&quot;,&quot;line&quot;:27,&quot;character&quot;:7,&quot;text&quot;:&quot;isInternetReachable&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/Reachability.native.ts&quot;,&quot;line&quot;:30,&quot;character&quot;:16,&quot;text&quot;:&quot;isInternetReachable&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/Reachability.native.ts&quot;,&quot;line&quot;:39,&quot;character&quot;:4,&quot;text&quot;:&quot;unsubscribe&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/Reachability.native.ts&quot;,&quot;line&quot;:46,&quot;character&quot;:16,&quot;text&quot;:&quot;netInfo&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:20 GMT</p>
+    </body>
+  </html>
+  

@@ -1,0 +1,512 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>SQLiteUtils.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/common/SQLiteUtils.ts</td><td class="">95.38%</td><td class="">0%</td><td class="">585</td><td class="">558</td><td class="">27</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import {
+	InternalSchema,
+	SchemaModel,
+	ModelField,
+	PersistentModel,
+	isGraphQLScalarType,
+	QueryOne,
+	PredicatesGroup,
+	isPredicateObj,
+	SortPredicatesGroup,
+	PredicateObject,
+	isPredicateGroup,
+	isModelFieldType,
+	isTargetNameAssociation,
+	isModelAttributeAuth,
+	ModelAttributeAuth,
+	ModelAuthRule,
+	utils,
+	GraphQLScalarType,
+} from &#x27;@aws-amplify/datastore&#x27;;
+
+import { ParameterizedStatement } from &#x27;./types&#x27;;
+
+const { USER, isNonModelConstructor, isModelConstructor } = utils;
+
+const keysFromModel = model =&gt;
+	Object.keys(model)
+		.map(k =&gt; `&quot;${k}&quot;`)
+		.join(&#x27;, &#x27;);
+
+const valuesFromModel = (model): [string, any[]] =&gt; {
+	const values = Object.values(model).map(prepareValueForDML);
+	const paramaterized = values.map(() =&gt; &#x27;?&#x27;).join(&#x27;, &#x27;);
+
+	return [paramaterized, values];
+};
+
+const updateSet: (model: any) =&gt; [any, any] = model =&gt; {
+	const values = [];
+	const paramaterized = Object.entries(model)
+		.filter(([k]) =&gt; k !== &#x27;id&#x27;)
+		.map(([k, v]) =&gt; {
+			values.push(prepareValueForDML(v));
+			return `&quot;${k}&quot;=?`;
+		})
+		.join(&#x27;, &#x27;);
+
+	return [paramaterized, values];
+};
+
+function prepareValueForDML(value: unknown): any {
+	const scalarTypes = [&#x27;string&#x27;, &#x27;number&#x27;, &#x27;boolean&#x27;];
+
+	const isScalarType =
+		value === null || value === undefined || scalarTypes.includes(typeof value);
+
+	if (isScalarType) {
+		return value;
+	}
+
+	const isObjectType =
+		typeof value === &#x27;object&#x27; &amp;&amp;
+		(Object.getPrototypeOf(value).constructor === Object ||
+			isNonModelConstructor(Object.getPrototypeOf(value).constructor) ||
+			isModelConstructor(Object.getPrototypeOf(value).constructor));
+
+	if (Array.isArray(value) || isObjectType) {
+		return JSON.stringify(value);
+	}
+
+	return `${value}`;
+}
+
+export function getSQLiteType(
+	scalar: keyof Omit&lt;
+		typeof GraphQLScalarType,
+		&#x27;getJSType&#x27; | &#x27;getValidationFunction&#x27; | &#x27;getSQLiteType&#x27;
+	&gt;
+): &#x27;TEXT&#x27; | &#x27;INTEGER&#x27; | &#x27;REAL&#x27; | &#x27;BLOB&#x27; {
+	switch (scalar) {
+		case &#x27;Boolean&#x27;:
+		case &#x27;Int&#x27;:
+		case &#x27;AWSTimestamp&#x27;:
+			return &#x27;INTEGER&#x27;;
+		case &#x27;ID&#x27;:
+		case &#x27;String&#x27;:
+		case &#x27;AWSDate&#x27;:
+		case &#x27;AWSTime&#x27;:
+		case &#x27;AWSDateTime&#x27;:
+		case &#x27;AWSEmail&#x27;:
+		case &#x27;AWSJSON&#x27;:
+		case &#x27;AWSURL&#x27;:
+		case &#x27;AWSPhone&#x27;:
+		case &#x27;AWSIPAddress&#x27;:
+			return &#x27;TEXT&#x27;;
+		case &#x27;Float&#x27;:
+			return &#x27;REAL&#x27;;
+		default:
+			const _: never = scalar as never;
+			throw new Error(`unknown type ${scalar as string}`);
+	}
+}
+
+export function generateSchemaStatements(schema: InternalSchema): string[] {
+	return Object.keys(schema.namespaces).flatMap(namespaceName =&gt; {
+		const namespace = schema.namespaces[namespaceName];
+		const isUserModel = namespaceName === USER;
+
+		return Object.values(namespace.models).map(model =&gt;
+			modelCreateTableStatement(model, isUserModel)
+		);
+	});
+}
+
+export const implicitAuthFieldsForModel: (model: SchemaModel) =&gt; string[] = (
+	model: SchemaModel
+) =&gt; {
+	if (!model.attributes || !model.attributes.length) {
+		return [];
+	}
+
+	const authRules: ModelAttributeAuth =
+		model.attributes.find(isModelAttributeAuth);
+
+	if (!authRules) {
+		return [];
+	}
+
+	const authFieldsForModel = authRules.properties.rules
+		.filter((rule: ModelAuthRule) =&gt; rule.ownerField || rule.groupsField)
+		.map((rule: ModelAuthRule) =&gt; rule.ownerField || rule.groupsField);
+
+	return authFieldsForModel.filter((authField: string) =&gt; {
+		const authFieldExplicitlyDefined = Object.values(model.fields).find(
+			(f: ModelField) =&gt; f.name === authField
+		);
+		return !authFieldExplicitlyDefined;
+	});
+};
+
+export function modelCreateTableStatement(
+	model: SchemaModel,
+	userModel: boolean = false
+): string {
+	// implicitly defined auth fields, e.g., `owner`, `groupsField`, etc.
+	const implicitAuthFields = implicitAuthFieldsForModel(model);
+
+	let fields = Object.values(model.fields).reduce((acc, field: ModelField) =&gt; {
+		if (isGraphQLScalarType(field.type)) {
+			if (field.name === &#x27;id&#x27;) {
+				return [...acc, &#x27;&quot;id&quot; PRIMARY KEY NOT NULL&#x27;];
+			}
+
+			let columnParam = `&quot;${field.name}&quot; ${getSQLiteType(field.type)}`;
+
+			if (field.isRequired) {
+				columnParam += &#x27; NOT NULL&#x27;;
+			}
+
+			return [...acc, `${columnParam}`];
+		}
+
+		if (isModelFieldType(field.type)) {
+			let columnParam = `&quot;${field.name}&quot; TEXT`;
+
+			// add targetName as well as field name for BELONGS_TO relations
+			if (isTargetNameAssociation(field.association)) {
+				// check if this field has been explicitly defined in the model
+				const fkDefinedInModel = Object.values(model.fields).find(
+					(f: ModelField) =&gt; f.name === field?.association?.targetName
+				);
+
+				// if the FK is not explicitly defined in the model, we have to add it here
+				if (!fkDefinedInModel) {
+					const required = field.isRequired ? &#x27; NOT NULL&#x27; : &#x27;&#x27;;
+					columnParam += `, &quot;${field.association.targetName}&quot; TEXT${required}`;
+				}
+			}
+
+			// ignore isRequired param for model fields, since they will not contain
+			// the related data locally
+			return [...acc, `${columnParam}`];
+		}
+
+		// default to TEXT
+		let columnParam = `&quot;${field.name}&quot; TEXT`;
+
+		if (field.isRequired) {
+			columnParam += &#x27; NOT NULL&#x27;;
+		}
+
+		return [...acc, `${columnParam}`];
+	}, [] as string[]);
+
+	implicitAuthFields.forEach((authField: string) =&gt; {
+		fields.push(`${authField} TEXT`);
+	});
+
+	if (userModel) {
+		fields = [
+			...fields,
+			`&quot;_version&quot; INTEGER`,
+			`&quot;_lastChangedAt&quot; INTEGER`,
+			`&quot;_deleted&quot; INTEGER`,
+		];
+	}
+
+	const createTableStatement = `CREATE TABLE IF NOT EXISTS &quot;${
+		model.name
+	}&quot; (${fields.join(&#x27;, &#x27;)});`;
+	return createTableStatement;
+}
+
+export function modelInsertStatement(
+	model: PersistentModel,
+	tableName: string
+): ParameterizedStatement {
+	const keys = keysFromModel(model);
+	const [paramaterized, values] = valuesFromModel(model);
+
+	const insertStatement = `INSERT INTO &quot;${tableName}&quot; (${keys}) VALUES (${paramaterized})`;
+
+	return [insertStatement, values];
+}
+
+export function modelUpdateStatement(
+	model: PersistentModel,
+	tableName: string
+): ParameterizedStatement {
+	const [paramaterized, values] = updateSet(model);
+
+	const updateStatement = `UPDATE &quot;${tableName}&quot; SET ${paramaterized} WHERE id=?`;
+
+	return [updateStatement, [...values, model.id]];
+}
+
+export function queryByIdStatement(
+	id: string,
+	tableName: string
+): ParameterizedStatement {
+	return [`SELECT * FROM &quot;${tableName}&quot; WHERE &quot;id&quot; = ?`, [id]];
+}
+
+/*
+	Predicates supported by DataStore:
+
+	Strings: eq | ne | le | lt | ge | gt | contains | notContains | beginsWith | between
+	Numbers: eq | ne | le | lt | ge | gt | between
+	Lists: contains | notContains
+*/
+
+const comparisonOperatorMap = {
+	eq: &#x27;=&#x27;,
+	ne: &#x27;!=&#x27;,
+	le: &#x27;&lt;=&#x27;,
+	lt: &#x27;&lt;&#x27;,
+	ge: &#x27;&gt;=&#x27;,
+	gt: &#x27;&gt;&#x27;,
+};
+
+const logicalOperatorMap = {
+	beginsWith: &#x27;LIKE&#x27;,
+	contains: &#x27;LIKE&#x27;,
+	notContains: &#x27;NOT LIKE&#x27;,
+	between: &#x27;BETWEEN&#x27;,
+};
+
+/**
+ * If the given (operator, operand) indicate the need for a special `NULL` comparison,
+ * that `WHERE` clause condition will be returned. If not special `NULL` handling is
+ * needed, `null` will be returned, and the caller should construct the `WHERE`
+ * clause component using the normal operator map(s) and parameterization.
+ *
+ * @param operator &quot;beginsWith&quot; | &quot;contains&quot; | &quot;notContains&quot; | &quot;between&quot;
+ * | &quot;eq&quot; | &quot;ne&quot; | &quot;le&quot; | &quot;lt&quot; | &quot;ge&quot; | &quot;gt&quot;
+ * @param operand any
+ * @returns (string | null) The `WHERE` clause component or `null` if N/A.
+ */
+function buildSpecialNullComparison(field, operator, operand) {
+	if (operand === null || operand === undefined) {
+		if (operator === &#x27;eq&#x27;) {
+			return `&quot;${field}&quot; IS NULL`;
+		} else if (operator === &#x27;ne&#x27;) {
+			return `&quot;${field}&quot; IS NOT NULL`;
+		}
+	}
+
+	// no special null handling required
+	return null;
+}
+
+const whereConditionFromPredicateObject = ({
+	field,
+	operator,
+	operand,
+}: {
+	field: string;
+	operator:
+		| keyof typeof logicalOperatorMap
+		| keyof typeof comparisonOperatorMap;
+	operand: any;
+}): ParameterizedStatement =&gt; {
+	const specialNullClause = buildSpecialNullComparison(
+		field,
+		operator,
+		operand
+	);
+	if (specialNullClause) {
+		return [specialNullClause, []];
+	}
+
+	const comparisonOperator = comparisonOperatorMap[operator];
+	if (comparisonOperator) {
+		return [`&quot;${field}&quot; ${comparisonOperator} ?`, [operand]];
+	}
+
+	const logicalOperatorKey = &lt;keyof typeof logicalOperatorMap&gt;operator;
+	const logicalOperator = logicalOperatorMap[logicalOperatorKey];
+
+	if (logicalOperator) {
+		let rightExp = [];
+		switch (logicalOperatorKey) {
+			case &#x27;between&#x27;:
+				rightExp = operand; // operand is a 2-tuple
+				break;
+			case &#x27;beginsWith&#x27;:
+				rightExp = [`${operand}%`];
+				break;
+			case &#x27;contains&#x27;:
+			case &#x27;notContains&#x27;:
+				rightExp = [`%${operand}%`];
+				break;
+			default:
+				const _: never = logicalOperatorKey;
+				// Incorrect WHERE clause can result in data loss
+				throw new Error(&#x27;Cannot map predicate to a valid WHERE clause&#x27;);
+		}
+		return [
+			`&quot;${field}&quot; ${logicalOperator} ${rightExp.map(_ =&gt; &#x27;?&#x27;).join(&#x27; AND &#x27;)}`,
+			rightExp,
+		];
+	}
+};
+
+export function whereClauseFromPredicate&lt;T extends PersistentModel&gt;(
+	predicate: PredicatesGroup&lt;T&gt;
+): ParameterizedStatement {
+	const result = [];
+	const params = [];
+
+	recurse(predicate, result, params);
+	const whereClause = `WHERE ${result.join(&#x27; &#x27;)}`;
+
+	return [whereClause, params];
+
+	function recurse(
+		predicate: PredicatesGroup&lt;T&gt; | PredicateObject&lt;T&gt;,
+		result = [],
+		params = []
+	): void {
+		if (isPredicateGroup(predicate)) {
+			const { type: groupType, predicates: groupPredicates } = predicate;
+			let filterType: string = &#x27;&#x27;;
+			let isNegation = false;
+			switch (groupType) {
+				case &#x27;not&#x27;:
+					isNegation = true;
+					break;
+				case &#x27;and&#x27;:
+					filterType = &#x27;AND&#x27;;
+					break;
+				case &#x27;or&#x27;:
+					filterType = &#x27;OR&#x27;;
+					break;
+				default:
+					const _: never = groupType as never;
+					throw new Error(`Invalid ${groupType}`);
+			}
+
+			const groupResult = [];
+			for (const p of groupPredicates) {
+				recurse(p, groupResult, params);
+			}
+			result.push(
+				`${isNegation ? &#x27;NOT&#x27; : &#x27;&#x27;}(${groupResult.join(` ${filterType} `)})`
+			);
+		} else if (isPredicateObj(predicate)) {
+			const [condition, conditionParams] =
+				whereConditionFromPredicateObject(predicate);
+
+			result.push(condition);
+			params.push(...conditionParams);
+		}
+	}
+}
+
+const sortDirectionMap = {
+	ASCENDING: &#x27;ASC&#x27;,
+	DESCENDING: &#x27;DESC&#x27;,
+};
+
+export function orderByClauseFromSort&lt;T extends PersistentModel&gt;(
+	sortPredicate: SortPredicatesGroup&lt;T&gt; = []
+): string {
+	const orderByParts = sortPredicate.map(
+		({ field, sortDirection }) =&gt;
+			`&quot;${field}&quot; ${sortDirectionMap[sortDirection]}`
+	);
+
+	// We always sort by _rowid_ last
+	orderByParts.push(`_rowid_ ${sortDirectionMap.ASCENDING}`);
+
+	return `ORDER BY ${orderByParts.join(&#x27;, &#x27;)}`;
+}
+
+export function limitClauseFromPagination(
+	limit: number,
+	page: number = 0
+): ParameterizedStatement {
+	const params = [limit];
+	let clause = &#x27;LIMIT ?&#x27;;
+	if (page) {
+		const offset = limit * page;
+		params.push(offset);
+		clause += &#x27; OFFSET ?&#x27;;
+	}
+
+	return [clause, params];
+}
+
+export function queryAllStatement&lt;T extends PersistentModel&gt;(
+	tableName: string,
+	predicate?: PredicatesGroup&lt;T&gt;,
+	sort?: SortPredicatesGroup&lt;T&gt;,
+	limit?: number,
+	page?: number
+): ParameterizedStatement {
+	let statement = `SELECT * FROM &quot;${tableName}&quot;`;
+	const params = [];
+
+	if (predicate &amp;&amp; predicate.predicates.length) {
+		const [whereClause, whereParams] = whereClauseFromPredicate(predicate);
+		statement += ` ${whereClause}`;
+		params.push(...whereParams);
+	}
+
+	const orderByClause = orderByClauseFromSort(sort);
+	statement += ` ${orderByClause}`;
+
+	if (limit) {
+		const [limitClause, limitParams] = limitClauseFromPagination(limit, page);
+		statement += ` ${limitClause}`;
+		params.push(...limitParams);
+	}
+
+	return [statement, params];
+}
+
+export function queryOneStatement(
+	firstOrLast,
+	tableName: string
+): ParameterizedStatement {
+	if (firstOrLast === QueryOne.FIRST) {
+		// ORDER BY rowid will no longer work as expected if a customer has
+		// a field by that name in their schema. We may want to enforce it
+		// as a reserved keyword in Codegen
+		return [`SELECT * FROM ${tableName} ORDER BY _rowid_ LIMIT 1`, []];
+	} else {
+		return [`SELECT * FROM ${tableName} ORDER BY _rowid_ DESC LIMIT 1`, []];
+	}
+}
+
+export function deleteByIdStatement(
+	id: string,
+	tableName: string
+): ParameterizedStatement {
+	const deleteStatement = `DELETE FROM &quot;${tableName}&quot; WHERE &quot;id&quot;=?`;
+	return [deleteStatement, [id]];
+}
+
+export function deleteByPredicateStatement&lt;T extends PersistentModel&gt;(
+	tableName: string,
+	predicate?: PredicatesGroup&lt;T&gt;
+): ParameterizedStatement {
+	let statement = `DELETE FROM &quot;${tableName}&quot;`;
+	const params = [];
+
+	if (predicate &amp;&amp; predicate.predicates.length) {
+		const [whereClause, whereParams] = whereClauseFromPredicate(predicate);
+		statement += ` ${whereClause}`;
+		params.push(...whereParams);
+	}
+	return [statement, params];
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:25,&quot;character&quot;:22,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:30,&quot;character&quot;:25,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:37,&quot;character&quot;:18,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:37,&quot;character&quot;:46,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:229,&quot;character&quot;:8,&quot;text&quot;:&quot;paramaterized&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:229,&quot;character&quot;:23,&quot;text&quot;:&quot;values&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:54,&quot;text&quot;:&quot;paramaterized&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:233,&quot;character&quot;:30,&quot;text&quot;:&quot;values&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:233,&quot;character&quot;:44,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:278,&quot;character&quot;:36,&quot;text&quot;:&quot;field&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:278,&quot;character&quot;:43,&quot;text&quot;:&quot;operator&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:278,&quot;character&quot;:53,&quot;text&quot;:&quot;operand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:279,&quot;character&quot;:5,&quot;text&quot;:&quot;operand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:279,&quot;character&quot;:25,&quot;text&quot;:&quot;operand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:280,&quot;character&quot;:6,&quot;text&quot;:&quot;operator&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:281,&quot;character&quot;:14,&quot;text&quot;:&quot;field&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:282,&quot;character&quot;:13,&quot;text&quot;:&quot;operator&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:14,&quot;text&quot;:&quot;field&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:294,&quot;character&quot;:1,&quot;text&quot;:&quot;operand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:300,&quot;character&quot;:1,&quot;text&quot;:&quot;operand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:305,&quot;character&quot;:2,&quot;text&quot;:&quot;operand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:313,&quot;character&quot;:49,&quot;text&quot;:&quot;operand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:326,&quot;character&quot;:19,&quot;text&quot;:&quot;operand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:330,&quot;character&quot;:20,&quot;text&quot;:&quot;operand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:338,&quot;character&quot;:49,&quot;text&quot;:&quot;_&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:459,&quot;character&quot;:1,&quot;text&quot;:&quot;firstOrLast&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/SQLiteUtils.ts&quot;,&quot;line&quot;:462,&quot;character&quot;:5,&quot;text&quot;:&quot;firstOrLast&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:31 GMT</p>
+    </body>
+  </html>
+  

@@ -1,0 +1,127 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>GoogleOAuth.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/OAuthHelper/GoogleOAuth.ts</td><td class="">71.79%</td><td class="">0%</td><td class="">117</td><td class="">84</td><td class="">33</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import { ConsoleLogger as Logger } from &#x27;../Logger&#x27;;
+import { browserOrNode } from &#x27;../JS&#x27;;
+import { NonRetryableError } from &#x27;../Util&#x27;;
+
+const logger = new Logger(&#x27;CognitoCredentials&#x27;);
+
+const waitForInit = new Promise((res, rej) =&gt; {
+	if (!browserOrNode().isBrowser) {
+		logger.debug(&#x27;not in the browser, directly resolved&#x27;);
+		return res();
+	}
+	const ga =
+		window[&#x27;gapi&#x27;] &amp;&amp; window[&#x27;gapi&#x27;].auth2 ? window[&#x27;gapi&#x27;].auth2 : null;
+	if (ga) {
+		logger.debug(&#x27;google api already loaded&#x27;);
+		return res();
+	} else {
+		setTimeout(() =&gt; {
+			return res();
+		}, 2000);
+	}
+});
+
+export class GoogleOAuth {
+	public initialized = false;
+
+	constructor() {
+		this.refreshGoogleToken = this.refreshGoogleToken.bind(this);
+		this._refreshGoogleTokenImpl = this._refreshGoogleTokenImpl.bind(this);
+	}
+
+	public async refreshGoogleToken() {
+		if (!this.initialized) {
+			logger.debug(&#x27;need to wait for the Google SDK loaded&#x27;);
+			await waitForInit;
+			this.initialized = true;
+			logger.debug(&#x27;finish waiting&#x27;);
+		}
+
+		return this._refreshGoogleTokenImpl();
+	}
+
+	private _refreshGoogleTokenImpl() {
+		let ga = null;
+		if (browserOrNode().isBrowser)
+			ga = window[&#x27;gapi&#x27;] &amp;&amp; window[&#x27;gapi&#x27;].auth2 ? window[&#x27;gapi&#x27;].auth2 : null;
+		if (!ga) {
+			logger.debug(&#x27;no gapi auth2 available&#x27;);
+			return Promise.reject(&#x27;no gapi auth2 available&#x27;);
+		}
+
+		return new Promise((res, rej) =&gt; {
+			ga.getAuthInstance()
+				.then(googleAuth =&gt; {
+					if (!googleAuth) {
+						logger.debug(&#x27;google Auth undefined&#x27;);
+						rej(new NonRetryableError(&#x27;google Auth undefined&#x27;));
+					}
+
+					const googleUser = googleAuth.currentUser.get();
+					// refresh the token
+					if (googleUser.isSignedIn()) {
+						logger.debug(&#x27;refreshing the google access token&#x27;);
+						googleUser
+							.reloadAuthResponse()
+							.then(authResponse =&gt; {
+								const { id_token, expires_at } = authResponse;
+								res({ token: id_token, expires_at });
+							})
+							.catch(err =&gt; {
+								if (err &amp;&amp; err.error === &#x27;network_error&#x27;) {
+									// Not using NonRetryableError so handler will be retried
+									rej(&#x27;Network error reloading google auth response&#x27;);
+								} else {
+									rej(
+										new NonRetryableError(
+											&#x27;Failed to reload google auth response&#x27;
+										)
+									);
+								}
+							});
+					} else {
+						rej(new NonRetryableError(&#x27;User is not signed in with Google&#x27;));
+					}
+				})
+				.catch(err =&gt; {
+					logger.debug(&#x27;Failed to refresh google token&#x27;, err);
+					rej(new NonRetryableError(&#x27;Failed to refresh google token&#x27;));
+				});
+		});
+	}
+}
+
+/**
+ * @deprecated use named import
+ */
+export default GoogleOAuth;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:23,&quot;character&quot;:7,&quot;text&quot;:&quot;ga&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:25,&quot;character&quot;:5,&quot;text&quot;:&quot;ga&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:55,&quot;character&quot;:6,&quot;text&quot;:&quot;ga&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:57,&quot;character&quot;:3,&quot;text&quot;:&quot;ga&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:58,&quot;character&quot;:7,&quot;text&quot;:&quot;ga&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:64,&quot;character&quot;:3,&quot;text&quot;:&quot;ga&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:64,&quot;character&quot;:6,&quot;text&quot;:&quot;getAuthInstance&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:5,&quot;text&quot;:&quot;then&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:10,&quot;text&quot;:&quot;googleAuth&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:66,&quot;character&quot;:10,&quot;text&quot;:&quot;googleAuth&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:11,&quot;text&quot;:&quot;googleUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:24,&quot;text&quot;:&quot;googleAuth&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:35,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:47,&quot;text&quot;:&quot;get&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:9,&quot;text&quot;:&quot;googleUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:20,&quot;text&quot;:&quot;isSignedIn&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:75,&quot;character&quot;:6,&quot;text&quot;:&quot;googleUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:76,&quot;character&quot;:8,&quot;text&quot;:&quot;reloadAuthResponse&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:77,&quot;character&quot;:8,&quot;text&quot;:&quot;then&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:77,&quot;character&quot;:13,&quot;text&quot;:&quot;authResponse&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:78,&quot;character&quot;:16,&quot;text&quot;:&quot;id_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:78,&quot;character&quot;:26,&quot;text&quot;:&quot;expires_at&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:79,&quot;character&quot;:14,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:79,&quot;character&quot;:21,&quot;text&quot;:&quot;id_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:79,&quot;character&quot;:31,&quot;text&quot;:&quot;expires_at&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:81,&quot;character&quot;:8,&quot;text&quot;:&quot;catch&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:81,&quot;character&quot;:14,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:82,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:82,&quot;character&quot;:19,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:82,&quot;character&quot;:23,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:97,&quot;character&quot;:5,&quot;text&quot;:&quot;catch&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:97,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuthHelper/GoogleOAuth.ts&quot;,&quot;line&quot;:98,&quot;character&quot;:52,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:20 GMT</p>
+    </body>
+  </html>
+  

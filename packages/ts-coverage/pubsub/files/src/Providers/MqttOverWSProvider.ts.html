@@ -1,0 +1,380 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>MqttOverWSProvider.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Providers/MqttOverWSProvider.ts</td><td class="">92.68%</td><td class="">0%</td><td class="">519</td><td class="">481</td><td class="">38</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import * as Paho from &#x27;paho-mqtt&#x27;;
+import { v4 as uuid } from &#x27;uuid&#x27;;
+import Observable from &#x27;zen-observable-ts&#x27;;
+
+import { AbstractPubSubProvider } from &#x27;./PubSubProvider&#x27;;
+import { SubscriptionObserver } from &#x27;../types/PubSub&#x27;;
+import { ProviderOptions } from &#x27;../types/Provider&#x27;;
+import { ConsoleLogger as Logger, Hub } from &#x27;@aws-amplify/core&#x27;;
+import {
+	ConnectionStateMonitor,
+	CONNECTION_CHANGE,
+} from &#x27;../utils/ConnectionStateMonitor&#x27;;
+import { AMPLIFY_SYMBOL, CONNECTION_STATE_CHANGE } from &#x27;./constants&#x27;;
+
+const logger = new Logger(&#x27;MqttOverWSProvider&#x27;);
+
+export function mqttTopicMatch(filter: string, topic: string) {
+	const filterArray = filter.split(&#x27;/&#x27;);
+	const length = filterArray.length;
+	const topicArray = topic.split(&#x27;/&#x27;);
+
+	for (let i = 0; i &lt; length; ++i) {
+		const left = filterArray[i];
+		const right = topicArray[i];
+		if (left === &#x27;#&#x27;) return topicArray.length &gt;= length;
+		if (left !== &#x27;+&#x27; &amp;&amp; left !== right) return false;
+	}
+	return length === topicArray.length;
+}
+
+export interface MqttProviderOptions extends ProviderOptions {
+	clientId?: string;
+	url?: string;
+}
+
+/**
+ * @deprecated Migrated to MqttProviderOptions
+ */
+export type MqttProvidertOptions = MqttProviderOptions;
+
+class ClientsQueue {
+	private promises: Map&lt;string, Promise&lt;any&gt;&gt; = new Map();
+
+	async get(clientId: string, clientFactory?: (input: string) =&gt; Promise&lt;any&gt;) {
+		const cachedPromise = this.promises.get(clientId);
+		if (cachedPromise) {
+			return cachedPromise;
+		}
+
+		if (clientFactory) {
+			const newPromise = clientFactory(clientId);
+
+			this.promises.set(clientId, newPromise);
+
+			return newPromise;
+		}
+		return undefined;
+	}
+
+	get allClients() {
+		return Array.from(this.promises.keys());
+	}
+
+	remove(clientId: string) {
+		this.promises.delete(clientId);
+	}
+}
+
+const dispatchPubSubEvent = (event: string, data: any, message: string) =&gt; {
+	Hub.dispatch(&#x27;pubsub&#x27;, { event, data, message }, &#x27;PubSub&#x27;, AMPLIFY_SYMBOL);
+};
+
+const topicSymbol = typeof Symbol !== &#x27;undefined&#x27; ? Symbol(&#x27;topic&#x27;) : &#x27;@@topic&#x27;;
+
+export class MqttOverWSProvider extends AbstractPubSubProvider {
+	private _clientsQueue = new ClientsQueue();
+	private readonly connectionStateMonitor = new ConnectionStateMonitor();
+
+	constructor(options: MqttProviderOptions = {}) {
+		super({ ...options, clientId: options.clientId || uuid() });
+
+		// Monitor the connection health state and pass changes along to Hub
+		this.connectionStateMonitor.connectionStateObservable.subscribe(
+			connectionStateChange =&gt; {
+				dispatchPubSubEvent(
+					CONNECTION_STATE_CHANGE,
+					{
+						provider: this,
+						connectionState: connectionStateChange,
+					},
+					`Connection state is ${connectionStateChange}`
+				);
+			}
+		);
+	}
+
+	protected get clientId() {
+		return this.options.clientId;
+	}
+
+	protected get endpoint() {
+		return this.options.aws_pubsub_endpoint;
+	}
+
+	protected get clientsQueue() {
+		return this._clientsQueue;
+	}
+
+	protected get isSSLEnabled() {
+		return !this.options
+			.aws_appsync_dangerously_connect_to_http_endpoint_for_testing;
+	}
+
+	protected getTopicForValue(value: any) {
+		return typeof value === &#x27;object&#x27; &amp;&amp; value[topicSymbol];
+	}
+
+	getProviderName() {
+		return &#x27;MqttOverWSProvider&#x27;;
+	}
+
+	public onDisconnect({
+		clientId,
+		errorCode,
+		...args
+	}: {
+		clientId?: string;
+		errorCode?: number;
+	}) {
+		if (errorCode !== 0) {
+			logger.warn(clientId, JSON.stringify({ errorCode, ...args }, null, 2));
+
+			const topicsToDelete: string[] = [];
+			if (!clientId) {
+				return;
+			}
+			const clientIdObservers = this._clientIdObservers.get(clientId);
+			if (!clientIdObservers) {
+				return;
+			}
+			clientIdObservers.forEach(observer =&gt; {
+				observer.error(&#x27;Disconnected, error code: &#x27; + errorCode);
+				// removing observers for disconnected clientId
+				this._topicObservers.forEach((observerForTopic, observerTopic) =&gt; {
+					observerForTopic.delete(observer);
+					if (observerForTopic.size === 0) {
+						topicsToDelete.push(observerTopic);
+					}
+				});
+			});
+
+			// forgiving any trace of clientId
+			this._clientIdObservers.delete(clientId);
+
+			// Removing topics that are not listen by an observer
+			topicsToDelete.forEach(topic =&gt; {
+				this._topicObservers.delete(topic);
+			});
+		}
+	}
+
+	public async newClient({ url, clientId }: MqttProviderOptions): Promise&lt;any&gt; {
+		logger.debug(&#x27;Creating new MQTT client&#x27;, clientId);
+
+		this.connectionStateMonitor.record(CONNECTION_CHANGE.OPENING_CONNECTION);
+		// @ts-ignore
+		const client = new Paho.Client(url, clientId);
+		// client.trace = (args) =&gt; logger.debug(clientId, JSON.stringify(args, null, 2));
+		client.onMessageArrived = ({
+			destinationName: topic,
+			payloadString: msg,
+		}: {
+			destinationName: string;
+			payloadString: string;
+		}) =&gt; {
+			this._onMessage(topic, msg);
+		};
+		client.onConnectionLost = ({
+			errorCode,
+			...args
+		}: {
+			errorCode: number;
+		}) =&gt; {
+			this.onDisconnect({ clientId, errorCode, ...args });
+			this.connectionStateMonitor.record(CONNECTION_CHANGE.CLOSED);
+		};
+
+		await new Promise((resolve, reject) =&gt; {
+			client.connect({
+				useSSL: this.isSSLEnabled,
+				mqttVersion: 3,
+				onSuccess: () =&gt; resolve(client),
+				onFailure: () =&gt; {
+					reject();
+					this.connectionStateMonitor.record(
+						CONNECTION_CHANGE.CONNECTION_FAILED
+					);
+				},
+			});
+		});
+
+		this.connectionStateMonitor.record(
+			CONNECTION_CHANGE.CONNECTION_ESTABLISHED
+		);
+
+		return client;
+	}
+
+	protected async connect(
+		clientId: string,
+		options: MqttProviderOptions = {}
+	): Promise&lt;any&gt; {
+		return await this.clientsQueue.get(clientId, clientId =&gt;
+			this.newClient({ ...options, clientId })
+		);
+	}
+
+	protected async disconnect(clientId: string): Promise&lt;void&gt; {
+		const client = await this.clientsQueue.get(clientId);
+
+		if (client &amp;&amp; client.isConnected()) {
+			client.disconnect();
+			this.connectionStateMonitor.record(CONNECTION_CHANGE.CLOSED);
+		}
+		this.clientsQueue.remove(clientId);
+	}
+
+	async publish(topics: string[] | string, msg: any) {
+		const targetTopics = ([] as string[]).concat(topics);
+		const message = JSON.stringify(msg);
+
+		const url = await this.endpoint;
+
+		const client = await this.connect(this.clientId, { url });
+
+		logger.debug(&#x27;Publishing to topic(s)&#x27;, targetTopics.join(&#x27;,&#x27;), message);
+		targetTopics.forEach(topic =&gt; client.send(topic, message));
+	}
+
+	protected _topicObservers: Map&lt;string, Set&lt;SubscriptionObserver&lt;any&gt;&gt;&gt; =
+		new Map();
+
+	protected _clientIdObservers: Map&lt;string, Set&lt;SubscriptionObserver&lt;any&gt;&gt;&gt; =
+		new Map();
+
+	private _onMessage(topic: string, msg: any) {
+		try {
+			const matchedTopicObservers: Set&lt;SubscriptionObserver&lt;any&gt;&gt;[] = [];
+			this._topicObservers.forEach((observerForTopic, observerTopic) =&gt; {
+				if (mqttTopicMatch(observerTopic, topic)) {
+					matchedTopicObservers.push(observerForTopic);
+				}
+			});
+			const parsedMessage = JSON.parse(msg);
+
+			if (typeof parsedMessage === &#x27;object&#x27;) {
+				parsedMessage[topicSymbol] = topic;
+			}
+
+			matchedTopicObservers.forEach(observersForTopic =&gt; {
+				observersForTopic.forEach(observer =&gt; observer.next(parsedMessage));
+			});
+		} catch (error) {
+			logger.warn(&#x27;Error handling message&#x27;, error, msg);
+		}
+	}
+
+	subscribe(
+		topics: string[] | string,
+		options: MqttProviderOptions = {}
+	): Observable&lt;any&gt; {
+		const targetTopics = ([] as string[]).concat(topics);
+		logger.debug(&#x27;Subscribing to topic(s)&#x27;, targetTopics.join(&#x27;,&#x27;));
+
+		return new Observable(observer =&gt; {
+			targetTopics.forEach(topic =&gt; {
+				// this._topicObservers is used to notify the observers according to the topic received on the message
+				let observersForTopic = this._topicObservers.get(topic);
+
+				if (!observersForTopic) {
+					observersForTopic = new Set();
+
+					this._topicObservers.set(topic, observersForTopic);
+				}
+
+				observersForTopic.add(observer);
+			});
+
+			// @ts-ignore
+			let client: Paho.Client;
+			const { clientId = this.clientId } = options;
+
+			// this._clientIdObservers is used to close observers when client gets disconnected
+			let observersForClientId = this._clientIdObservers.get(clientId);
+			if (!observersForClientId) {
+				observersForClientId = new Set();
+			}
+			observersForClientId.add(observer);
+			this._clientIdObservers.set(clientId, observersForClientId);
+
+			(async () =&gt; {
+				const { url = await this.endpoint } = options;
+
+				try {
+					client = await this.connect(clientId, { url });
+					targetTopics.forEach(topic =&gt; {
+						client.subscribe(topic);
+					});
+				} catch (e) {
+					observer.error(e);
+				}
+			})();
+
+			return () =&gt; {
+				logger.debug(&#x27;Unsubscribing from topic(s)&#x27;, targetTopics.join(&#x27;,&#x27;));
+
+				if (client) {
+					this._clientIdObservers.get(clientId)?.delete(observer);
+					// No more observers per client =&gt; client not needed anymore
+					if (this._clientIdObservers.get(clientId)?.size === 0) {
+						this.connectionStateMonitor.record(
+							CONNECTION_CHANGE.CLOSING_CONNECTION
+						);
+
+						this.disconnect(clientId);
+						this._clientIdObservers.delete(clientId);
+					}
+
+					targetTopics.forEach(topic =&gt; {
+						const observersForTopic =
+							this._topicObservers.get(topic) ||
+							(new Set() as Set&lt;SubscriptionObserver&lt;any&gt;&gt;);
+
+						observersForTopic.delete(observer);
+
+						// if no observers exists for the topic, topic should be removed
+						if (observersForTopic.size === 0) {
+							this._topicObservers.delete(topic);
+							if (client.isConnected()) {
+								client.unsubscribe(topic);
+							}
+						}
+					});
+				}
+
+				return null;
+			};
+		});
+	}
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:80,&quot;character&quot;:44,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:81,&quot;character&quot;:33,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:108,&quot;character&quot;:15,&quot;text&quot;:&quot;clientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:109,&quot;character&quot;:22,&quot;text&quot;:&quot;clientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:112,&quot;character&quot;:15,&quot;text&quot;:&quot;endpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:113,&quot;character&quot;:22,&quot;text&quot;:&quot;aws_pubsub_endpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:122,&quot;character&quot;:4,&quot;text&quot;:&quot;aws_appsync_dangerously_connect_to_http_endpoint_for_testing&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:125,&quot;character&quot;:28,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:126,&quot;character&quot;:16,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:126,&quot;character&quot;:38,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:230,&quot;character&quot;:8,&quot;text&quot;:&quot;client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:6,&quot;text&quot;:&quot;client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:16,&quot;text&quot;:&quot;client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:23,&quot;text&quot;:&quot;isConnected&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:233,&quot;character&quot;:3,&quot;text&quot;:&quot;client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:233,&quot;character&quot;:10,&quot;text&quot;:&quot;disconnect&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:239,&quot;character&quot;:42,&quot;text&quot;:&quot;msg&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:241,&quot;character&quot;:33,&quot;text&quot;:&quot;msg&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:243,&quot;character&quot;:8,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:243,&quot;character&quot;:25,&quot;text&quot;:&quot;endpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:245,&quot;character&quot;:8,&quot;text&quot;:&quot;client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:245,&quot;character&quot;:41,&quot;text&quot;:&quot;clientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:248,&quot;character&quot;:32,&quot;text&quot;:&quot;client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:248,&quot;character&quot;:39,&quot;text&quot;:&quot;send&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:257,&quot;character&quot;:35,&quot;text&quot;:&quot;msg&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:265,&quot;character&quot;:9,&quot;text&quot;:&quot;parsedMessage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:267,&quot;character&quot;:14,&quot;text&quot;:&quot;parsedMessage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:268,&quot;character&quot;:4,&quot;text&quot;:&quot;parsedMessage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:272,&quot;character&quot;:56,&quot;text&quot;:&quot;parsedMessage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:275,&quot;character&quot;:41,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:275,&quot;character&quot;:48,&quot;text&quot;:&quot;msg&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:274,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:302,&quot;character&quot;:11,&quot;text&quot;:&quot;clientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:302,&quot;character&quot;:27,&quot;text&quot;:&quot;clientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:313,&quot;character&quot;:12,&quot;text&quot;:&quot;url&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:313,&quot;character&quot;:29,&quot;text&quot;:&quot;endpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:321,&quot;character&quot;:20,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/MqttOverWSProvider.ts&quot;,&quot;line&quot;:320,&quot;character&quot;:13,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:25 GMT</p>
+    </body>
+  </html>
+  

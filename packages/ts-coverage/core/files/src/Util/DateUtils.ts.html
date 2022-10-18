@@ -1,0 +1,102 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>DateUtils.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Util/DateUtils.ts</td><td class="">65.43%</td><td class="">0%</td><td class="">81</td><td class="">53</td><td class="">28</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/**
+ * Date &amp; time utility functions to abstract the `aws-sdk` away from users.
+ * (v2 =&gt; v3 modularization is a breaking change)
+ *
+ * @see https://github.com/aws/aws-sdk-js/blob/6edf586dcc1de7fe8fbfbbd9a0d2b1847921e6e1/lib/util.js#L262
+ */
+
+// Comment - TODO: remove
+
+const FIVE_MINUTES_IN_MS = 1000 * 60 * 5;
+
+export const DateUtils = {
+	/**
+	 * Milliseconds to offset the date to compensate for clock skew between device &amp; services
+	 */
+	clockOffset: 0,
+
+	getDateWithClockOffset() {
+		if (DateUtils.clockOffset) {
+			return new Date(new Date().getTime() + DateUtils.clockOffset);
+		} else {
+			return new Date();
+		}
+	},
+
+	/**
+	 * @returns {number} Clock offset in milliseconds
+	 */
+	getClockOffset() {
+		return DateUtils.clockOffset;
+	},
+
+	getHeaderStringFromDate(date: Date = DateUtils.getDateWithClockOffset()) {
+		return date.toISOString().replace(/[:\-]|\.\d{3}/g, &#x27;&#x27;);
+	},
+
+	getDateFromHeaderString(header: string) {
+		const [, year, month, day, hour, minute, second] = header.match(
+			/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2}).+/
+		);
+
+		return new Date(
+			Date.UTC(
+				Number(year),
+				Number(month) - 1,
+				Number(day),
+				Number(hour),
+				Number(minute),
+				Number(second)
+			)
+		);
+	},
+
+	isClockSkewed(serverDate: Date) {
+		// API gateway permits client calls that are off by no more than ±5 minutes
+		return (
+			Math.abs(
+				serverDate.getTime() - DateUtils.getDateWithClockOffset().getTime()
+			) &gt;= FIVE_MINUTES_IN_MS
+		);
+	},
+
+	isClockSkewError(error: any) {
+		if (!error.response || !error.response.headers) {
+			return false;
+		}
+
+		const { headers } = error.response;
+
+		return Boolean(
+			[&#x27;BadRequestException&#x27;, &#x27;InvalidSignatureException&#x27;].includes(
+				headers[&#x27;x-amzn-errortype&#x27;]
+			) &amp;&amp;
+				(headers.date || headers.Date)
+		);
+	},
+
+	/**
+	 * @param {number} offset Clock offset in milliseconds
+	 */
+	setClockOffset(offset: number) {
+		DateUtils.clockOffset = offset;
+	},
+};
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:11,&quot;character&quot;:13,&quot;text&quot;:&quot;DateUtils&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:18,&quot;character&quot;:6,&quot;text&quot;:&quot;DateUtils&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:18,&quot;character&quot;:16,&quot;text&quot;:&quot;clockOffset&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:19,&quot;character&quot;:42,&quot;text&quot;:&quot;DateUtils&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:19,&quot;character&quot;:52,&quot;text&quot;:&quot;clockOffset&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:29,&quot;character&quot;:9,&quot;text&quot;:&quot;DateUtils&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:29,&quot;character&quot;:19,&quot;text&quot;:&quot;clockOffset&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:32,&quot;character&quot;:38,&quot;text&quot;:&quot;DateUtils&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:32,&quot;character&quot;:48,&quot;text&quot;:&quot;getDateWithClockOffset&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:57,&quot;character&quot;:27,&quot;text&quot;:&quot;DateUtils&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:57,&quot;character&quot;:37,&quot;text&quot;:&quot;getDateWithClockOffset&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:57,&quot;character&quot;:62,&quot;text&quot;:&quot;getTime&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:18,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:63,&quot;character&quot;:7,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:63,&quot;character&quot;:13,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:63,&quot;character&quot;:26,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:63,&quot;character&quot;:32,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:63,&quot;character&quot;:41,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:67,&quot;character&quot;:10,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:67,&quot;character&quot;:22,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:67,&quot;character&quot;:28,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:4,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:5,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:13,&quot;text&quot;:&quot;date&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:21,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:29,&quot;text&quot;:&quot;Date&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:81,&quot;character&quot;:2,&quot;text&quot;:&quot;DateUtils&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Util/DateUtils.ts&quot;,&quot;line&quot;:81,&quot;character&quot;:12,&quot;text&quot;:&quot;clockOffset&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:20 GMT</p>
+    </body>
+  </html>
+  

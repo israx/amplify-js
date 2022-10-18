@@ -1,0 +1,7513 @@
+{
+  "fileCounts": {},
+  "anys": [
+    {
+      "file": "lib/types/Auth.d.ts",
+      "line": 36,
+      "character": 4,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Auth.d.ts",
+      "line": 56,
+      "character": 49,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Auth.d.ts",
+      "line": 57,
+      "character": 55,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Auth.d.ts",
+      "line": 58,
+      "character": 39,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Auth.d.ts",
+      "line": 63,
+      "character": 4,
+      "text": "challengeName",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Auth.d.ts",
+      "line": 64,
+      "character": 4,
+      "text": "challengeParameters",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Auth.d.ts",
+      "line": 151,
+      "character": 47,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 10,
+      "character": 12,
+      "text": "userPool",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "_oAuthHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 15,
+      "character": 12,
+      "text": "oAuthFlowInProgress",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "pendingSignIn",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "autoSignInInitiated",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 25,
+      "character": 14,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 34,
+      "character": 12,
+      "text": "handleAutoSignIn",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 35,
+      "character": 12,
+      "text": "handleCodeAutoSignIn",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 36,
+      "character": 12,
+      "text": "handleLinkAutoSignIn",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 37,
+      "character": 12,
+      "text": "signInAfterUserConfirmed",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 46,
+      "character": 12,
+      "text": "isTrueStorageValue",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 69,
+      "character": 12,
+      "text": "authCallbacks",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 76,
+      "character": 12,
+      "text": "signInWithPassword",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 83,
+      "character": 12,
+      "text": "signInWithoutPassword",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 92,
+      "character": 18,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 98,
+      "character": 20,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 99,
+      "character": 12,
+      "text": "_getMfaTypeFromUserData",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 100,
+      "character": 12,
+      "text": "_getUserData",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 107,
+      "character": 20,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 127,
+      "character": 14,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 134,
+      "character": 20,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 140,
+      "character": 18,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 141,
+      "character": 24,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 141,
+      "character": 67,
+      "text": "requiredAttributes",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 147,
+      "character": 30,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 153,
+      "character": 25,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 164,
+      "character": 25,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 170,
+      "character": 19,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 171,
+      "character": 20,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 175,
+      "character": 12,
+      "text": "isErrorWithMessage",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 176,
+      "character": 12,
+      "text": "isTokenRevokedError",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 177,
+      "character": 12,
+      "text": "isRefreshTokenRevokedError",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 178,
+      "character": 12,
+      "text": "isUserDisabledError",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 179,
+      "character": 12,
+      "text": "isUserDoesNotExistError",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 180,
+      "character": 12,
+      "text": "isRefreshTokenExpiredError",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 181,
+      "character": 12,
+      "text": "isSignedInHostedUI",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 182,
+      "character": 12,
+      "text": "isSessionInvalid",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 183,
+      "character": 12,
+      "text": "cleanUpInvalidSession",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 189,
+      "character": 12,
+      "text": "isOAuthInProgress",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 206,
+      "character": 16,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 219,
+      "character": 24,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 227,
+      "character": 30,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 236,
+      "character": 12,
+      "text": "cognitoIdentitySignOut",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 237,
+      "character": 12,
+      "text": "oAuthSignOutRedirect",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 238,
+      "character": 12,
+      "text": "oAuthSignOutAndResolve",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 239,
+      "character": 12,
+      "text": "oAuthSignOutRedirectOrReject",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 246,
+      "character": 12,
+      "text": "cleanCachedItems",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 254,
+      "character": 19,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 282,
+      "character": 12,
+      "text": "_handleAuthResponse",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 288,
+      "character": 25,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 289,
+      "character": 12,
+      "text": "attributesToObject",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 290,
+      "character": 12,
+      "text": "isTruthyString",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 291,
+      "character": 12,
+      "text": "createCognitoUser",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 292,
+      "character": 12,
+      "text": "_isValidAuthStorage",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 293,
+      "character": 12,
+      "text": "noUserPoolErrorHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 294,
+      "character": 12,
+      "text": "rejectAuthError",
+      "kind": 1
+    },
+    {
+      "file": "lib/Auth.d.ts",
+      "line": 295,
+      "character": 12,
+      "text": "rejectNoUserPool",
+      "kind": 1
+    },
+    {
+      "file": "lib/urlListener.d.ts",
+      "line": 0,
+      "character": 25,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "lib/urlListener.native.d.ts",
+      "line": 0,
+      "character": 25,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Auth.d.ts",
+      "line": 36,
+      "character": 4,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Auth.d.ts",
+      "line": 56,
+      "character": 49,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Auth.d.ts",
+      "line": 57,
+      "character": 55,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Auth.d.ts",
+      "line": 58,
+      "character": 39,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Auth.d.ts",
+      "line": 63,
+      "character": 4,
+      "text": "challengeName",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Auth.d.ts",
+      "line": 64,
+      "character": 4,
+      "text": "challengeParameters",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Auth.d.ts",
+      "line": 151,
+      "character": 47,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 10,
+      "character": 12,
+      "text": "userPool",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "_oAuthHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 15,
+      "character": 12,
+      "text": "oAuthFlowInProgress",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "pendingSignIn",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "autoSignInInitiated",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 25,
+      "character": 14,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 34,
+      "character": 12,
+      "text": "handleAutoSignIn",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 35,
+      "character": 12,
+      "text": "handleCodeAutoSignIn",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 36,
+      "character": 12,
+      "text": "handleLinkAutoSignIn",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 37,
+      "character": 12,
+      "text": "signInAfterUserConfirmed",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 46,
+      "character": 12,
+      "text": "isTrueStorageValue",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 69,
+      "character": 12,
+      "text": "authCallbacks",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 76,
+      "character": 12,
+      "text": "signInWithPassword",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 83,
+      "character": 12,
+      "text": "signInWithoutPassword",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 92,
+      "character": 18,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 98,
+      "character": 20,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 99,
+      "character": 12,
+      "text": "_getMfaTypeFromUserData",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 100,
+      "character": 12,
+      "text": "_getUserData",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 107,
+      "character": 20,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 127,
+      "character": 14,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 134,
+      "character": 20,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 140,
+      "character": 18,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 141,
+      "character": 24,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 141,
+      "character": 67,
+      "text": "requiredAttributes",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 147,
+      "character": 30,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 153,
+      "character": 25,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 164,
+      "character": 25,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 170,
+      "character": 19,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 171,
+      "character": 20,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 175,
+      "character": 12,
+      "text": "isErrorWithMessage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 176,
+      "character": 12,
+      "text": "isTokenRevokedError",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 177,
+      "character": 12,
+      "text": "isRefreshTokenRevokedError",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 178,
+      "character": 12,
+      "text": "isUserDisabledError",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 179,
+      "character": 12,
+      "text": "isUserDoesNotExistError",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 180,
+      "character": 12,
+      "text": "isRefreshTokenExpiredError",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 181,
+      "character": 12,
+      "text": "isSignedInHostedUI",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 182,
+      "character": 12,
+      "text": "isSessionInvalid",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 183,
+      "character": 12,
+      "text": "cleanUpInvalidSession",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 189,
+      "character": 12,
+      "text": "isOAuthInProgress",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 206,
+      "character": 16,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 219,
+      "character": 24,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 227,
+      "character": 30,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 236,
+      "character": 12,
+      "text": "cognitoIdentitySignOut",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 237,
+      "character": 12,
+      "text": "oAuthSignOutRedirect",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 238,
+      "character": 12,
+      "text": "oAuthSignOutAndResolve",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 239,
+      "character": 12,
+      "text": "oAuthSignOutRedirectOrReject",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 246,
+      "character": 12,
+      "text": "cleanCachedItems",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 254,
+      "character": 19,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 282,
+      "character": 12,
+      "text": "_handleAuthResponse",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 288,
+      "character": 25,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 289,
+      "character": 12,
+      "text": "attributesToObject",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 290,
+      "character": 12,
+      "text": "isTruthyString",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 291,
+      "character": 12,
+      "text": "createCognitoUser",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 292,
+      "character": 12,
+      "text": "_isValidAuthStorage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 293,
+      "character": 12,
+      "text": "noUserPoolErrorHandler",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 294,
+      "character": 12,
+      "text": "rejectAuthError",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Auth.d.ts",
+      "line": 295,
+      "character": 12,
+      "text": "rejectNoUserPool",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/urlListener.d.ts",
+      "line": 0,
+      "character": 25,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/urlListener.native.d.ts",
+      "line": 0,
+      "character": 25,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/OAuth.d.ts",
+      "line": 2,
+      "character": 12,
+      "text": "_urlOpener",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/OAuth.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/OAuth.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "_cognitoClientId",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/OAuth.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "_scopes",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/OAuth.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "isValidScopes",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/OAuth.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "_handleCodeFlow",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/OAuth.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "_handleImplicitFlow",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/OAuth.d.ts",
+      "line": 17,
+      "character": 8,
+      "text": "accessToken",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/OAuth.d.ts",
+      "line": 18,
+      "character": 8,
+      "text": "refreshToken",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/OAuth.d.ts",
+      "line": 19,
+      "character": 8,
+      "text": "idToken",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/OAuth.d.ts",
+      "line": 21,
+      "character": 12,
+      "text": "_validateState",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/OAuth.d.ts",
+      "line": 23,
+      "character": 12,
+      "text": "_generateState",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/OAuth.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "_generateChallenge",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/OAuth.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "_base64URL",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/OAuth.d.ts",
+      "line": 26,
+      "character": 12,
+      "text": "_generateRandom",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/OAuth.d.ts",
+      "line": 27,
+      "character": 12,
+      "text": "_bufferToString",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuth/urlOpener.native.d.ts",
+      "line": 0,
+      "character": 33,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/OAuth.d.ts",
+      "line": 2,
+      "character": 12,
+      "text": "_urlOpener",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/OAuth.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/OAuth.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "_cognitoClientId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/OAuth.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "_scopes",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/OAuth.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "isValidScopes",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/OAuth.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "_handleCodeFlow",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/OAuth.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "_handleImplicitFlow",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/OAuth.d.ts",
+      "line": 17,
+      "character": 8,
+      "text": "accessToken",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/OAuth.d.ts",
+      "line": 18,
+      "character": 8,
+      "text": "refreshToken",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/OAuth.d.ts",
+      "line": 19,
+      "character": 8,
+      "text": "idToken",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/OAuth.d.ts",
+      "line": 21,
+      "character": 12,
+      "text": "_validateState",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/OAuth.d.ts",
+      "line": 23,
+      "character": 12,
+      "text": "_generateState",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/OAuth.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "_generateChallenge",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/OAuth.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "_base64URL",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/OAuth.d.ts",
+      "line": 26,
+      "character": 12,
+      "text": "_generateRandom",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/OAuth.d.ts",
+      "line": 27,
+      "character": 12,
+      "text": "_bufferToString",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuth/urlOpener.native.d.ts",
+      "line": 0,
+      "character": 33,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Auth.ts",
+      "line": 51,
+      "character": 1,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Auth.ts",
+      "line": 82,
+      "character": 1,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Auth.ts",
+      "line": 85,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Auth.ts",
+      "line": 85,
+      "character": 32,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Auth.ts",
+      "line": 89,
+      "character": 1,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Auth.ts",
+      "line": 92,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Auth.ts",
+      "line": 92,
+      "character": 32,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Auth.ts",
+      "line": 95,
+      "character": 31,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Auth.ts",
+      "line": 100,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Auth.ts",
+      "line": 100,
+      "character": 32,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Auth.ts",
+      "line": 107,
+      "character": 1,
+      "text": "challengeName",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Auth.ts",
+      "line": 108,
+      "character": 1,
+      "text": "challengeParameters",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Auth.ts",
+      "line": 224,
+      "character": 39,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 33,
+      "character": 42,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 34,
+      "character": 31,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 40,
+      "character": 9,
+      "text": "_urlOpener",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 41,
+      "character": 9,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 42,
+      "character": 9,
+      "text": "_cognitoClientId",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 43,
+      "character": 9,
+      "text": "_scopes",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 54,
+      "character": 7,
+      "text": "_urlOpener",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 55,
+      "character": 7,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 56,
+      "character": 7,
+      "text": "_cognitoClientId",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 60,
+      "character": 7,
+      "text": "_scopes",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 96,
+      "character": 8,
+      "text": "code_challenge",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 99,
+      "character": 8,
+      "text": "scopesString",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 99,
+      "character": 28,
+      "text": "_scopes",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 99,
+      "character": 36,
+      "text": "join",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 106,
+      "character": 3,
+      "text": "scope",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 106,
+      "character": 10,
+      "text": "scopesString",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 108,
+      "character": 35,
+      "text": "code_challenge",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 111,
+      "character": 13,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 116,
+      "character": 7,
+      "text": "_urlOpener",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 122,
+      "character": 10,
+      "text": "code",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 129,
+      "character": 14,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 129,
+      "character": 22,
+      "text": "redirectSignIn",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 131,
+      "character": 7,
+      "text": "code",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 136,
+      "character": 21,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 136,
+      "character": 29,
+      "text": "domain",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 144,
+      "character": 8,
+      "text": "client_id",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 144,
+      "character": 45,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 145,
+      "character": 10,
+      "text": "_cognitoClientId",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 146,
+      "character": 10,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 146,
+      "character": 18,
+      "text": "clientID",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 148,
+      "character": 8,
+      "text": "redirect_uri",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 148,
+      "character": 48,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 150,
+      "character": 10,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 150,
+      "character": 18,
+      "text": "redirectUri",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 156,
+      "character": 3,
+      "text": "code",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 157,
+      "character": 3,
+      "text": "client_id",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 158,
+      "character": 3,
+      "text": "redirect_uri",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 168,
+      "character": 13,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 172,
+      "character": 3,
+      "text": "access_token",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 173,
+      "character": 3,
+      "text": "refresh_token",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 174,
+      "character": 3,
+      "text": "id_token",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 175,
+      "character": 3,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 182,
+      "character": 14,
+      "text": "json",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 184,
+      "character": 6,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 189,
+      "character": 3,
+      "text": "accessToken",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 189,
+      "character": 16,
+      "text": "access_token",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 190,
+      "character": 3,
+      "text": "refreshToken",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 190,
+      "character": 17,
+      "text": "refresh_token",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 191,
+      "character": 3,
+      "text": "idToken",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 191,
+      "character": 12,
+      "text": "id_token",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 197,
+      "character": 10,
+      "text": "id_token",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 197,
+      "character": 20,
+      "text": "access_token",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 210,
+      "character": 3,
+      "text": "accessToken",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 210,
+      "character": 16,
+      "text": "access_token",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 211,
+      "character": 3,
+      "text": "idToken",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 211,
+      "character": 12,
+      "text": "id_token",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 218,
+      "character": 9,
+      "text": "urlParams",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 231,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 231,
+      "character": 18,
+      "text": "error_description",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 233,
+      "character": 7,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 237,
+      "character": 45,
+      "text": "urlParams",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 240,
+      "character": 21,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 240,
+      "character": 29,
+      "text": "responseType",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 242,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 242,
+      "character": 20,
+      "text": "responseType",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 248,
+      "character": 49,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 249,
+      "character": 9,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 247,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 253,
+      "character": 24,
+      "text": "urlParams",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 254,
+      "character": 7,
+      "text": "urlParams",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 259,
+      "character": 17,
+      "text": "returnedState",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 262,
+      "character": 35,
+      "text": "returnedState",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 269,
+      "character": 46,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 269,
+      "character": 54,
+      "text": "domain",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 271,
+      "character": 8,
+      "text": "client_id",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 271,
+      "character": 45,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 272,
+      "character": 10,
+      "text": "_cognitoClientId",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 273,
+      "character": 10,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 273,
+      "character": 18,
+      "text": "oauth",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 273,
+      "character": 24,
+      "text": "clientID",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 275,
+      "character": 8,
+      "text": "signout_uri",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 275,
+      "character": 47,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 277,
+      "character": 10,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 277,
+      "character": 18,
+      "text": "returnTo",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 280,
+      "character": 3,
+      "text": "client_id",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 283,
+      "character": 13,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 283,
+      "character": 28,
+      "text": "v",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 293,
+      "character": 14,
+      "text": "_urlOpener",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 293,
+      "character": 46,
+      "text": "signout_uri",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 310,
+      "character": 20,
+      "text": "string",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 311,
+      "character": 9,
+      "text": "string",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 313,
+      "character": 4,
+      "text": "replace",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 314,
+      "character": 4,
+      "text": "replace",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/OAuth.ts",
+      "line": 315,
+      "character": 4,
+      "text": "replace",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.ts",
+      "line": 14,
+      "character": 15,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.ts",
+      "line": 18,
+      "character": 2,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 90,
+      "character": 42,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 91,
+      "character": 31,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 107,
+      "character": 9,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 109,
+      "character": 9,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 110,
+      "character": 9,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 130,
+      "character": 10,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 130,
+      "character": 19,
+      "text": "setItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 133,
+      "character": 10,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 133,
+      "character": 19,
+      "text": "removeItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 136,
+      "character": 10,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 136,
+      "character": 19,
+      "text": "setItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 146,
+      "character": 11,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 147,
+      "character": 7,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 149,
+      "character": 8,
+      "text": "conf",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 152,
+      "character": 31,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 153,
+      "character": 3,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 166,
+      "character": 3,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 172,
+      "character": 27,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 174,
+      "character": 9,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 174,
+      "character": 20,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 174,
+      "character": 27,
+      "text": "ssr",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 183,
+      "character": 8,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 186,
+      "character": 7,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 187,
+      "character": 18,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 188,
+      "character": 8,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 188,
+      "character": 28,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 197,
+      "character": 31,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 211,
+      "character": 3,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 211,
+      "character": 17,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 216,
+      "character": 8,
+      "text": "cognitoHostedUIConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 219,
+      "character": 19,
+      "text": "awsCognito",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 222,
+      "character": 6,
+      "text": "cognitoHostedUIConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 223,
+      "character": 9,
+      "text": "cognitoAuthParams",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 227,
+      "character": 5,
+      "text": "domain",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 227,
+      "character": 13,
+      "text": "cognitoHostedUIConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 228,
+      "character": 5,
+      "text": "scopes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 228,
+      "character": 13,
+      "text": "cognitoHostedUIConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 229,
+      "character": 5,
+      "text": "redirectSignIn",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 229,
+      "character": 21,
+      "text": "cognitoHostedUIConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 230,
+      "character": 5,
+      "text": "redirectSignOut",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 230,
+      "character": 22,
+      "text": "cognitoHostedUIConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 231,
+      "character": 5,
+      "text": "responseType",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 231,
+      "character": 19,
+      "text": "cognitoHostedUIConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 232,
+      "character": 5,
+      "text": "Storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 232,
+      "character": 19,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 233,
+      "character": 5,
+      "text": "urlOpener",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 233,
+      "character": 16,
+      "text": "cognitoHostedUIConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 234,
+      "character": 5,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 236,
+      "character": 4,
+      "text": "cognitoHostedUIConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 240,
+      "character": 12,
+      "text": "cognitoAuthParams",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 240,
+      "character": 30,
+      "text": "scopes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 242,
+      "character": 21,
+      "text": "cognitoAuthParams",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 242,
+      "character": 39,
+      "text": "cognitoClientId",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 249,
+      "character": 18,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 250,
+      "character": 25,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 254,
+      "character": 21,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 267,
+      "character": 15,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 278,
+      "character": 9,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 278,
+      "character": 18,
+      "text": "removeItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 280,
+      "character": 8,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 280,
+      "character": 17,
+      "text": "removeItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 286,
+      "character": 44,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 287,
+      "character": 7,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 296,
+      "character": 26,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 319,
+      "character": 6,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 347,
+      "character": 4,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 348,
+      "character": 27,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 349,
+      "character": 4,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 349,
+      "character": 34,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 376,
+      "character": 9,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 376,
+      "character": 18,
+      "text": "setItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 435,
+      "character": 2,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 436,
+      "character": 2,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 445,
+      "character": 6,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 445,
+      "character": 11,
+      "text": "userConfirmed",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 455,
+      "character": 25,
+      "text": "payload",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 456,
+      "character": 7,
+      "text": "payload",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 456,
+      "character": 15,
+      "text": "event",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 464,
+      "character": 7,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 464,
+      "character": 16,
+      "text": "setItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 474,
+      "character": 9,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 474,
+      "character": 18,
+      "text": "removeItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 496,
+      "character": 5,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 499,
+      "character": 7,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 507,
+      "character": 12,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 507,
+      "character": 21,
+      "text": "removeItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 509,
+      "character": 11,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 509,
+      "character": 20,
+      "text": "removeItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 511,
+      "character": 5,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 512,
+      "character": 19,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 513,
+      "character": 11,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 513,
+      "character": 20,
+      "text": "removeItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 518,
+      "character": 16,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 517,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 550,
+      "character": 6,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 552,
+      "character": 3,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 553,
+      "character": 26,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 554,
+      "character": 3,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 554,
+      "character": 33,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 560,
+      "character": 5,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 560,
+      "character": 10,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 561,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 562,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 566,
+      "character": 7,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 576,
+      "character": 12,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 576,
+      "character": 21,
+      "text": "removeItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 578,
+      "character": 14,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 587,
+      "character": 8,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 587,
+      "character": 20,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 587,
+      "character": 29,
+      "text": "getItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 588,
+      "character": 9,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 588,
+      "character": 16,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 599,
+      "character": 48,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 610,
+      "character": 37,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 614,
+      "character": 13,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 630,
+      "character": 48,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 636,
+      "character": 6,
+      "text": "username",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 637,
+      "character": 6,
+      "text": "password",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 642,
+      "character": 3,
+      "text": "username",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 643,
+      "character": 3,
+      "text": "password",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 650,
+      "character": 3,
+      "text": "username",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 651,
+      "character": 3,
+      "text": "password",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 656,
+      "character": 7,
+      "text": "username",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 665,
+      "character": 6,
+      "text": "password",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 681,
+      "character": 12,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 682,
+      "character": 11,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 695,
+      "character": 52,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 694,
+      "character": 13,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 700,
+      "character": 12,
+      "text": "currentUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 701,
+      "character": 11,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 701,
+      "character": 18,
+      "text": "currentUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 704,
+      "character": 7,
+      "text": "currentUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 707,
+      "character": 14,
+      "text": "currentUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 709,
+      "character": 55,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 710,
+      "character": 13,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 708,
+      "character": 14,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 714,
+      "character": 14,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 715,
+      "character": 35,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 718,
+      "character": 5,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 721,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 723,
+      "character": 20,
+      "text": "challengeParam",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 729,
+      "character": 32,
+      "text": "challengeParam",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 735,
+      "character": 29,
+      "text": "challengeParam",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 741,
+      "character": 25,
+      "text": "userAttributes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 741,
+      "character": 41,
+      "text": "requiredAttributes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 745,
+      "character": 5,
+      "text": "userAttributes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 746,
+      "character": 5,
+      "text": "requiredAttributes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 750,
+      "character": 33,
+      "text": "challengeParam",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 756,
+      "character": 34,
+      "text": "challengeParam",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 785,
+      "character": 5,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 787,
+      "character": 14,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 789,
+      "character": 5,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 791,
+      "character": 13,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 825,
+      "character": 22,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 827,
+      "character": 3,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 827,
+      "character": 8,
+      "text": "getMFAOptions",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 827,
+      "character": 23,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 827,
+      "character": 28,
+      "text": "mfaOptions",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 828,
+      "character": 8,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 829,
+      "character": 44,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 830,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 833,
+      "character": 44,
+      "text": "mfaOptions",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 846,
+      "character": 2,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 851,
+      "character": 9,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 851,
+      "character": 39,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 854,
+      "character": 3,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 854,
+      "character": 8,
+      "text": "getUserData",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 855,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 855,
+      "character": 16,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 856,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 857,
+      "character": 51,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 858,
+      "character": 32,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 864,
+      "character": 40,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 864,
+      "character": 44,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 864,
+      "character": 95,
+      "text": "cleanUpError",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 864,
+      "character": 108,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 861,
+      "character": 16,
+      "text": "cleanUpError",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 870,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 874,
+      "character": 11,
+      "text": "mfaType",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 874,
+      "character": 50,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 875,
+      "character": 10,
+      "text": "mfaType",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 883,
+      "character": 19,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 888,
+      "character": 33,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 889,
+      "character": 6,
+      "text": "ret",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 890,
+      "character": 8,
+      "text": "preferredMFA",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 890,
+      "character": 23,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 890,
+      "character": 28,
+      "text": "PreferredMfaSetting",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 893,
+      "character": 6,
+      "text": "preferredMFA",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 894,
+      "character": 3,
+      "text": "ret",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 894,
+      "character": 9,
+      "text": "preferredMFA",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 897,
+      "character": 9,
+      "text": "mfaList",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 897,
+      "character": 19,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 897,
+      "character": 24,
+      "text": "UserMFASettingList",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 898,
+      "character": 8,
+      "text": "mfaList",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 903,
+      "character": 10,
+      "text": "MFAOptions",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 903,
+      "character": 23,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 903,
+      "character": 28,
+      "text": "MFAOptions",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 904,
+      "character": 8,
+      "text": "MFAOptions",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 905,
+      "character": 5,
+      "text": "ret",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 907,
+      "character": 5,
+      "text": "ret",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 909,
+      "character": 14,
+      "text": "mfaList",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 909,
+      "character": 22,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 910,
+      "character": 4,
+      "text": "ret",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 912,
+      "character": 53,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 915,
+      "character": 9,
+      "text": "ret",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 918,
+      "character": 22,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 918,
+      "character": 28,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 920,
+      "character": 3,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 920,
+      "character": 8,
+      "text": "getUserData",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 920,
+      "character": 27,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 920,
+      "character": 32,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 921,
+      "character": 8,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 922,
+      "character": 46,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 923,
+      "character": 31,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 929,
+      "character": 39,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 929,
+      "character": 43,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 929,
+      "character": 94,
+      "text": "cleanUpError",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 929,
+      "character": 107,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 926,
+      "character": 15,
+      "text": "cleanUpError",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 935,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 940,
+      "character": 6,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 951,
+      "character": 2,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 954,
+      "character": 8,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 954,
+      "character": 38,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 956,
+      "character": 43,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 958,
+      "character": 3,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 960,
+      "character": 6,
+      "text": "smsMfaSettings",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 961,
+      "character": 6,
+      "text": "totpMfaSettings",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 966,
+      "character": 4,
+      "text": "totpMfaSettings",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 973,
+      "character": 4,
+      "text": "smsMfaSettings",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 980,
+      "character": 10,
+      "text": "currentMFAType",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 981,
+      "character": 8,
+      "text": "currentMFAType",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 983,
+      "character": 15,
+      "text": "currentMFAType",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 984,
+      "character": 5,
+      "text": "smsMfaSettings",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 988,
+      "character": 15,
+      "text": "currentMFAType",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 989,
+      "character": 5,
+      "text": "totpMfaSettings",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1000,
+      "character": 21,
+      "text": "mfaType",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1001,
+      "character": 10,
+      "text": "mfaType",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1002,
+      "character": 7,
+      "text": "smsMfaSettings",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1006,
+      "character": 17,
+      "text": "mfaType",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1007,
+      "character": 7,
+      "text": "totpMfaSettings",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1022,
+      "character": 3,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1022,
+      "character": 8,
+      "text": "setUserMfaPreference",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1023,
+      "character": 4,
+      "text": "smsMfaSettings",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1024,
+      "character": 4,
+      "text": "totpMfaSettings",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1025,
+      "character": 5,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1025,
+      "character": 10,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1026,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1027,
+      "character": 52,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1028,
+      "character": 17,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1030,
+      "character": 42,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1033,
+      "character": 5,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1033,
+      "character": 10,
+      "text": "getUserData",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1034,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1034,
+      "character": 18,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1035,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1036,
+      "character": 49,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1037,
+      "character": 34,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1043,
+      "character": 42,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1043,
+      "character": 46,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1043,
+      "character": 97,
+      "text": "cleanUpError",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1043,
+      "character": 110,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1040,
+      "character": 18,
+      "text": "cleanUpError",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1049,
+      "character": 19,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1056,
+      "character": 7,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1111,
+      "character": 18,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1113,
+      "character": 3,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1113,
+      "character": 8,
+      "text": "associateSoftwareToken",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1114,
+      "character": 15,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1115,
+      "character": 51,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1116,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1119,
+      "character": 25,
+      "text": "secretCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1120,
+      "character": 51,
+      "text": "secretCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1135,
+      "character": 2,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1138,
+      "character": 42,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1140,
+      "character": 3,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1140,
+      "character": 8,
+      "text": "verifySoftwareToken",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1141,
+      "character": 15,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1142,
+      "character": 44,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1143,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1146,
+      "character": 15,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1149,
+      "character": 6,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1150,
+      "character": 16,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1150,
+      "character": 21,
+      "text": "getUsername",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1152,
+      "character": 45,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1166,
+      "character": 2,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1169,
+      "character": 48,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1177,
+      "character": 3,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1177,
+      "character": 8,
+      "text": "sendMFACode",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1180,
+      "character": 22,
+      "text": "session",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1181,
+      "character": 19,
+      "text": "session",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1184,
+      "character": 47,
+      "text": "session",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1187,
+      "character": 54,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1186,
+      "character": 15,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1189,
+      "character": 12,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1189,
+      "character": 19,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1193,
+      "character": 8,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1194,
+      "character": 18,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1194,
+      "character": 23,
+      "text": "getUsername",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1196,
+      "character": 15,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1199,
+      "character": 16,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1200,
+      "character": 45,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1201,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1211,
+      "character": 2,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1213,
+      "character": 2,
+      "text": "requiredAttributes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1214,
+      "character": 48,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1222,
+      "character": 3,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1222,
+      "character": 8,
+      "text": "completeNewPasswordChallenge",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1224,
+      "character": 4,
+      "text": "requiredAttributes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1226,
+      "character": 22,
+      "text": "session",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1227,
+      "character": 19,
+      "text": "session",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1230,
+      "character": 47,
+      "text": "session",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1233,
+      "character": 54,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1232,
+      "character": 15,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1235,
+      "character": 12,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1235,
+      "character": 19,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1238,
+      "character": 8,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1239,
+      "character": 18,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1239,
+      "character": 23,
+      "text": "getUsername",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1241,
+      "character": 15,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1244,
+      "character": 16,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1245,
+      "character": 50,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1248,
+      "character": 7,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1249,
+      "character": 15,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1251,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1253,
+      "character": 19,
+      "text": "challengeName",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1253,
+      "character": 34,
+      "text": "challengeParam",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1255,
+      "character": 6,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1255,
+      "character": 30,
+      "text": "challengeName",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1256,
+      "character": 6,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1256,
+      "character": 31,
+      "text": "challengeParam",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1257,
+      "character": 14,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1259,
+      "character": 16,
+      "text": "challengeName",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1259,
+      "character": 31,
+      "text": "challengeParam",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1260,
+      "character": 39,
+      "text": "challengeName",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1261,
+      "character": 6,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1261,
+      "character": 30,
+      "text": "challengeName",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1262,
+      "character": 6,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1262,
+      "character": 31,
+      "text": "challengeParam",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1263,
+      "character": 14,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1265,
+      "character": 20,
+      "text": "challengeName",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1265,
+      "character": 35,
+      "text": "challengeParam",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1266,
+      "character": 39,
+      "text": "challengeName",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1267,
+      "character": 6,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1267,
+      "character": 30,
+      "text": "challengeName",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1268,
+      "character": 6,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1268,
+      "character": 31,
+      "text": "challengeParam",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1269,
+      "character": 14,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1283,
+      "character": 2,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1285,
+      "character": 48,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1296,
+      "character": 3,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1296,
+      "character": 8,
+      "text": "sendCustomChallengeAnswer",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1310,
+      "character": 2,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1315,
+      "character": 20,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1316,
+      "character": 4,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1316,
+      "character": 9,
+      "text": "deleteAttributes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1316,
+      "character": 43,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1316,
+      "character": 48,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1317,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1318,
+      "character": 20,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1334,
+      "character": 14,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1336,
+      "character": 57,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1335,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1342,
+      "character": 8,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1342,
+      "character": 17,
+      "text": "getItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1352,
+      "character": 28,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1352,
+      "character": 33,
+      "text": "session",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1353,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1354,
+      "character": 54,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1355,
+      "character": 33,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1361,
+      "character": 41,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1361,
+      "character": 45,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1361,
+      "character": 96,
+      "text": "cleanUpError",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1361,
+      "character": 109,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1358,
+      "character": 17,
+      "text": "cleanUpError",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1367,
+      "character": 18,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1379,
+      "character": 14,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1382,
+      "character": 18,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1392,
+      "character": 16,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1415,
+      "character": 2,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1417,
+      "character": 48,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1422,
+      "character": 20,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1432,
+      "character": 4,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1432,
+      "character": 9,
+      "text": "updateAttributes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1434,
+      "character": 6,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1434,
+      "character": 11,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1435,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1436,
+      "character": 21,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1452,
+      "character": 2,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1455,
+      "character": 20,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1456,
+      "character": 4,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1456,
+      "character": 9,
+      "text": "getUserAttributes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1456,
+      "character": 28,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1456,
+      "character": 33,
+      "text": "attributes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1457,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1458,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1467,
+      "character": 24,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1469,
+      "character": 29,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1494,
+      "character": 28,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1496,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1497,
+      "character": 40,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1503,
+      "character": 2,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1506,
+      "character": 27,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1512,
+      "character": 2,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1515,
+      "character": 27,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1521,
+      "character": 2,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1523,
+      "character": 33,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1527,
+      "character": 2,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1530,
+      "character": 27,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1535,
+      "character": 2,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1538,
+      "character": 27,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1546,
+      "character": 8,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1546,
+      "character": 17,
+      "text": "getItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1550,
+      "character": 26,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1552,
+      "character": 28,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1553,
+      "character": 32,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1554,
+      "character": 28,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1555,
+      "character": 35,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1556,
+      "character": 35,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1562,
+      "character": 7,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1565,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1573,
+      "character": 37,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1589,
+      "character": 8,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1590,
+      "character": 5,
+      "text": "then",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1605,
+      "character": 39,
+      "text": "payload",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1606,
+      "character": 16,
+      "text": "event",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1609,
+      "character": 9,
+      "text": "event",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1610,
+      "character": 9,
+      "text": "event",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1612,
+      "character": 48,
+      "text": "event",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1631,
+      "character": 11,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1631,
+      "character": 41,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1635,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1635,
+      "character": 18,
+      "text": "session",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1636,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1637,
+      "character": 55,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1638,
+      "character": 34,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1644,
+      "character": 42,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1644,
+      "character": 46,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1644,
+      "character": 97,
+      "text": "cleanUpError",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1644,
+      "character": 110,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1641,
+      "character": 18,
+      "text": "cleanUpError",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1650,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1661,
+      "character": 13,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1661,
+      "character": 43,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1664,
+      "character": 15,
+      "text": "scope",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1664,
+      "character": 30,
+      "text": "session",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1664,
+      "character": 38,
+      "text": "getAccessToken",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1664,
+      "character": 55,
+      "text": "decodePayload",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1665,
+      "character": 11,
+      "text": "scope",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1665,
+      "character": 17,
+      "text": "split",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1665,
+      "character": 28,
+      "text": "includes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1676,
+      "character": 100,
+      "text": "cleanUpError",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1676,
+      "character": 113,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1673,
+      "character": 21,
+      "text": "cleanUpError",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1703,
+      "character": 24,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1716,
+      "character": 5,
+      "text": "catch",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1716,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1717,
+      "character": 59,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1718,
+      "character": 16,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1736,
+      "character": 6,
+      "text": "federatedUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1738,
+      "character": 14,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1740,
+      "character": 57,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1741,
+      "character": 9,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1739,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1745,
+      "character": 9,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1746,
+      "character": 9,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1746,
+      "character": 18,
+      "text": "getItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1748,
+      "character": 7,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1749,
+      "character": 4,
+      "text": "federatedUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1750,
+      "character": 8,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1750,
+      "character": 22,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1751,
+      "character": 5,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1751,
+      "character": 12,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1751,
+      "character": 26,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1754,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1758,
+      "character": 6,
+      "text": "federatedUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1759,
+      "character": 8,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1759,
+      "character": 15,
+      "text": "federatedUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1760,
+      "character": 65,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1761,
+      "character": 15,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1764,
+      "character": 7,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1766,
+      "character": 4,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1768,
+      "character": 8,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1774,
+      "character": 63,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1767,
+      "character": 12,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1777,
+      "character": 8,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1777,
+      "character": 15,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1778,
+      "character": 15,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1797,
+      "character": 10,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1799,
+      "character": 19,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1804,
+      "character": 13,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1805,
+      "character": 57,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1806,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1810,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1811,
+      "character": 52,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1812,
+      "character": 9,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1823,
+      "character": 20,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1824,
+      "character": 7,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1828,
+      "character": 8,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1828,
+      "character": 38,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1831,
+      "character": 55,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1832,
+      "character": 3,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1832,
+      "character": 8,
+      "text": "getSession",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1833,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1833,
+      "character": 16,
+      "text": "session",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1834,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1835,
+      "character": 58,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1836,
+      "character": 32,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1842,
+      "character": 40,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1842,
+      "character": 44,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1842,
+      "character": 95,
+      "text": "cleanUpError",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1842,
+      "character": 108,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1839,
+      "character": 16,
+      "text": "cleanUpError",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1848,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1851,
+      "character": 54,
+      "text": "session",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1856,
+      "character": 6,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1869,
+      "character": 14,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1871,
+      "character": 57,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1872,
+      "character": 9,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1870,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1876,
+      "character": 6,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1878,
+      "character": 3,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1879,
+      "character": 9,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1879,
+      "character": 18,
+      "text": "getItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1882,
+      "character": 73,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1881,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1885,
+      "character": 6,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1887,
+      "character": 49,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1913,
+      "character": 2,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1915,
+      "character": 48,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1918,
+      "character": 3,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1918,
+      "character": 8,
+      "text": "getAttributeVerificationCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1921,
+      "character": 15,
+      "text": "success",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1924,
+      "character": 15,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1925,
+      "character": 20,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1941,
+      "character": 2,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1950,
+      "character": 3,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1950,
+      "character": 8,
+      "text": "verifyAttribute",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1951,
+      "character": 14,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1955,
+      "character": 14,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1956,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1967,
+      "character": 9,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1967,
+      "character": 42,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1983,
+      "character": 9,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1983,
+      "character": 48,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1988,
+      "character": 2,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1991,
+      "character": 14,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1993,
+      "character": 57,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1994,
+      "character": 9,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1992,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1999,
+      "character": 8,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 1999,
+      "character": 17,
+      "text": "getItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2003,
+      "character": 41,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2006,
+      "character": 10,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2006,
+      "character": 40,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2008,
+      "character": 4,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2008,
+      "character": 9,
+      "text": "getSession",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2009,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2009,
+      "character": 17,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2010,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2011,
+      "character": 54,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2012,
+      "character": 33,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2018,
+      "character": 41,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2018,
+      "character": 45,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2018,
+      "character": 96,
+      "text": "cleanUpError",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2018,
+      "character": 109,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2015,
+      "character": 17,
+      "text": "cleanUpError",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2024,
+      "character": 18,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2026,
+      "character": 6,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2026,
+      "character": 11,
+      "text": "globalSignOut",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2027,
+      "character": 18,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2035,
+      "character": 18,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2036,
+      "character": 47,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2037,
+      "character": 19,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2041,
+      "character": 7,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2044,
+      "character": 34,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2045,
+      "character": 4,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2045,
+      "character": 9,
+      "text": "signOut",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2058,
+      "character": 11,
+      "text": "reason",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2074,
+      "character": 47,
+      "text": "reason",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2089,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2110,
+      "character": 36,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2111,
+      "character": 7,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2127,
+      "character": 2,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2130,
+      "character": 48,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2133,
+      "character": 20,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2134,
+      "character": 4,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2134,
+      "character": 9,
+      "text": "changePassword",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2137,
+      "character": 6,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2137,
+      "character": 11,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2138,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2139,
+      "character": 47,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2140,
+      "character": 21,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2158,
+      "character": 48,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2185,
+      "character": 28,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2191,
+      "character": 14,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2211,
+      "character": 48,
+      "text": "clientMetadata",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2262,
+      "character": 8,
+      "text": "source",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2264,
+      "character": 7,
+      "text": "source",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2264,
+      "character": 17,
+      "text": "source",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2264,
+      "character": 37,
+      "text": "source",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2265,
+      "character": 9,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2265,
+      "character": 55,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2266,
+      "character": 17,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2268,
+      "character": 8,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2273,
+      "character": 49,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2275,
+      "character": 8,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2277,
+      "character": 5,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2281,
+      "character": 6,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2278,
+      "character": 13,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2286,
+      "character": 5,
+      "text": "id",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2286,
+      "character": 9,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2286,
+      "character": 23,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2286,
+      "character": 35,
+      "text": "identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2287,
+      "character": 5,
+      "text": "username",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2287,
+      "character": 15,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2287,
+      "character": 20,
+      "text": "getUsername",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2292,
+      "character": 42,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2291,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2297,
+      "character": 6,
+      "text": "source",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2298,
+      "character": 9,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2298,
+      "character": 21,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2299,
+      "character": 10,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2299,
+      "character": 17,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2377,
+      "character": 21,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2377,
+      "character": 30,
+      "text": "getItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2377,
+      "character": 68,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2383,
+      "character": 12,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2392,
+      "character": 9,
+      "text": "currentUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2395,
+      "character": 4,
+      "text": "currentUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2396,
+      "character": 14,
+      "text": "currentUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2396,
+      "character": 26,
+      "text": "username",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2442,
+      "character": 9,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2442,
+      "character": 18,
+      "text": "setItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2444,
+      "character": 13,
+      "text": "accessToken",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2444,
+      "character": 26,
+      "text": "idToken",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2444,
+      "character": 35,
+      "text": "refreshToken",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2456,
+      "character": 9,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2459,
+      "character": 6,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2460,
+      "character": 38,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2512,
+      "character": 12,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2514,
+      "character": 59,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2528,
+      "character": 6,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2533,
+      "character": 6,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2538,
+      "character": 6,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2513,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2553,
+      "character": 29,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2555,
+      "character": 16,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2555,
+      "character": 28,
+      "text": "accessKeyId",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2556,
+      "character": 17,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2556,
+      "character": 29,
+      "text": "sessionToken",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2557,
+      "character": 20,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2557,
+      "character": 32,
+      "text": "secretAccessKey",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2558,
+      "character": 15,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2558,
+      "character": 27,
+      "text": "identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2559,
+      "character": 18,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2559,
+      "character": 30,
+      "text": "authenticated",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2563,
+      "character": 28,
+      "text": "attributes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2565,
+      "character": 6,
+      "text": "attributes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2566,
+      "character": 3,
+      "text": "attributes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2566,
+      "character": 14,
+      "text": "map",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2566,
+      "character": 18,
+      "text": "attribute",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2568,
+      "character": 5,
+      "text": "attribute",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2568,
+      "character": 15,
+      "text": "Name",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2569,
+      "character": 5,
+      "text": "attribute",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2569,
+      "character": 15,
+      "text": "Name",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2571,
+      "character": 9,
+      "text": "attribute",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2571,
+      "character": 19,
+      "text": "Name",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2572,
+      "character": 26,
+      "text": "attribute",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2572,
+      "character": 36,
+      "text": "Value",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2572,
+      "character": 46,
+      "text": "attribute",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2572,
+      "character": 56,
+      "text": "Value",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2574,
+      "character": 9,
+      "text": "attribute",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2574,
+      "character": 19,
+      "text": "Name",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2574,
+      "character": 27,
+      "text": "attribute",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2574,
+      "character": 37,
+      "text": "Value",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2581,
+      "character": 24,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2583,
+      "character": 10,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2583,
+      "character": 16,
+      "text": "toLowerCase",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2583,
+      "character": 46,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2583,
+      "character": 52,
+      "text": "toLowerCase",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2592,
+      "character": 26,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2603,
+      "character": 29,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2606,
+      "character": 5,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2607,
+      "character": 10,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2607,
+      "character": 14,
+      "text": "getItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2608,
+      "character": 10,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2608,
+      "character": 14,
+      "text": "setItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2609,
+      "character": 10,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2609,
+      "character": 14,
+      "text": "removeItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2610,
+      "character": 10,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2610,
+      "character": 14,
+      "text": "clear",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2633,
+      "character": 6,
+      "text": "currUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2636,
+      "character": 3,
+      "text": "currUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2638,
+      "character": 62,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2637,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2642,
+      "character": 2,
+      "text": "currUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2642,
+      "character": 11,
+      "text": "getCachedDeviceKeyAndPassword",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2644,
+      "character": 3,
+      "text": "currUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2644,
+      "character": 12,
+      "text": "setDeviceStatusRemembered",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2645,
+      "character": 15,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2648,
+      "character": 15,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2649,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2649,
+      "character": 13,
+      "text": "code",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2651,
+      "character": 16,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2651,
+      "character": 20,
+      "text": "code",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2654,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2662,
+      "character": 6,
+      "text": "currUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2665,
+      "character": 3,
+      "text": "currUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2667,
+      "character": 62,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2666,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2671,
+      "character": 2,
+      "text": "currUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2671,
+      "character": 11,
+      "text": "getCachedDeviceKeyAndPassword",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2673,
+      "character": 3,
+      "text": "currUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2673,
+      "character": 12,
+      "text": "forgetDevice",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2674,
+      "character": 15,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2677,
+      "character": 15,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2678,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2678,
+      "character": 13,
+      "text": "code",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2680,
+      "character": 16,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2680,
+      "character": 20,
+      "text": "code",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2683,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2691,
+      "character": 6,
+      "text": "currUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2694,
+      "character": 3,
+      "text": "currUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2696,
+      "character": 62,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2695,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2700,
+      "character": 2,
+      "text": "currUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2700,
+      "character": 11,
+      "text": "getCachedDeviceKeyAndPassword",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2703,
+      "character": 14,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2704,
+      "character": 39,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2704,
+      "character": 44,
+      "text": "Devices",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2704,
+      "character": 52,
+      "text": "map",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2704,
+      "character": 56,
+      "text": "device",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2705,
+      "character": 12,
+      "text": "deviceName",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2706,
+      "character": 7,
+      "text": "device",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2706,
+      "character": 14,
+      "text": "DeviceAttributes",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2706,
+      "character": 31,
+      "text": "find",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2707,
+      "character": 11,
+      "text": "Name",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2707,
+      "character": 22,
+      "text": "Name",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2711,
+      "character": 11,
+      "text": "device",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2711,
+      "character": 18,
+      "text": "DeviceKey",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2712,
+      "character": 13,
+      "text": "deviceName",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2712,
+      "character": 24,
+      "text": "Value",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2718,
+      "character": 15,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2719,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2719,
+      "character": 13,
+      "text": "code",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2721,
+      "character": 16,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2721,
+      "character": 20,
+      "text": "code",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2724,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2728,
+      "character": 3,
+      "text": "currUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Auth.ts",
+      "line": 2728,
+      "character": 12,
+      "text": "listDevices",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 15,
+      "character": 4,
+      "text": "handler",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 17,
+      "character": 21,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 18,
+      "character": 5,
+      "text": "handler",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 22,
+      "character": 5,
+      "text": "Linking",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 23,
+      "character": 5,
+      "text": "AppState",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 24,
+      "character": 5,
+      "text": "subscription",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 26,
+      "character": 5,
+      "text": "Linking",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 26,
+      "character": 14,
+      "text": "AppState",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 27,
+      "character": 10,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 31,
+      "character": 1,
+      "text": "handler",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 32,
+      "character": 2,
+      "text": "handler",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 35,
+      "character": 3,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 39,
+      "character": 5,
+      "text": "Linking",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 39,
+      "character": 13,
+      "text": "removeEventListener",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 40,
+      "character": 2,
+      "text": "Linking",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 40,
+      "character": 10,
+      "text": "removeEventListener",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 40,
+      "character": 37,
+      "text": "handler",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 41,
+      "character": 2,
+      "text": "Linking",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 41,
+      "character": 10,
+      "text": "addEventListener",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 41,
+      "character": 34,
+      "text": "handler",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 44,
+      "character": 2,
+      "text": "subscription",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 44,
+      "character": 16,
+      "text": "remove",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 45,
+      "character": 2,
+      "text": "subscription",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 45,
+      "character": 17,
+      "text": "Linking",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 45,
+      "character": 25,
+      "text": "addEventListener",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 45,
+      "character": 49,
+      "text": "handler",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 47,
+      "character": 1,
+      "text": "AppState",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 47,
+      "character": 10,
+      "text": "addEventListener",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 47,
+      "character": 43,
+      "text": "newAppState",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 48,
+      "character": 6,
+      "text": "newAppState",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 49,
+      "character": 9,
+      "text": "initialUrl",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 49,
+      "character": 28,
+      "text": "Linking",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 49,
+      "character": 36,
+      "text": "getInitialURL",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 50,
+      "character": 3,
+      "text": "handler",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 50,
+      "character": 13,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "src/urlListener.native.ts",
+      "line": 50,
+      "character": 18,
+      "text": "initialUrl",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/urlOpener.native.ts",
+      "line": 15,
+      "character": 25,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuth/urlOpener.native.ts",
+      "line": 15,
+      "character": 48,
+      "text": "url",
+      "kind": 1
+    }
+  ],
+  "percentage": 79.43996931338704,
+  "total": 5214,
+  "covered": 4142,
+  "uncovered": 1072
+}

@@ -1,0 +1,170 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>multiAuthStrategy.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/authModeStrategies/multiAuthStrategy.ts</td><td class="">97.63%</td><td class="">0%</td><td class="">211</td><td class="">206</td><td class="">5</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import Auth from &#x27;@aws-amplify/auth&#x27;;
+import { GRAPHQL_AUTH_MODE } from &#x27;@aws-amplify/api-graphql&#x27;;
+import {
+	AuthModeStrategy,
+	ModelAttributeAuthProperty,
+	ModelAttributeAuthProvider,
+	ModelAttributeAuthAllow,
+	AmplifyContext,
+} from &#x27;../types&#x27;;
+
+function getProviderFromRule(
+	rule: ModelAttributeAuthProperty
+): ModelAttributeAuthProvider {
+	// private with no provider means userPools
+	if (rule.allow === &#x27;private&#x27; &amp;&amp; !rule.provider) {
+		return ModelAttributeAuthProvider.USER_POOLS;
+	}
+	// public with no provider means apiKey
+	if (rule.allow === &#x27;public&#x27; &amp;&amp; !rule.provider) {
+		return ModelAttributeAuthProvider.API_KEY;
+	}
+	return rule.provider;
+}
+
+function sortAuthRulesWithPriority(rules: ModelAttributeAuthProperty[]) {
+	const allowSortPriority = [
+		ModelAttributeAuthAllow.CUSTOM,
+		ModelAttributeAuthAllow.OWNER,
+		ModelAttributeAuthAllow.GROUPS,
+		ModelAttributeAuthAllow.PRIVATE,
+		ModelAttributeAuthAllow.PUBLIC,
+	];
+	const providerSortPriority = [
+		ModelAttributeAuthProvider.FUNCTION,
+		ModelAttributeAuthProvider.USER_POOLS,
+		ModelAttributeAuthProvider.OIDC,
+		ModelAttributeAuthProvider.IAM,
+		ModelAttributeAuthProvider.API_KEY,
+	];
+
+	return [...rules].sort(
+		(a: ModelAttributeAuthProperty, b: ModelAttributeAuthProperty) =&gt; {
+			if (a.allow === b.allow) {
+				return (
+					providerSortPriority.indexOf(getProviderFromRule(a)) -
+					providerSortPriority.indexOf(getProviderFromRule(b))
+				);
+			}
+			return (
+				allowSortPriority.indexOf(a.allow) - allowSortPriority.indexOf(b.allow)
+			);
+		}
+	);
+}
+
+function getAuthRules({
+	rules,
+	currentUser,
+}: {
+	rules: ModelAttributeAuthProperty[];
+	currentUser: unknown;
+}) {
+	// Using Set to ensure uniqueness
+	const authModes = new Set&lt;GRAPHQL_AUTH_MODE&gt;();
+
+	rules.forEach(rule =&gt; {
+		switch (rule.allow) {
+			case ModelAttributeAuthAllow.CUSTOM:
+				// custom with no provider -&gt; function
+				if (
+					!rule.provider ||
+					rule.provider === ModelAttributeAuthProvider.FUNCTION
+				) {
+					authModes.add(GRAPHQL_AUTH_MODE.AWS_LAMBDA);
+				}
+				break;
+			case ModelAttributeAuthAllow.GROUPS:
+			case ModelAttributeAuthAllow.OWNER: {
+				// We shouldn&#x27;t attempt User Pool or OIDC if there isn&#x27;t an authenticated user
+				if (currentUser) {
+					if (rule.provider === ModelAttributeAuthProvider.USER_POOLS) {
+						authModes.add(GRAPHQL_AUTH_MODE.AMAZON_COGNITO_USER_POOLS);
+					} else if (rule.provider === ModelAttributeAuthProvider.OIDC) {
+						authModes.add(GRAPHQL_AUTH_MODE.OPENID_CONNECT);
+					}
+				}
+				break;
+			}
+			case ModelAttributeAuthAllow.PRIVATE: {
+				// We shouldn&#x27;t attempt private if there isn&#x27;t an authenticated user
+				if (currentUser) {
+					// private with no provider means userPools
+					if (
+						!rule.provider ||
+						rule.provider === ModelAttributeAuthProvider.USER_POOLS
+					) {
+						authModes.add(GRAPHQL_AUTH_MODE.AMAZON_COGNITO_USER_POOLS);
+					} else if (rule.provider === ModelAttributeAuthProvider.IAM) {
+						authModes.add(GRAPHQL_AUTH_MODE.AWS_IAM);
+					}
+				}
+
+				break;
+			}
+			case ModelAttributeAuthAllow.PUBLIC: {
+				if (rule.provider === ModelAttributeAuthProvider.IAM) {
+					authModes.add(GRAPHQL_AUTH_MODE.AWS_IAM);
+				} else if (
+					!rule.provider ||
+					rule.provider === ModelAttributeAuthProvider.API_KEY
+				) {
+					// public with no provider means apiKey
+					authModes.add(GRAPHQL_AUTH_MODE.API_KEY);
+				}
+				break;
+			}
+			default:
+				break;
+		}
+	});
+
+	return Array.from(authModes);
+}
+
+export const multiAuthStrategy: (
+	amplifyContext: AmplifyContext
+) =&gt; AuthModeStrategy =
+	(amplifyContext: AmplifyContext) =&gt;
+	async ({ schema, modelName }) =&gt; {
+		amplifyContext.Auth = amplifyContext.Auth || Auth;
+		let currentUser;
+		try {
+			currentUser = await amplifyContext.Auth.currentAuthenticatedUser();
+		} catch (e) {
+			// No current user
+		}
+
+		const { attributes } = schema.namespaces.user.models[modelName];
+
+		if (attributes) {
+			const authAttribute = attributes.find(attr =&gt; attr.type === &#x27;auth&#x27;);
+
+			if (authAttribute?.properties?.rules) {
+				const sortedRules = sortAuthRulesWithPriority(
+					authAttribute.properties.rules
+				);
+
+				return getAuthRules({ currentUser, rules: sortedRules });
+			}
+		}
+		return [];
+	};
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/authModeStrategies/multiAuthStrategy.ts&quot;,&quot;line&quot;:130,&quot;character&quot;:6,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/authModeStrategies/multiAuthStrategy.ts&quot;,&quot;line&quot;:132,&quot;character&quot;:3,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/authModeStrategies/multiAuthStrategy.ts&quot;,&quot;line&quot;:133,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/authModeStrategies/multiAuthStrategy.ts&quot;,&quot;line&quot;:142,&quot;character&quot;:34,&quot;text&quot;:&quot;rules&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/authModeStrategies/multiAuthStrategy.ts&quot;,&quot;line&quot;:144,&quot;character&quot;:30,&quot;text&quot;:&quot;rules&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:29 GMT</p>
+    </body>
+  </html>
+  

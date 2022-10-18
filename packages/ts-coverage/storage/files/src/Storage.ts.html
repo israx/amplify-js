@@ -1,0 +1,429 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Storage.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Storage.ts</td><td class="">93.42%</td><td class="">0%</td><td class="">562</td><td class="">525</td><td class="">37</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import { ConsoleLogger as Logger, Parser } from &#x27;@aws-amplify/core&#x27;;
+import { AWSS3Provider } from &#x27;./providers&#x27;;
+import {
+	StorageCopySource,
+	StorageCopyDestination,
+	StorageGetConfig,
+	StorageProvider,
+	StoragePutConfig,
+	StorageRemoveConfig,
+	StorageListConfig,
+	StorageCopyConfig,
+	StorageProviderWithCopy,
+	StorageGetOutput,
+	StoragePutOutput,
+	StorageRemoveOutput,
+	StorageListOutput,
+	StorageCopyOutput,
+	UploadTask,
+} from &#x27;./types&#x27;;
+import axios, { CancelTokenSource } from &#x27;axios&#x27;;
+import { PutObjectCommandInput } from &#x27;@aws-sdk/client-s3&#x27;;
+import { AWSS3UploadTask } from &#x27;./providers/AWSS3UploadTask&#x27;;
+
+const logger = new Logger(&#x27;StorageClass&#x27;);
+
+const DEFAULT_PROVIDER = &#x27;AWSS3&#x27;;
+/**
+ * Provide storage methods to use AWS S3
+ */
+export class Storage {
+	/**
+	 * @private
+	 */
+	private _config;
+	private _pluggables: StorageProvider[];
+
+	/**
+	 * Similar to the API module. This weak map allows users to cancel their in-flight request made using the Storage
+	 * module. For every get or put request, a unique cancel token will be generated and injected to it&#x27;s underlying
+	 * AxiosHttpHandler. This map maintains a mapping of Request to CancelTokenSource. When .cancel is invoked, it will
+	 * attempt to retrieve it&#x27;s corresponding cancelTokenSource and cancel the in-flight request.
+	 */
+	private _cancelTokenSourceMap: WeakMap&lt;Promise&lt;any&gt;, CancelTokenSource&gt;;
+
+	/**
+	 * @public
+	 */
+	public vault: Storage;
+
+	/**
+	 * Initialize Storage
+	 * @param {Object} config - Configuration object for storage
+	 */
+	constructor() {
+		this._config = {};
+		this._pluggables = [];
+		this._cancelTokenSourceMap = new WeakMap&lt;Promise&lt;any&gt;, CancelTokenSource&gt;();
+		logger.debug(&#x27;Storage Options&#x27;, this._config);
+
+		this.get = this.get.bind(this);
+		this.put = this.put.bind(this);
+		this.remove = this.remove.bind(this);
+		this.list = this.list.bind(this);
+	}
+
+	public getModuleName() {
+		return &#x27;Storage&#x27;;
+	}
+
+	/**
+	 * add plugin into Storage category
+	 * @param {Object} pluggable - an instance of the plugin
+	 */
+	public addPluggable(pluggable: StorageProvider) {
+		if (pluggable &amp;&amp; pluggable.getCategory() === &#x27;Storage&#x27;) {
+			this._pluggables.push(pluggable);
+			let config = {};
+
+			config = pluggable.configure(this._config[pluggable.getProviderName()]);
+
+			return config;
+		}
+	}
+
+	/**
+	 * Get the plugin object
+	 * @param providerName - the name of the plugin
+	 */
+	public getPluggable(providerName: string) {
+		const pluggable = this._pluggables.find(
+			pluggable =&gt; pluggable.getProviderName() === providerName
+		);
+		if (pluggable === undefined) {
+			logger.debug(&#x27;No plugin found with providerName&#x27;, providerName);
+			return null;
+		} else return pluggable;
+	}
+
+	/**
+	 * Remove the plugin object
+	 * @param providerName - the name of the plugin
+	 */
+	public removePluggable(providerName: string) {
+		this._pluggables = this._pluggables.filter(
+			pluggable =&gt; pluggable.getProviderName() !== providerName
+		);
+		return;
+	}
+
+	/**
+	 * Configure Storage
+	 * @param {Object} config - Configuration object for storage
+	 * @return {Object} - Current configuration
+	 */
+	configure(config?) {
+		logger.debug(&#x27;configure Storage&#x27;);
+		if (!config) return this._config;
+
+		const amplifyConfig = Parser.parseMobilehubConfig(config);
+
+		const storageKeysFromConfig = Object.keys(amplifyConfig.Storage);
+
+		const storageArrayKeys = [
+			&#x27;bucket&#x27;,
+			&#x27;region&#x27;,
+			&#x27;level&#x27;,
+			&#x27;track&#x27;,
+			&#x27;customPrefix&#x27;,
+			&#x27;serverSideEncryption&#x27;,
+			&#x27;SSECustomerAlgorithm&#x27;,
+			&#x27;SSECustomerKey&#x27;,
+			&#x27;SSECustomerKeyMD5&#x27;,
+			&#x27;SSEKMSKeyId&#x27;,
+		];
+
+		const isInStorageArrayKeys = (k: string) =&gt;
+			storageArrayKeys.some(x =&gt; x === k);
+		const checkConfigKeysFromArray = (k: string[]) =&gt;
+			k.find(k =&gt; isInStorageArrayKeys(k));
+
+		if (
+			storageKeysFromConfig &amp;&amp;
+			checkConfigKeysFromArray(storageKeysFromConfig) &amp;&amp;
+			!amplifyConfig.Storage[DEFAULT_PROVIDER]
+		) {
+			amplifyConfig.Storage[DEFAULT_PROVIDER] = {};
+		}
+
+		Object.entries(amplifyConfig.Storage).map(([key, value]) =&gt; {
+			if (key &amp;&amp; isInStorageArrayKeys(key) &amp;&amp; value !== undefined) {
+				amplifyConfig.Storage[DEFAULT_PROVIDER][key] = value;
+				delete amplifyConfig.Storage[key];
+			}
+		});
+
+		// only update new values for each provider
+		Object.keys(amplifyConfig.Storage).forEach(providerName =&gt; {
+			if (typeof amplifyConfig.Storage[providerName] !== &#x27;string&#x27;) {
+				this._config[providerName] = {
+					...this._config[providerName],
+					...amplifyConfig.Storage[providerName],
+				};
+			}
+		});
+
+		this._pluggables.forEach(pluggable =&gt; {
+			pluggable.configure(this._config[pluggable.getProviderName()]);
+		});
+
+		if (this._pluggables.length === 0) {
+			this.addPluggable(new AWSS3Provider());
+		}
+
+		return this._config;
+	}
+
+	private getCancellableTokenSource(): CancelTokenSource {
+		return axios.CancelToken.source();
+	}
+
+	private updateRequestToBeCancellable(
+		request: Promise&lt;any&gt;,
+		cancelTokenSource: CancelTokenSource
+	) {
+		this._cancelTokenSourceMap.set(request, cancelTokenSource);
+	}
+
+	private isUploadTask(x: unknown): x is UploadTask {
+		return (
+			typeof x !== &#x27;undefined&#x27; &amp;&amp;
+			typeof x[&#x27;pause&#x27;] === &#x27;function&#x27; &amp;&amp;
+			typeof x[&#x27;resume&#x27;] === &#x27;function&#x27;
+		);
+	}
+
+	/**
+	 * Cancels an inflight request
+	 *
+	 * @param request - The request to cancel
+	 * @param [message] - A message to include in the cancelation exception
+	 */
+	public cancel(request: UploadTask, message?: string): Promise&lt;boolean&gt;;
+	public cancel(request: Promise&lt;any&gt;, message?: string): void;
+	public cancel(
+		request: Promise&lt;any&gt; | UploadTask,
+		message?: string
+	): void | Promise&lt;boolean&gt; {
+		if (request instanceof AWSS3UploadTask) {
+			return request._cancel();
+		}
+		const cancelTokenSource = this._cancelTokenSourceMap.get(
+			request as Promise&lt;any&gt;
+		);
+		if (cancelTokenSource) {
+			cancelTokenSource.cancel(message);
+		} else {
+			logger.debug(&#x27;The request does not map to any cancel token&#x27;);
+		}
+	}
+
+	/**
+	 * Copies a file from src to dest.
+	 *
+	 * @param src - The source object.
+	 * @param dest - The destination object.
+	 * @param [config] - config for the Storage operation.
+	 * @return A promise resolves to the copied object&#x27;s key.
+	 */
+	public copy&lt;T extends Record&lt;string, any&gt;&gt;(
+		src: StorageCopySource,
+		dest: StorageCopyDestination,
+		config?: StorageCopyConfig&lt;T&gt;
+	): StorageCopyOutput&lt;T&gt;;
+	public copy&lt;T extends StorageProviderWithCopy = AWSS3Provider&gt;(
+		src: Parameters&lt;T[&#x27;copy&#x27;]&gt;[0],
+		dest: Parameters&lt;T[&#x27;copy&#x27;]&gt;[1],
+		config?: StorageCopyConfig&lt;T&gt;
+	): StorageCopyOutput&lt;T&gt; {
+		const provider = config?.provider || DEFAULT_PROVIDER;
+		const prov = this._pluggables.find(
+			pluggable =&gt; pluggable.getProviderName() === provider
+		);
+		if (prov === undefined) {
+			logger.debug(&#x27;No plugin found with providerName&#x27;, provider);
+			return Promise.reject(
+				&#x27;No plugin found in Storage for the provider&#x27;
+			) as StorageCopyOutput&lt;T&gt;;
+		}
+		const cancelTokenSource = this.getCancellableTokenSource();
+		if (typeof prov.copy !== &#x27;function&#x27;) {
+			return Promise.reject(
+				`.copy is not implemented on provider ${prov.getProviderName()}`
+			) as StorageCopyOutput&lt;T&gt;;
+		}
+		const responsePromise = prov.copy(src, dest, {
+			...config,
+			cancelTokenSource,
+		});
+		this.updateRequestToBeCancellable(responsePromise, cancelTokenSource);
+		return responsePromise as StorageCopyOutput&lt;T&gt;;
+	}
+
+	/**
+	 * Get a presigned URL of the file or the object data when download:true
+	 *
+	 * @param key - key of the object
+	 * @param [config] - config for the Storage operation.
+	 * @return - A promise resolves to either a presigned url or the object
+	 */
+	// Adding &amp; { download?: boolean }, if not T extends { download: true } ? ... : ... will not work properly
+	public get&lt;T extends Record&lt;string, any&gt; &amp; { download?: boolean }&gt;(
+		key: string,
+		config?: StorageGetConfig&lt;T&gt;
+	): StorageGetOutput&lt;T&gt;;
+	public get&lt;
+		T extends StorageProvider | { [key: string]: any; download?: boolean }
+	&gt;(key: string, config?: StorageGetConfig&lt;T&gt;): StorageGetOutput&lt;T&gt; {
+		const provider = config?.provider || DEFAULT_PROVIDER;
+		const prov = this._pluggables.find(
+			pluggable =&gt; pluggable.getProviderName() === provider
+		);
+		if (prov === undefined) {
+			logger.debug(&#x27;No plugin found with providerName&#x27;, provider);
+			return Promise.reject(
+				&#x27;No plugin found in Storage for the provider&#x27;
+			) as StorageGetOutput&lt;T&gt;;
+		}
+		const cancelTokenSource = this.getCancellableTokenSource();
+		const responsePromise = prov.get(key, {
+			...config,
+			cancelTokenSource,
+		});
+		this.updateRequestToBeCancellable(responsePromise, cancelTokenSource);
+		return responsePromise as StorageGetOutput&lt;T&gt;;
+	}
+
+	public isCancelError(error: any) {
+		return axios.isCancel(error);
+	}
+
+	/**
+	 * Put a file in storage bucket specified to configure method
+	 * @param key - key of the object
+	 * @param object - File to be put in bucket
+	 * @param [config] - { level : private|protected|public, contentType: MIME Types,
+	 *  progressCallback: function }
+	 * @return - promise resolves to object on success
+	 */
+	public put&lt;T extends Record&lt;string, any&gt;&gt;(
+		key: string,
+		object: any,
+		config?: StoragePutConfig&lt;T&gt;
+	): StoragePutOutput&lt;T&gt;;
+	public put&lt;T extends StorageProvider = AWSS3Provider&gt;(
+		key: string,
+		object: Omit&lt;PutObjectCommandInput[&#x27;Body&#x27;], &#x27;ReadableStream&#x27; | &#x27;Readable&#x27;&gt;,
+		config?: StoragePutConfig&lt;T&gt;
+	): StoragePutOutput&lt;T&gt; {
+		const provider = config?.provider || DEFAULT_PROVIDER;
+		const prov = this._pluggables.find(
+			pluggable =&gt; pluggable.getProviderName() === provider
+		);
+		if (prov === undefined) {
+			logger.debug(&#x27;No plugin found with providerName&#x27;, provider);
+			return Promise.reject(
+				&#x27;No plugin found in Storage for the provider&#x27;
+			) as StoragePutOutput&lt;T&gt;;
+		}
+		const cancelTokenSource = this.getCancellableTokenSource();
+		const response = prov.put(key, object, {
+			...config,
+			cancelTokenSource,
+		});
+		if (!this.isUploadTask(response)) {
+			this.updateRequestToBeCancellable(response, cancelTokenSource);
+		}
+		return response as StoragePutOutput&lt;T&gt;;
+	}
+
+	/**
+	 * Remove the object for specified key
+	 * @param key - key of the object
+	 * @param [config] - { level : private|protected|public }
+	 * @return - Promise resolves upon successful removal of the object
+	 */
+	public remove&lt;T extends Record&lt;string, any&gt;&gt;(
+		key: string,
+		config?: StorageRemoveConfig&lt;T&gt;
+	): StorageRemoveOutput&lt;T&gt;;
+	public remove&lt;T extends StorageProvider = AWSS3Provider&gt;(
+		key: string,
+		config?: StorageRemoveConfig&lt;T&gt;
+	): StorageRemoveOutput&lt;T&gt; {
+		const provider = config?.provider || DEFAULT_PROVIDER;
+		const prov = this._pluggables.find(
+			pluggable =&gt; pluggable.getProviderName() === provider
+		);
+		if (prov === undefined) {
+			logger.debug(&#x27;No plugin found with providerName&#x27;, provider);
+			return Promise.reject(
+				&#x27;No plugin found in Storage for the provider&#x27;
+			) as StorageRemoveOutput&lt;T&gt;;
+		}
+		return prov.remove(key, config) as StorageRemoveOutput&lt;T&gt;;
+	}
+
+	/**
+	 * List bucket objects relative to the level and prefix specified
+	 * @param path - the path that contains objects
+	 * @param [config] - { level : private|protected|public, maxKeys: NUMBER }
+	 * @return - Promise resolves to list of keys for all objects in path
+	 */
+	public list&lt;T extends Record&lt;string, any&gt;&gt;(
+		key: string,
+		config?: StorageListConfig&lt;T&gt;
+	): StorageListOutput&lt;T&gt;;
+	public list&lt;T extends StorageProvider = AWSS3Provider&gt;(
+		path: string,
+		config?: StorageListConfig&lt;T&gt;
+	): StorageListOutput&lt;T&gt; {
+		const provider = config?.provider || DEFAULT_PROVIDER;
+		const prov = this._pluggables.find(
+			pluggable =&gt; pluggable.getProviderName() === provider
+		);
+		if (prov === undefined) {
+			logger.debug(&#x27;No plugin found with providerName&#x27;, provider);
+			return Promise.reject(
+				&#x27;No plugin found in Storage for the provider&#x27;
+			) as StorageListOutput&lt;T&gt;;
+		}
+		return prov.list(path, config) as StorageListOutput&lt;T&gt;;
+	}
+}
+
+/**
+ * @deprecated use named import
+ */
+export default Storage;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:46,&quot;character&quot;:9,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:67,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:70,&quot;character&quot;:39,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:37,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:127,&quot;character&quot;:11,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:129,&quot;character&quot;:7,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:129,&quot;character&quot;:27,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:52,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:161,&quot;character&quot;:51,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:162,&quot;character&quot;:43,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:171,&quot;character&quot;:9,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:172,&quot;character&quot;:13,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:179,&quot;character&quot;:28,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:186,&quot;character&quot;:14,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:251,&quot;character&quot;:8,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:251,&quot;character&quot;:27,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:253,&quot;character&quot;:48,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:256,&quot;character&quot;:53,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:290,&quot;character&quot;:8,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:290,&quot;character&quot;:27,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:292,&quot;character&quot;:48,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:295,&quot;character&quot;:53,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:309,&quot;character&quot;:22,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:310,&quot;character&quot;:24,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:323,&quot;character&quot;:2,&quot;text&quot;:&quot;object&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:331,&quot;character&quot;:8,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:331,&quot;character&quot;:27,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:333,&quot;character&quot;:48,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:336,&quot;character&quot;:53,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:366,&quot;character&quot;:8,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:366,&quot;character&quot;:27,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:368,&quot;character&quot;:48,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:371,&quot;character&quot;:53,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:393,&quot;character&quot;:8,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:393,&quot;character&quot;:27,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:395,&quot;character&quot;:48,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Storage.ts&quot;,&quot;line&quot;:398,&quot;character&quot;:53,&quot;text&quot;:&quot;provider&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:23 GMT</p>
+    </body>
+  </html>
+  

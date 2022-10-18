@@ -1,0 +1,273 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>EventBuffer.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Providers/EventBuffer.ts</td><td class="">91.26%</td><td class="">0%</td><td class="">366</td><td class="">334</td><td class="">32</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import { ConsoleLogger as Logger } from &#x27;@aws-amplify/core&#x27;;
+
+import {
+	PutEventsResponse,
+	EventBuffer,
+	EventObject,
+	EventMap,
+} from &#x27;../types&#x27;;
+import {
+	PutEventsCommand,
+	PutEventsCommandOutput,
+} from &#x27;@aws-sdk/client-pinpoint&#x27;;
+import { isAppInForeground } from &#x27;../utils/AppUtils&#x27;;
+
+const logger = new Logger(&#x27;EventsBuffer&#x27;);
+const RETRYABLE_CODES = [429, 500];
+const ACCEPTED_CODES = [202];
+
+type EventsBufferConfig = {
+	bufferSize: number;
+	flushSize: number;
+	flushInterval: number;
+	resendLimit: number;
+};
+
+export default class EventsBuffer {
+	private _config;
+	private _client;
+	private _interval;
+	private _buffer: EventBuffer;
+	private _pause = false;
+	private _flush = false;
+
+	constructor(client, config: EventsBufferConfig) {
+		logger.debug(&#x27;Instantiating buffer with config:&#x27;, config);
+		this._buffer = [];
+		this._client = client;
+		this._config = config;
+
+		this._sendBatch = this._sendBatch.bind(this);
+
+		this._startLoop();
+	}
+
+	public push(event: EventObject) {
+		// if the buffer is currently at the configured limit, pushing would exceed it
+		if (this._buffer.length &gt;= this._config.bufferSize) {
+			logger.debug(&#x27;Exceeded analytics events buffer size&#x27;);
+			return event.handlers.reject(
+				new Error(&#x27;Exceeded the size of analytics events buffer&#x27;)
+			);
+		}
+
+		const { eventId } = event.params.event;
+		const bufferElement = { [eventId]: event };
+		this._buffer.push(bufferElement);
+	}
+
+	public pause() {
+		this._pause = true;
+	}
+
+	public resume() {
+		this._pause = false;
+	}
+
+	public updateClient(client) {
+		this._client = client;
+	}
+
+	public flush() {
+		this._flush = true;
+	}
+
+	private _startLoop() {
+		if (this._interval) {
+			clearInterval(this._interval);
+		}
+
+		const { flushInterval } = this._config;
+
+		this._interval = setInterval(this._sendBatch, flushInterval);
+	}
+
+	private _sendBatch() {
+		const bufferLength = this._buffer.length;
+
+		if (this._flush &amp;&amp; !bufferLength) {
+			clearInterval(this._interval);
+		}
+
+		// Do not send the batch of events if
+		// the Buffer is paused or is empty or the App is not in the foreground
+		// Apps should be in the foreground since
+		// the OS may restrict access to the network in the background
+		if (this._pause || !bufferLength || !isAppInForeground()) {
+			return;
+		}
+
+		const { flushSize } = this._config;
+
+		const batchSize = Math.min(flushSize, bufferLength);
+		const bufferSubset = this._buffer.splice(0, batchSize);
+
+		this._putEvents(bufferSubset);
+	}
+
+	private async _putEvents(buffer: EventBuffer) {
+		const eventMap: EventMap = this._bufferToMap(buffer);
+		const batchEventParams = this._generateBatchEventParams(eventMap);
+
+		try {
+			const command: PutEventsCommand = new PutEventsCommand(batchEventParams);
+			const data: PutEventsCommandOutput = await this._client.send(command);
+			this._processPutEventsSuccessResponse(data, eventMap);
+		} catch (err) {
+			return this._handlePutEventsFailure(err, eventMap);
+		}
+	}
+
+	private _generateBatchEventParams(eventMap: EventMap) {
+		const batchEventParams = {
+			ApplicationId: &#x27;&#x27;,
+			EventsRequest: {
+				BatchItem: {},
+			},
+		};
+
+		Object.values(eventMap).forEach(item =&gt; {
+			const { params } = item;
+			const { event, timestamp, config } = params;
+			const { name, attributes, metrics, eventId, session } = event;
+			const { appId, endpointId } = config;
+
+			const batchItem = batchEventParams.EventsRequest.BatchItem;
+
+			batchEventParams.ApplicationId = batchEventParams.ApplicationId || appId;
+
+			if (!batchItem[endpointId]) {
+				batchItem[endpointId] = {
+					Endpoint: {},
+					Events: {},
+				};
+			}
+
+			batchItem[endpointId].Events[eventId] = {
+				EventType: name,
+				Timestamp: new Date(timestamp).toISOString(),
+				Attributes: attributes,
+				Metrics: metrics,
+				Session: session,
+			};
+		});
+
+		return batchEventParams;
+	}
+
+	private _handlePutEventsFailure(err, eventMap: EventMap) {
+		logger.debug(&#x27;_putEvents Failed: &#x27;, err);
+		const statusCode = err.$metadata &amp;&amp; err.$metadata.httpStatusCode;
+
+		if (RETRYABLE_CODES.includes(statusCode)) {
+			const retryableEvents = Object.values(eventMap);
+			this._retry(retryableEvents);
+			return;
+		}
+	}
+
+	private _processPutEventsSuccessResponse(
+		data: PutEventsResponse,
+		eventMap: EventMap
+	) {
+		const { Results } = data.EventsResponse;
+		const retryableEvents: EventObject[] = [];
+
+		Object.entries(Results).forEach(([endpointId, endpointValues]) =&gt; {
+			const responses = endpointValues.EventsItemResponse;
+
+			Object.entries(responses).forEach(
+				([eventId, { StatusCode, Message }]) =&gt; {
+					const eventObject = eventMap[eventId];
+
+					// manually crafting handlers response to keep API consistant
+					const response = {
+						EventsResponse: {
+							Results: {
+								[endpointId]: {
+									EventsItemResponse: {
+										[eventId]: { StatusCode, Message },
+									},
+								},
+							},
+						},
+					};
+
+					if (ACCEPTED_CODES.includes(StatusCode)) {
+						eventObject.handlers.resolve(response);
+						return;
+					}
+
+					if (RETRYABLE_CODES.includes(StatusCode)) {
+						retryableEvents.push(eventObject);
+						return;
+					}
+
+					const { name } = eventObject.params.event;
+
+					logger.error(
+						`event ${eventId} : ${name} failed with error: ${Message}`
+					);
+					return eventObject.handlers.reject(response);
+				}
+			);
+		});
+
+		if (retryableEvents.length) {
+			this._retry(retryableEvents);
+		}
+	}
+
+	private _retry(retryableEvents: EventObject[]) {
+		// retryable events that haven&#x27;t reached the resendLimit
+		const eligibleEvents: EventBuffer = [];
+
+		retryableEvents.forEach((event: EventObject) =&gt; {
+			const { params } = event;
+			const { eventId, name } = params.event;
+
+			if (params.resendLimit-- &gt; 0) {
+				logger.debug(
+					`resending event ${eventId} : ${name} with ${params.resendLimit} retry attempts remaining`
+				);
+				eligibleEvents.push({ [eventId]: event });
+				return;
+			}
+
+			logger.debug(
+				`no retry attempts remaining for event ${eventId} : ${name}`
+			);
+		});
+
+		// add the events to the front of the buffer
+		this._buffer.unshift(...eligibleEvents);
+	}
+
+	// convert buffer to map, i.e. { eventId1: { params, handler }, eventId2: { params, handlers } }
+	// this allows us to easily access the handlers after receiving a batch response
+	private _bufferToMap(buffer: EventBuffer) {
+		return buffer.reduce((acc, curVal) =&gt; {
+			const [[key, value]] = Object.entries(curVal);
+			acc[key] = value;
+			return acc;
+		}, {});
+	}
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:26,&quot;character&quot;:9,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:27,&quot;character&quot;:9,&quot;text&quot;:&quot;_client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:28,&quot;character&quot;:9,&quot;text&quot;:&quot;_interval&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:33,&quot;character&quot;:13,&quot;text&quot;:&quot;client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:36,&quot;character&quot;:7,&quot;text&quot;:&quot;_client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:36,&quot;character&quot;:17,&quot;text&quot;:&quot;client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:37,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:46,&quot;character&quot;:34,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:46,&quot;character&quot;:42,&quot;text&quot;:&quot;bufferSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:66,&quot;character&quot;:21,&quot;text&quot;:&quot;client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:67,&quot;character&quot;:7,&quot;text&quot;:&quot;_client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:67,&quot;character&quot;:17,&quot;text&quot;:&quot;client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:75,&quot;character&quot;:11,&quot;text&quot;:&quot;_interval&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:76,&quot;character&quot;:22,&quot;text&quot;:&quot;_interval&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:79,&quot;character&quot;:10,&quot;text&quot;:&quot;flushInterval&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:79,&quot;character&quot;:33,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:81,&quot;character&quot;:7,&quot;text&quot;:&quot;_interval&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:88,&quot;character&quot;:22,&quot;text&quot;:&quot;_interval&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:99,&quot;character&quot;:10,&quot;text&quot;:&quot;flushSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:99,&quot;character&quot;:29,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:113,&quot;character&quot;:51,&quot;text&quot;:&quot;_client&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:113,&quot;character&quot;:59,&quot;text&quot;:&quot;send&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:39,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:115,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:157,&quot;character&quot;:33,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:158,&quot;character&quot;:38,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:159,&quot;character&quot;:8,&quot;text&quot;:&quot;statusCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:159,&quot;character&quot;:21,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:159,&quot;character&quot;:25,&quot;text&quot;:&quot;$metadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:159,&quot;character&quot;:38,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:159,&quot;character&quot;:42,&quot;text&quot;:&quot;$metadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/EventBuffer.ts&quot;,&quot;line&quot;:159,&quot;character&quot;:52,&quot;text&quot;:&quot;httpStatusCode&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:24 GMT</p>
+    </body>
+  </html>
+  

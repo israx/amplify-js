@@ -1,0 +1,221 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>util.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/util.ts</td><td class="">81.86%</td><td class="">0%</td><td class="">204</td><td class="">167</td><td class="">37</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import booleanClockwise from &#x27;@turf/boolean-clockwise&#x27;;
+
+import {
+	Longitude,
+	Latitude,
+	GeofenceId,
+	GeofenceInput,
+	GeofencePolygon,
+	LinearRing,
+} from &#x27;./types&#x27;;
+
+export function validateCoordinates(lng: Longitude, lat: Latitude): void {
+	if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+		throw new Error(`Invalid coordinates: [${lng},${lat}]`);
+	}
+	if (lat &lt; -90 || 90 &lt; lat) {
+		throw new Error(&#x27;Latitude must be between -90 and 90 degrees inclusive.&#x27;);
+	} else if (lng &lt; -180 || 180 &lt; lng) {
+		throw new Error(
+			&#x27;Longitude must be between -180 and 180 degrees inclusive.&#x27;
+		);
+	}
+}
+
+export function validateGeofenceId(geofenceId: GeofenceId): void {
+	const geofenceIdRegex = /^[-._\p{L}\p{N}]+$/iu;
+
+	// Check if geofenceId is valid
+	if (!geofenceIdRegex.test(geofenceId)) {
+		throw new Error(
+			`Invalid geofenceId: &#x27;${geofenceId}&#x27; - IDs can only contain alphanumeric characters, hyphens, underscores and periods.`
+		);
+	}
+}
+
+export function validateLinearRing(
+	linearRing: LinearRing,
+	geofenceId?: GeofenceId
+): void {
+	const errorPrefix = geofenceId ? `${geofenceId}: ` : &#x27;&#x27;;
+	// Validate LinearRing size, must be at least 4 points
+	if (linearRing.length &lt; 4) {
+		throw new Error(
+			`${errorPrefix}LinearRing must contain 4 or more coordinates.`
+		);
+	}
+
+	// Validate all coordinates are valid, error with which ones are bad
+	const badCoordinates = [];
+	linearRing.forEach(coordinates =&gt; {
+		try {
+			validateCoordinates(coordinates[0], coordinates[1]);
+		} catch (error) {
+			badCoordinates.push({ coordinates, error: error.message });
+		}
+	});
+	if (badCoordinates.length &gt; 0) {
+		throw new Error(
+			`${errorPrefix}One or more of the coordinates in the Polygon LinearRing are not valid: ${JSON.stringify(
+				badCoordinates
+			)}`
+		);
+	}
+
+	// Validate first and last coordinates are the same
+	const [lngA, latA] = linearRing[0];
+	const [lngB, latB] = linearRing[linearRing.length - 1];
+
+	if (lngA !== lngB || latA !== latB) {
+		throw new Error(
+			`${errorPrefix}LinearRing&#x27;s first and last coordinates are not the same`
+		);
+	}
+
+	if (booleanClockwise(linearRing)) {
+		throw new Error(
+			`${errorPrefix}LinearRing coordinates must be wound counterclockwise`
+		);
+	}
+}
+
+export function validatePolygon(
+	polygon: GeofencePolygon,
+	geofenceId?: GeofenceId
+): void {
+	const errorPrefix = geofenceId ? `${geofenceId}: ` : &#x27;&#x27;;
+	if (!Array.isArray(polygon)) {
+		throw new Error(
+			`${errorPrefix}Polygon is of incorrect structure. It should be an array of LinearRings`
+		);
+	}
+	if (polygon.length &lt; 1) {
+		throw new Error(
+			`${errorPrefix}Polygon must have a single LinearRing array.`
+		);
+	}
+
+	if (polygon.length &gt; 1) {
+		throw new Error(
+			`${errorPrefix}Polygon must have a single LinearRing array. Note: We do not currently support polygons with holes, multipolygons, polygons that are wound clockwise, or that cross the antimeridian.`
+		);
+	}
+	const verticesCount = polygon.reduce(
+		(prev, linearRing) =&gt; prev + linearRing.length,
+		0
+	);
+	if (verticesCount &gt; 1000) {
+		throw new Error(
+			`${errorPrefix}Polygon has more than the maximum 1000 vertices.`
+		);
+	}
+	polygon.forEach(linearRing =&gt; {
+		validateLinearRing(linearRing, geofenceId);
+	});
+}
+
+export function validateGeofencesInput(geofences: GeofenceInput[]) {
+	const geofenceIds = {};
+
+	geofences.forEach((geofence: GeofenceInput) =&gt; {
+		// verify all required properties are present
+
+		// Validate geofenceId exists
+		if (!geofence.geofenceId) {
+			throw new Error(`Geofence &#x27;${geofence}&#x27; is missing geofenceId`);
+		}
+		const { geofenceId } = geofence;
+		validateGeofenceId(geofenceId);
+
+		// Validate geofenceId is unique
+		if (geofenceIds[geofenceId]) {
+			throw new Error(`Duplicate geofenceId: ${geofenceId}`);
+		} else {
+			geofenceIds[geofenceId] = true;
+		}
+
+		// Validate geometry exists
+		if (!geofence.geometry) {
+			throw new Error(`Geofence &#x27;${geofenceId}&#x27; is missing geometry`);
+		}
+		const { geometry } = geofence;
+
+		// Validate polygon exists
+		if (!geometry.polygon) {
+			throw new Error(`Geofence &#x27;${geofenceId}&#x27; is missing geometry.polygon`);
+		}
+		const { polygon } = geometry;
+
+		// Validate polygon length and structure
+		try {
+			validatePolygon(polygon, geofenceId);
+		} catch (error) {
+			if (
+				error.message.includes(
+					&#x27;Polygon has more than the maximum 1000 vertices.&#x27;
+				)
+			) {
+				throw new Error(
+					`Geofence &#x27;${geofenceId}&#x27; has more than the maximum of 1000 vertices`
+				);
+			}
+		}
+
+		// Validate LinearRing length, structure, and coordinates
+		const [linearRing] = polygon;
+		validateLinearRing(linearRing, geofenceId);
+	});
+}
+
+export function mapSearchOptions(options, locationServiceInput) {
+	const locationServiceModifiedInput = { ...locationServiceInput };
+	locationServiceModifiedInput.FilterCountries = options.countries;
+	locationServiceModifiedInput.MaxResults = options.maxResults;
+
+	if (options.searchIndexName) {
+		locationServiceModifiedInput.IndexName = options.searchIndexName;
+	}
+
+	if (options[&#x27;biasPosition&#x27;] &amp;&amp; options[&#x27;searchAreaConstraints&#x27;]) {
+		throw new Error(
+			&#x27;BiasPosition and SearchAreaConstraints are mutually exclusive, please remove one or the other from the options object&#x27;
+		);
+	}
+	if (options[&#x27;biasPosition&#x27;]) {
+		locationServiceModifiedInput.BiasPosition = options[&#x27;biasPosition&#x27;];
+	}
+	if (options[&#x27;searchAreaConstraints&#x27;]) {
+		locationServiceModifiedInput.FilterBBox = options[&#x27;searchAreaConstraints&#x27;];
+	}
+	return locationServiceModifiedInput;
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:38,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:45,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:51,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:64,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:165,&quot;character&quot;:4,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:165,&quot;character&quot;:10,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:165,&quot;character&quot;:18,&quot;text&quot;:&quot;includes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:163,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:181,&quot;character&quot;:33,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:181,&quot;character&quot;:42,&quot;text&quot;:&quot;locationServiceInput&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:182,&quot;character&quot;:7,&quot;text&quot;:&quot;locationServiceModifiedInput&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:182,&quot;character&quot;:43,&quot;text&quot;:&quot;locationServiceInput&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:183,&quot;character&quot;:1,&quot;text&quot;:&quot;locationServiceModifiedInput&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:183,&quot;character&quot;:30,&quot;text&quot;:&quot;FilterCountries&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:183,&quot;character&quot;:48,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:183,&quot;character&quot;:56,&quot;text&quot;:&quot;countries&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:184,&quot;character&quot;:1,&quot;text&quot;:&quot;locationServiceModifiedInput&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:184,&quot;character&quot;:30,&quot;text&quot;:&quot;MaxResults&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:184,&quot;character&quot;:43,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:184,&quot;character&quot;:51,&quot;text&quot;:&quot;maxResults&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:186,&quot;character&quot;:5,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:186,&quot;character&quot;:13,&quot;text&quot;:&quot;searchIndexName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:187,&quot;character&quot;:2,&quot;text&quot;:&quot;locationServiceModifiedInput&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:187,&quot;character&quot;:31,&quot;text&quot;:&quot;IndexName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:187,&quot;character&quot;:43,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:187,&quot;character&quot;:51,&quot;text&quot;:&quot;searchIndexName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:190,&quot;character&quot;:5,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:190,&quot;character&quot;:32,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:195,&quot;character&quot;:5,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:196,&quot;character&quot;:2,&quot;text&quot;:&quot;locationServiceModifiedInput&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:196,&quot;character&quot;:31,&quot;text&quot;:&quot;BiasPosition&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:196,&quot;character&quot;:46,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:198,&quot;character&quot;:5,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:199,&quot;character&quot;:2,&quot;text&quot;:&quot;locationServiceModifiedInput&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:199,&quot;character&quot;:31,&quot;text&quot;:&quot;FilterBBox&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:199,&quot;character&quot;:44,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:201,&quot;character&quot;:8,&quot;text&quot;:&quot;locationServiceModifiedInput&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:22 GMT</p>
+    </body>
+  </html>
+  

@@ -1,0 +1,236 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Hub.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Hub.ts</td><td class="">94.67%</td><td class="">0%</td><td class="">244</td><td class="">231</td><td class="">13</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import { ConsoleLogger as Logger } from &#x27;./Logger&#x27;;
+
+const logger = new Logger(&#x27;Hub&#x27;);
+
+const AMPLIFY_SYMBOL = (typeof Symbol !== &#x27;undefined&#x27; &amp;&amp;
+typeof Symbol.for === &#x27;function&#x27;
+	? Symbol.for(&#x27;amplify_default&#x27;)
+	: &#x27;@@amplify_default&#x27;) as Symbol;
+interface IPattern {
+	pattern: RegExp;
+	callback: HubCallback;
+}
+
+interface IListener {
+	name: string;
+	callback: HubCallback;
+}
+
+export type HubCapsule = {
+	channel: string;
+	payload: HubPayload;
+	source: string;
+	patternInfo?: string[];
+};
+
+export type HubPayload = {
+	event: string;
+	data?: any;
+	message?: string;
+};
+
+export type HubCallback = (capsule: HubCapsule) =&gt; void;
+
+export type LegacyCallback = { onHubCapsule: HubCallback };
+
+function isLegacyCallback(callback: any): callback is LegacyCallback {
+	return (&lt;LegacyCallback&gt;callback).onHubCapsule !== undefined;
+}
+
+export class HubClass {
+	name: string;
+	private listeners: IListener[] = [];
+	private patterns: IPattern[] = [];
+
+	protectedChannels = [
+		&#x27;core&#x27;,
+		&#x27;auth&#x27;,
+		&#x27;api&#x27;,
+		&#x27;analytics&#x27;,
+		&#x27;interactions&#x27;,
+		&#x27;pubsub&#x27;,
+		&#x27;storage&#x27;,
+		&#x27;ui&#x27;,
+		&#x27;xr&#x27;,
+	];
+
+	constructor(name: string) {
+		this.name = name;
+	}
+
+	// Note - Need to pass channel as a reference for removal to work and not anonymous function
+	remove(channel: string | RegExp, listener: HubCallback) {
+		if (channel instanceof RegExp) {
+			const pattern = this.patterns.find(
+				({ pattern }) =&gt; pattern.source === channel.source
+			);
+			if (!pattern) {
+				logger.warn(`No listeners for ${channel}`);
+				return;
+			}
+			this.patterns = [...this.patterns.filter(x =&gt; x !== pattern)];
+		} else {
+			const holder = this.listeners[channel];
+			if (!holder) {
+				logger.warn(`No listeners for ${channel}`);
+				return;
+			}
+			this.listeners[channel] = [
+				...holder.filter(({ callback }) =&gt; callback !== listener),
+			];
+		}
+	}
+
+	dispatch(
+		channel: string,
+		payload: HubPayload,
+		source: string = &#x27;&#x27;,
+		ampSymbol?: Symbol
+	) {
+		if (this.protectedChannels.indexOf(channel) &gt; -1) {
+			const hasAccess = ampSymbol === AMPLIFY_SYMBOL;
+
+			if (!hasAccess) {
+				logger.warn(
+					`WARNING: ${channel} is protected and dispatching on it can have unintended consequences`
+				);
+			}
+		}
+
+		const capsule: HubCapsule = {
+			channel,
+			payload: { ...payload },
+			source,
+			patternInfo: [],
+		};
+
+		try {
+			this._toListeners(capsule);
+		} catch (e) {
+			logger.error(e);
+		}
+	}
+
+	listen(
+		channel: string | RegExp,
+		callback?: HubCallback | LegacyCallback,
+		listenerName = &#x27;noname&#x27;
+	) {
+		let cb: HubCallback;
+		// Check for legacy onHubCapsule callback for backwards compatability
+		if (isLegacyCallback(callback)) {
+			logger.warn(
+				`WARNING onHubCapsule is Deprecated. Please pass in a callback.`
+			);
+			cb = callback.onHubCapsule.bind(callback);
+		} else if (typeof callback !== &#x27;function&#x27;) {
+			throw new Error(&#x27;No callback supplied to Hub&#x27;);
+		} else {
+			cb = callback;
+		}
+
+		if (channel instanceof RegExp) {
+			this.patterns.push({
+				pattern: channel,
+				callback: cb,
+			});
+		} else {
+			let holder = this.listeners[channel];
+
+			if (!holder) {
+				holder = [];
+				this.listeners[channel] = holder;
+			}
+
+			holder.push({
+				name: listenerName,
+				callback: cb,
+			});
+		}
+
+		return () =&gt; {
+			this.remove(channel, cb);
+		};
+	}
+
+	private _toListeners(capsule: HubCapsule) {
+		const { channel, payload } = capsule;
+		const holder = this.listeners[channel];
+
+		if (holder) {
+			holder.forEach(listener =&gt; {
+				logger.debug(`Dispatching to ${channel} with `, payload);
+				try {
+					listener.callback(capsule);
+				} catch (e) {
+					logger.error(e);
+				}
+			});
+		}
+
+		if (this.patterns.length &gt; 0) {
+			if (!payload.message) {
+				logger.warn(`Cannot perform pattern matching without a message key`);
+				return;
+			}
+
+			const payloadStr = payload.message;
+
+			this.patterns.forEach(pattern =&gt; {
+				const match = payloadStr.match(pattern.pattern);
+				if (match) {
+					const [, ...groups] = match;
+					const dispatchingCapsule: HubCapsule = {
+						...capsule,
+						patternInfo: groups,
+					};
+					try {
+						pattern.callback(dispatchingCapsule);
+					} catch (e) {
+						logger.error(e);
+					}
+				}
+			});
+		}
+	}
+}
+
+/*We export a __default__ instance of HubClass to use it as a 
+pseudo Singleton for the main messaging bus, however you can still create
+your own instance of HubClass() for a separate &quot;private bus&quot; of events.*/
+export const Hub = new HubClass(&#x27;__default__&#x27;);
+/**
+ * @deprecated use named import
+ */
+export default Hub;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Hub.ts&quot;,&quot;line&quot;:40,&quot;character&quot;:1,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Hub.ts&quot;,&quot;line&quot;:48,&quot;character&quot;:26,&quot;text&quot;:&quot;callback&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Hub.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:24,&quot;text&quot;:&quot;callback&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Hub.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:39,&quot;text&quot;:&quot;callback&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Hub.ts&quot;,&quot;line&quot;:122,&quot;character&quot;:16,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Hub.ts&quot;,&quot;line&quot;:121,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Hub.ts&quot;,&quot;line&quot;:173,&quot;character&quot;:18,&quot;text&quot;:&quot;listener&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Hub.ts&quot;,&quot;line&quot;:176,&quot;character&quot;:5,&quot;text&quot;:&quot;listener&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Hub.ts&quot;,&quot;line&quot;:176,&quot;character&quot;:14,&quot;text&quot;:&quot;callback&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Hub.ts&quot;,&quot;line&quot;:178,&quot;character&quot;:18,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Hub.ts&quot;,&quot;line&quot;:177,&quot;character&quot;:13,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Hub.ts&quot;,&quot;line&quot;:202,&quot;character&quot;:19,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Hub.ts&quot;,&quot;line&quot;:201,&quot;character&quot;:14,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:20 GMT</p>
+    </body>
+  </html>
+  

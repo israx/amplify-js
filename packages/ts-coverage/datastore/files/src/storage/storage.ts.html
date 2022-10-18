@@ -1,0 +1,568 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>storage.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/storage/storage.ts</td><td class="">96.60%</td><td class="">0%</td><td class="">853</td><td class="">824</td><td class="">29</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import { Logger, Mutex } from &#x27;@aws-amplify/core&#x27;;
+import Observable, { ZenObservable } from &#x27;zen-observable-ts&#x27;;
+import PushStream from &#x27;zen-push&#x27;;
+import { Patch } from &#x27;immer&#x27;;
+import { ModelInstanceCreator } from &#x27;../datastore/datastore&#x27;;
+import { ModelPredicateCreator } from &#x27;../predicates&#x27;;
+import {
+	InternalSchema,
+	ModelInstanceMetadata,
+	ModelPredicate,
+	NamespaceResolver,
+	OpType,
+	PaginationInput,
+	PersistentModel,
+	PersistentModelConstructor,
+	PredicatesGroup,
+	QueryOne,
+	SchemaNamespace,
+	InternalSubscriptionMessage,
+	SubscriptionMessage,
+	isTargetNameAssociation,
+} from &#x27;../types&#x27;;
+import {
+	isModelConstructor,
+	STORAGE,
+	validatePredicate,
+	valuesEqual,
+} from &#x27;../util&#x27;;
+import { getIdentifierValue } from &#x27;../sync/utils&#x27;;
+import { Adapter } from &#x27;./adapter&#x27;;
+import getDefaultAdapter from &#x27;./adapter/getDefaultAdapter&#x27;;
+
+export type StorageSubscriptionMessage&lt;T extends PersistentModel&gt; =
+	InternalSubscriptionMessage&lt;T&gt; &amp; {
+		mutator?: Symbol;
+	};
+
+export type StorageFacade = Omit&lt;Adapter, &#x27;setUp&#x27;&gt;;
+export type Storage = InstanceType&lt;typeof StorageClass&gt;;
+
+const logger = new Logger(&#x27;DataStore&#x27;);
+class StorageClass implements StorageFacade {
+	private initialized: Promise&lt;void&gt;;
+	private readonly pushStream: {
+		observable: Observable&lt;StorageSubscriptionMessage&lt;PersistentModel&gt;&gt;;
+	} &amp; Required&lt;
+		ZenObservable.Observer&lt;StorageSubscriptionMessage&lt;PersistentModel&gt;&gt;
+	&gt;;
+
+	constructor(
+		private readonly schema: InternalSchema,
+		private readonly namespaceResolver: NamespaceResolver,
+		private readonly getModelConstructorByModelName: (
+			namsespaceName: string,
+			modelName: string
+		) =&gt; PersistentModelConstructor&lt;any&gt;,
+		private readonly modelInstanceCreator: ModelInstanceCreator,
+		private readonly adapter?: Adapter,
+		private readonly sessionId?: string
+	) {
+		this.adapter = this.adapter || getDefaultAdapter();
+		this.pushStream = new PushStream();
+	}
+
+	static getNamespace() {
+		const namespace: SchemaNamespace = {
+			name: STORAGE,
+			relationships: {},
+			enums: {},
+			models: {},
+			nonModels: {},
+		};
+
+		return namespace;
+	}
+
+	async init() {
+		if (this.initialized !== undefined) {
+			await this.initialized;
+			return;
+		}
+		logger.debug(&#x27;Starting Storage&#x27;);
+
+		let resolve: (value?: void | PromiseLike&lt;void&gt;) =&gt; void;
+		let reject: (value?: void | PromiseLike&lt;void&gt;) =&gt; void;
+
+		this.initialized = new Promise&lt;void&gt;((res, rej) =&gt; {
+			resolve = res;
+			reject = rej;
+		});
+
+		this.adapter
+			.setUp(
+				this.schema,
+				this.namespaceResolver,
+				this.modelInstanceCreator,
+				this.getModelConstructorByModelName,
+				this.sessionId
+			)
+			.then(resolve, reject);
+
+		await this.initialized;
+	}
+
+	async save&lt;T extends PersistentModel&gt;(
+		model: T,
+		condition?: ModelPredicate&lt;T&gt;,
+		mutator?: Symbol,
+		patchesTuple?: [Patch[], PersistentModel]
+	): Promise&lt;[T, OpType.INSERT | OpType.UPDATE][]&gt; {
+		await this.init();
+
+		const result = await this.adapter.save(model, condition);
+
+		result.forEach(r =&gt; {
+			const [savedElement, opType] = r;
+
+			// truthy when save is called by the Merger
+			const syncResponse = !!mutator;
+
+			let updateMutationInput;
+			// don&#x27;t attempt to calc mutation input when storage.save
+			// is called by Merger, i.e., when processing an AppSync response
+			if (opType === OpType.UPDATE &amp;&amp; !syncResponse) {
+				//
+				// TODO: LOOK!!!
+				// the `model` used here is in effect regardless of what model
+				// comes back from adapter.save().
+				// Prior to fix, SQLite adapter had been returning two models
+				// of different types, resulting in invalid outbox entries.
+				//
+				// the bug is essentially fixed in SQLite adapter.
+				// leaving as-is, because it&#x27;s currently unclear whether anything
+				// depends on this remaining as-is.
+				//
+
+				updateMutationInput = this.getUpdateMutationInput(
+					model,
+					savedElement,
+					patchesTuple
+				);
+				// // an update without changed user fields
+				// =&gt; don&#x27;t create mutationEvent
+				if (updateMutationInput === null) {
+					return result;
+				}
+			}
+
+			const element = updateMutationInput || savedElement;
+
+			const modelConstructor = (Object.getPrototypeOf(savedElement) as Object)
+				.constructor as PersistentModelConstructor&lt;T&gt;;
+
+			this.pushStream.next({
+				model: modelConstructor,
+				opType,
+				element,
+				mutator,
+				condition: ModelPredicateCreator.getPredicates(condition, false),
+				savedElement,
+			});
+		});
+
+		return result;
+	}
+
+	delete&lt;T extends PersistentModel&gt;(
+		model: T,
+		condition?: ModelPredicate&lt;T&gt;,
+		mutator?: Symbol
+	): Promise&lt;[T[], T[]]&gt;;
+	delete&lt;T extends PersistentModel&gt;(
+		modelConstructor: PersistentModelConstructor&lt;T&gt;,
+		condition?: ModelPredicate&lt;T&gt;,
+		mutator?: Symbol
+	): Promise&lt;[T[], T[]]&gt;;
+	async delete&lt;T extends PersistentModel&gt;(
+		modelOrModelConstructor: T | PersistentModelConstructor&lt;T&gt;,
+		condition?: ModelPredicate&lt;T&gt;,
+		mutator?: Symbol
+	): Promise&lt;[T[], T[]]&gt; {
+		await this.init();
+
+		let deleted: T[];
+		let models: T[];
+
+		[models, deleted] = await this.adapter.delete(
+			modelOrModelConstructor,
+			condition
+		);
+
+		const modelConstructor = isModelConstructor(modelOrModelConstructor)
+			? modelOrModelConstructor
+			: (Object.getPrototypeOf(modelOrModelConstructor || {})
+					.constructor as PersistentModelConstructor&lt;T&gt;);
+		const namespaceName = this.namespaceResolver(modelConstructor);
+
+		const modelDefinition =
+			this.schema.namespaces[namespaceName].models[modelConstructor.name];
+
+		const modelIds = new Set(
+			models.map(model =&gt; {
+				const modelId = getIdentifierValue(modelDefinition, model);
+				return modelId;
+			})
+		);
+
+		if (
+			!isModelConstructor(modelOrModelConstructor) &amp;&amp;
+			!Array.isArray(deleted)
+		) {
+			deleted = [deleted];
+		}
+
+		deleted.forEach(model =&gt; {
+			const modelConstructor = (Object.getPrototypeOf(model) as Object)
+				.constructor as PersistentModelConstructor&lt;T&gt;;
+
+			let theCondition: PredicatesGroup&lt;any&gt;;
+
+			if (!isModelConstructor(modelOrModelConstructor)) {
+				const modelId = getIdentifierValue(modelDefinition, model);
+				theCondition = modelIds.has(modelId)
+					? ModelPredicateCreator.getPredicates(condition, false)
+					: undefined;
+			}
+
+			this.pushStream.next({
+				model: modelConstructor,
+				opType: OpType.DELETE,
+				element: model,
+				mutator,
+				condition: theCondition,
+			});
+		});
+
+		return [models, deleted];
+	}
+
+	async query&lt;T extends PersistentModel&gt;(
+		modelConstructor: PersistentModelConstructor&lt;T&gt;,
+		predicate?: ModelPredicate&lt;T&gt;,
+		pagination?: PaginationInput&lt;T&gt;
+	): Promise&lt;T[]&gt; {
+		await this.init();
+
+		return await this.adapter.query(modelConstructor, predicate, pagination);
+	}
+
+	async queryOne&lt;T extends PersistentModel&gt;(
+		modelConstructor: PersistentModelConstructor&lt;T&gt;,
+		firstOrLast: QueryOne = QueryOne.FIRST
+	): Promise&lt;T&gt; {
+		await this.init();
+
+		const record = await this.adapter.queryOne(modelConstructor, firstOrLast);
+		return record;
+	}
+
+	observe&lt;T extends PersistentModel&gt;(
+		modelConstructor?: PersistentModelConstructor&lt;T&gt;,
+		predicate?: ModelPredicate&lt;T&gt;,
+		skipOwn?: Symbol
+	): Observable&lt;SubscriptionMessage&lt;T&gt;&gt; {
+		const listenToAll = !modelConstructor;
+		const { predicates, type } =
+			ModelPredicateCreator.getPredicates(predicate, false) || {};
+		const hasPredicate = !!predicates;
+
+		let result = this.pushStream.observable
+			.filter(({ mutator }) =&gt; {
+				return !skipOwn || mutator !== skipOwn;
+			})
+			.map(
+				({ mutator: _mutator, ...message }) =&gt; message as SubscriptionMessage&lt;T&gt;
+			);
+
+		if (!listenToAll) {
+			result = result.filter(({ model, element }) =&gt; {
+				if (modelConstructor !== model) {
+					return false;
+				}
+
+				if (hasPredicate) {
+					return validatePredicate(element, type, predicates);
+				}
+
+				return true;
+			});
+		}
+
+		return result;
+	}
+
+	async clear(completeObservable = true) {
+		this.initialized = undefined;
+
+		await this.adapter.clear();
+
+		if (completeObservable) {
+			this.pushStream.complete();
+		}
+	}
+
+	async batchSave&lt;T extends PersistentModel&gt;(
+		modelConstructor: PersistentModelConstructor&lt;any&gt;,
+		items: ModelInstanceMetadata[],
+		mutator?: Symbol
+	): Promise&lt;[T, OpType][]&gt; {
+		await this.init();
+
+		const result = await this.adapter.batchSave(modelConstructor, items);
+
+		result.forEach(([element, opType]) =&gt; {
+			this.pushStream.next({
+				model: modelConstructor,
+				opType,
+				element,
+				mutator,
+				condition: undefined,
+			});
+		});
+
+		return result as any;
+	}
+
+	// returns null if no user fields were changed (determined by value comparison)
+	private getUpdateMutationInput&lt;T extends PersistentModel&gt;(
+		model: T,
+		originalElement: T,
+		patchesTuple?: [Patch[], PersistentModel]
+	): PersistentModel | null {
+		const containsPatches = patchesTuple &amp;&amp; patchesTuple.length;
+		if (!containsPatches) {
+			return null;
+		}
+
+		const [patches, source] = patchesTuple;
+		const updatedElement = {};
+		// extract array of updated fields from patches
+		const updatedFields = &lt;string[]&gt;(
+			patches.map(patch =&gt; patch.path &amp;&amp; patch.path[0])
+		);
+
+		// check model def for association and replace with targetName if exists
+		const modelConstructor = Object.getPrototypeOf(model)
+			.constructor as PersistentModelConstructor&lt;T&gt;;
+		const namespace = this.namespaceResolver(modelConstructor);
+		const { fields } =
+			this.schema.namespaces[namespace].models[modelConstructor.name];
+		const { primaryKey, compositeKeys = [] } =
+			this.schema.namespaces[namespace].keys[modelConstructor.name];
+
+		// set original values for these fields
+		updatedFields.forEach((field: string) =&gt; {
+			const targetNames: any = isTargetNameAssociation(
+				fields[field]?.association
+			);
+
+			if (Array.isArray(targetNames)) {
+				// if field refers to a belongsTo relation, use the target field instead
+
+				for (const targetName of targetNames) {
+					// check field values by value. Ignore unchanged fields
+					if (!valuesEqual(source[targetName], originalElement[targetName])) {
+						// if the field was updated to &#x27;undefined&#x27;, replace with &#x27;null&#x27; for compatibility with JSON and GraphQL
+
+						updatedElement[targetName] =
+							originalElement[targetName] === undefined
+								? null
+								: originalElement[targetName];
+
+						for (const fieldSet of compositeKeys) {
+							// include all of the fields that comprise the composite key
+							if (fieldSet.has(targetName)) {
+								for (const compositeField of fieldSet) {
+									updatedElement[compositeField] =
+										originalElement[compositeField];
+								}
+							}
+						}
+					}
+				}
+			} else {
+				// Backwards compatibility pre-CPK
+
+				// if field refers to a belongsTo relation, use the target field instead
+				const key = targetNames || field;
+
+				// check field values by value. Ignore unchanged fields
+				if (!valuesEqual(source[key], originalElement[key])) {
+					// if the field was updated to &#x27;undefined&#x27;, replace with &#x27;null&#x27; for compatibility with JSON and GraphQL
+
+					updatedElement[key] =
+						originalElement[key] === undefined ? null : originalElement[key];
+
+					for (const fieldSet of compositeKeys) {
+						// include all of the fields that comprise the composite key
+						if (fieldSet.has(key)) {
+							for (const compositeField of fieldSet) {
+								updatedElement[compositeField] =
+									originalElement[compositeField];
+							}
+						}
+					}
+				}
+			}
+		});
+
+        // Exit early when there are no changes introduced in the update mutation 
+		if (Object.keys(updatedElement).length === 0) {
+			return null;
+		}
+
+		// include field(s) from custom PK if one is specified for the model
+		if (primaryKey &amp;&amp; primaryKey.length) {
+			for (const pkField of primaryKey) {
+				updatedElement[pkField] = originalElement[pkField];
+			}
+		}
+
+		const { id, _version, _lastChangedAt, _deleted } = originalElement;
+
+		// For update mutations we only want to send fields with changes
+		// and the required internal fields
+		return {
+			...updatedElement,
+			id,
+			_version,
+			_lastChangedAt,
+			_deleted,
+		};
+	}
+}
+
+class ExclusiveStorage implements StorageFacade {
+	private storage: StorageClass;
+	private readonly mutex = new Mutex();
+	constructor(
+		schema: InternalSchema,
+		namespaceResolver: NamespaceResolver,
+		getModelConstructorByModelName: (
+			namsespaceName: string,
+			modelName: string
+		) =&gt; PersistentModelConstructor&lt;any&gt;,
+		modelInstanceCreator: ModelInstanceCreator,
+		adapter?: Adapter,
+		sessionId?: string
+	) {
+		this.storage = new StorageClass(
+			schema,
+			namespaceResolver,
+			getModelConstructorByModelName,
+			modelInstanceCreator,
+			adapter,
+			sessionId
+		);
+	}
+
+	runExclusive&lt;T&gt;(fn: (storage: StorageClass) =&gt; Promise&lt;T&gt;) {
+		return &lt;Promise&lt;T&gt;&gt;this.mutex.runExclusive(fn.bind(this, this.storage));
+	}
+
+	async save&lt;T extends PersistentModel&gt;(
+		model: T,
+		condition?: ModelPredicate&lt;T&gt;,
+		mutator?: Symbol,
+		patchesTuple?: [Patch[], PersistentModel]
+	): Promise&lt;[T, OpType.INSERT | OpType.UPDATE][]&gt; {
+		return this.runExclusive&lt;[T, OpType.INSERT | OpType.UPDATE][]&gt;(storage =&gt;
+			storage.save(model, condition, mutator, patchesTuple)
+		);
+	}
+
+	async delete&lt;T extends PersistentModel&gt;(
+		model: T,
+		condition?: ModelPredicate&lt;T&gt;,
+		mutator?: Symbol
+	): Promise&lt;[T[], T[]]&gt;;
+	async delete&lt;T extends PersistentModel&gt;(
+		modelConstructor: PersistentModelConstructor&lt;T&gt;,
+		condition?: ModelPredicate&lt;T&gt;,
+		mutator?: Symbol
+	): Promise&lt;[T[], T[]]&gt;;
+	async delete&lt;T extends PersistentModel&gt;(
+		modelOrModelConstructor: T | PersistentModelConstructor&lt;T&gt;,
+		condition?: ModelPredicate&lt;T&gt;,
+		mutator?: Symbol
+	): Promise&lt;[T[], T[]]&gt; {
+		return this.runExclusive&lt;[T[], T[]]&gt;(storage =&gt; {
+			if (isModelConstructor(modelOrModelConstructor)) {
+				const modelConstructor = modelOrModelConstructor;
+
+				return storage.delete(modelConstructor, condition, mutator);
+			} else {
+				const model = modelOrModelConstructor;
+
+				return storage.delete(model, condition, mutator);
+			}
+		});
+	}
+
+	async query&lt;T extends PersistentModel&gt;(
+		modelConstructor: PersistentModelConstructor&lt;T&gt;,
+		predicate?: ModelPredicate&lt;T&gt;,
+		pagination?: PaginationInput&lt;T&gt;
+	): Promise&lt;T[]&gt; {
+		return this.runExclusive&lt;T[]&gt;(storage =&gt;
+			storage.query&lt;T&gt;(modelConstructor, predicate, pagination)
+		);
+	}
+
+	async queryOne&lt;T extends PersistentModel&gt;(
+		modelConstructor: PersistentModelConstructor&lt;T&gt;,
+		firstOrLast: QueryOne = QueryOne.FIRST
+	): Promise&lt;T&gt; {
+		return this.runExclusive&lt;T&gt;(storage =&gt;
+			storage.queryOne&lt;T&gt;(modelConstructor, firstOrLast)
+		);
+	}
+
+	static getNamespace() {
+		return StorageClass.getNamespace();
+	}
+
+	observe&lt;T extends PersistentModel&gt;(
+		modelConstructor?: PersistentModelConstructor&lt;T&gt;,
+		predicate?: ModelPredicate&lt;T&gt;,
+		skipOwn?: Symbol
+	): Observable&lt;SubscriptionMessage&lt;T&gt;&gt; {
+		return this.storage.observe(modelConstructor, predicate, skipOwn);
+	}
+
+	async clear() {
+		await this.storage.clear();
+	}
+
+	batchSave&lt;T extends PersistentModel&gt;(
+		modelConstructor: PersistentModelConstructor&lt;T&gt;,
+		items: ModelInstanceMetadata[]
+	): Promise&lt;[T, OpType][]&gt; {
+		return this.storage.batchSave(modelConstructor, items);
+	}
+
+	async init() {
+		return this.storage.init();
+	}
+}
+
+export { ExclusiveStorage };
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:120,&quot;character&quot;:7,&quot;text&quot;:&quot;updateMutationInput&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:136,&quot;character&quot;:4,&quot;text&quot;:&quot;updateMutationInput&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:143,&quot;character&quot;:8,&quot;text&quot;:&quot;updateMutationInput&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:9,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:19,&quot;text&quot;:&quot;updateMutationInput&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:313,&quot;character&quot;:19,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:355,&quot;character&quot;:9,&quot;text&quot;:&quot;targetNames&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:359,&quot;character&quot;:21,&quot;text&quot;:&quot;targetNames&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:362,&quot;character&quot;:15,&quot;text&quot;:&quot;targetName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:364,&quot;character&quot;:29,&quot;text&quot;:&quot;targetName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:364,&quot;character&quot;:58,&quot;text&quot;:&quot;targetName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:367,&quot;character&quot;:21,&quot;text&quot;:&quot;targetName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:368,&quot;character&quot;:23,&quot;text&quot;:&quot;targetName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:370,&quot;character&quot;:26,&quot;text&quot;:&quot;targetName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:387,&quot;character&quot;:10,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:387,&quot;character&quot;:16,&quot;text&quot;:&quot;targetNames&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:390,&quot;character&quot;:28,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:390,&quot;character&quot;:50,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:393,&quot;character&quot;:20,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:394,&quot;character&quot;:22,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:394,&quot;character&quot;:66,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:421,&quot;character&quot;:10,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:421,&quot;character&quot;:14,&quot;text&quot;:&quot;_version&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:421,&quot;character&quot;:24,&quot;text&quot;:&quot;_lastChangedAt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:421,&quot;character&quot;:40,&quot;text&quot;:&quot;_deleted&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:427,&quot;character&quot;:3,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:428,&quot;character&quot;:3,&quot;text&quot;:&quot;_version&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:429,&quot;character&quot;:3,&quot;text&quot;:&quot;_lastChangedAt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/storage.ts&quot;,&quot;line&quot;:430,&quot;character&quot;:3,&quot;text&quot;:&quot;_deleted&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:29 GMT</p>
+    </body>
+  </html>
+  

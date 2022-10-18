@@ -1,0 +1,642 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>subscription.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/sync/processors/subscription.ts</td><td class="">91.69%</td><td class="">0%</td><td class="">746</td><td class="">684</td><td class="">62</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import API, { GraphQLResult, GRAPHQL_AUTH_MODE } from &#x27;@aws-amplify/api&#x27;;
+import { Auth } from &#x27;@aws-amplify/auth&#x27;;
+import Cache from &#x27;@aws-amplify/cache&#x27;;
+import { ConsoleLogger as Logger, Hub, HubCapsule } from &#x27;@aws-amplify/core&#x27;;
+import { CONTROL_MSG as PUBSUB_CONTROL_MSG } from &#x27;@aws-amplify/pubsub&#x27;;
+import Observable, { ZenObservable } from &#x27;zen-observable-ts&#x27;;
+import {
+	InternalSchema,
+	PersistentModel,
+	SchemaModel,
+	SchemaNamespace,
+	PredicatesGroup,
+	ModelPredicate,
+	AuthModeStrategy,
+	ErrorHandler,
+	ProcessName,
+	AmplifyContext,
+} from &#x27;../../types&#x27;;
+import {
+	buildSubscriptionGraphQLOperation,
+	getAuthorizationRules,
+	getModelAuthModes,
+	getUserGroupsFromToken,
+	TransformerMutationType,
+	getTokenForCustomAuth,
+} from &#x27;../utils&#x27;;
+import { ModelPredicateCreator } from &#x27;../../predicates&#x27;;
+import { validatePredicate, USER_AGENT_SUFFIX_DATASTORE } from &#x27;../../util&#x27;;
+import { getSubscriptionErrorType } from &#x27;./errorMaps&#x27;;
+
+const logger = new Logger(&#x27;DataStore&#x27;);
+
+export enum CONTROL_MSG {
+	CONNECTED = &#x27;CONNECTED&#x27;,
+}
+
+export enum USER_CREDENTIALS {
+	&#x27;none&#x27;,
+	&#x27;unauth&#x27;,
+	&#x27;auth&#x27;,
+}
+
+type AuthorizationInfo = {
+	authMode: GRAPHQL_AUTH_MODE;
+	isOwner: boolean;
+	ownerField?: string;
+	ownerValue?: string;
+};
+
+class SubscriptionProcessor {
+	private readonly typeQuery = new WeakMap&lt;
+		SchemaModel,
+		[TransformerMutationType, string, string][]
+	&gt;();
+	private buffer: [TransformerMutationType, SchemaModel, PersistentModel][] =
+		[];
+	private dataObserver: ZenObservable.Observer&lt;any&gt;;
+
+	constructor(
+		private readonly schema: InternalSchema,
+		private readonly syncPredicates: WeakMap&lt;SchemaModel, ModelPredicate&lt;any&gt;&gt;,
+		private readonly amplifyConfig: Record&lt;string, any&gt; = {},
+		private readonly authModeStrategy: AuthModeStrategy,
+		private readonly errorHandler: ErrorHandler,
+		private readonly amplifyContext: AmplifyContext = { Auth, API, Cache }
+	) {}
+
+	private buildSubscription(
+		namespace: SchemaNamespace,
+		model: SchemaModel,
+		transformerMutationType: TransformerMutationType,
+		userCredentials: USER_CREDENTIALS,
+		cognitoTokenPayload: { [field: string]: any } | undefined,
+		oidcTokenPayload: { [field: string]: any } | undefined,
+		authMode: GRAPHQL_AUTH_MODE
+	): {
+		opType: TransformerMutationType;
+		opName: string;
+		query: string;
+		authMode: GRAPHQL_AUTH_MODE;
+		isOwner: boolean;
+		ownerField?: string;
+		ownerValue?: string;
+	} {
+		const { aws_appsync_authenticationType } = this.amplifyConfig;
+		const { isOwner, ownerField, ownerValue } =
+			this.getAuthorizationInfo(
+				model,
+				userCredentials,
+				aws_appsync_authenticationType,
+				cognitoTokenPayload,
+				oidcTokenPayload,
+				authMode
+			) || {};
+
+		const [opType, opName, query] = buildSubscriptionGraphQLOperation(
+			namespace,
+			model,
+			transformerMutationType,
+			isOwner,
+			ownerField
+		);
+		return { authMode, opType, opName, query, isOwner, ownerField, ownerValue };
+	}
+
+	private getAuthorizationInfo(
+		model: SchemaModel,
+		userCredentials: USER_CREDENTIALS,
+		defaultAuthType: GRAPHQL_AUTH_MODE,
+		cognitoTokenPayload: { [field: string]: any } = {},
+		oidcTokenPayload: { [field: string]: any } = {},
+		authMode: GRAPHQL_AUTH_MODE
+	): AuthorizationInfo {
+		const rules = getAuthorizationRules(model);
+
+		// Return null if user doesn&#x27;t have proper credentials for private API with IAM auth
+		const iamPrivateAuth =
+			authMode === GRAPHQL_AUTH_MODE.AWS_IAM &amp;&amp;
+			rules.find(
+				rule =&gt; rule.authStrategy === &#x27;private&#x27; &amp;&amp; rule.provider === &#x27;iam&#x27;
+			);
+
+		if (iamPrivateAuth &amp;&amp; userCredentials === USER_CREDENTIALS.unauth) {
+			return null;
+		}
+
+		// Group auth should take precedence over owner auth, so we are checking
+		// if rule(s) have group authorization as well as if either the Cognito or
+		// OIDC token has a groupClaim. If so, we are returning auth info before
+		// any further owner-based auth checks.
+		const groupAuthRules = rules.filter(
+			rule =&gt;
+				rule.authStrategy === &#x27;groups&#x27; &amp;&amp;
+				[&#x27;userPools&#x27;, &#x27;oidc&#x27;].includes(rule.provider)
+		);
+
+		const validGroup =
+			(authMode === GRAPHQL_AUTH_MODE.AMAZON_COGNITO_USER_POOLS ||
+				authMode === GRAPHQL_AUTH_MODE.OPENID_CONNECT) &amp;&amp;
+			groupAuthRules.find(groupAuthRule =&gt; {
+				// validate token against groupClaim
+				const cognitoUserGroups = getUserGroupsFromToken(
+					cognitoTokenPayload,
+					groupAuthRule
+				);
+				const oidcUserGroups = getUserGroupsFromToken(
+					oidcTokenPayload,
+					groupAuthRule
+				);
+
+				return [...cognitoUserGroups, ...oidcUserGroups].find(userGroup =&gt; {
+					return groupAuthRule.groups.find(group =&gt; group === userGroup);
+				});
+			});
+
+		if (validGroup) {
+			return {
+				authMode,
+				isOwner: false,
+			};
+		}
+
+		// Owner auth needs additional values to be returned in order to create the subscription with
+		// the correct parameters so we are getting the owner value from the Cognito token via the
+		// identityClaim from the auth rule.
+		const cognitoOwnerAuthRules =
+			authMode === GRAPHQL_AUTH_MODE.AMAZON_COGNITO_USER_POOLS
+				? rules.filter(
+						rule =&gt;
+							rule.authStrategy === &#x27;owner&#x27; &amp;&amp; rule.provider === &#x27;userPools&#x27;
+				  )
+				: [];
+
+		let ownerAuthInfo: AuthorizationInfo;
+		cognitoOwnerAuthRules.forEach(ownerAuthRule =&gt; {
+			const ownerValue = cognitoTokenPayload[ownerAuthRule.identityClaim];
+
+			if (ownerValue) {
+				ownerAuthInfo = {
+					authMode: GRAPHQL_AUTH_MODE.AMAZON_COGNITO_USER_POOLS,
+					isOwner: ownerAuthRule.areSubscriptionsPublic ? false : true,
+					ownerField: ownerAuthRule.ownerField,
+					ownerValue,
+				};
+			}
+		});
+
+		if (ownerAuthInfo) {
+			return ownerAuthInfo;
+		}
+
+		// Owner auth needs additional values to be returned in order to create the subscription with
+		// the correct parameters so we are getting the owner value from the OIDC token via the
+		// identityClaim from the auth rule.
+		const oidcOwnerAuthRules =
+			authMode === GRAPHQL_AUTH_MODE.OPENID_CONNECT
+				? rules.filter(
+						rule =&gt; rule.authStrategy === &#x27;owner&#x27; &amp;&amp; rule.provider === &#x27;oidc&#x27;
+				  )
+				: [];
+
+		oidcOwnerAuthRules.forEach(ownerAuthRule =&gt; {
+			const ownerValue = oidcTokenPayload[ownerAuthRule.identityClaim];
+
+			if (ownerValue) {
+				ownerAuthInfo = {
+					authMode: GRAPHQL_AUTH_MODE.OPENID_CONNECT,
+					isOwner: ownerAuthRule.areSubscriptionsPublic ? false : true,
+					ownerField: ownerAuthRule.ownerField,
+					ownerValue,
+				};
+			}
+		});
+
+		if (ownerAuthInfo) {
+			return ownerAuthInfo;
+		}
+
+		// Fallback: return authMode or default auth type
+		return {
+			authMode: authMode || defaultAuthType,
+			isOwner: false,
+		};
+	}
+
+	private hubQueryCompletionListener(completed: Function, capsule: HubCapsule) {
+		const {
+			payload: { event },
+		} = capsule;
+
+		if (event === PUBSUB_CONTROL_MSG.SUBSCRIPTION_ACK) {
+			completed();
+		}
+	}
+
+	start(): [
+		Observable&lt;CONTROL_MSG&gt;,
+		Observable&lt;[TransformerMutationType, SchemaModel, PersistentModel]&gt;
+	] {
+		const ctlObservable = new Observable&lt;CONTROL_MSG&gt;(observer =&gt; {
+			const promises: Promise&lt;void&gt;[] = [];
+
+			// Creating subs for each model/operation combo so they can be unsubscribed
+			// independently, since the auth retry behavior is asynchronous.
+			let subscriptions: {
+				[modelName: string]: {
+					[TransformerMutationType.CREATE]: ZenObservable.Subscription[];
+					[TransformerMutationType.UPDATE]: ZenObservable.Subscription[];
+					[TransformerMutationType.DELETE]: ZenObservable.Subscription[];
+				};
+			} = {};
+			let cognitoTokenPayload: { [field: string]: any },
+				oidcTokenPayload: { [field: string]: any };
+			let userCredentials = USER_CREDENTIALS.none;
+			(async () =&gt; {
+				try {
+					// retrieving current AWS Credentials
+					const credentials =
+						await this.amplifyContext.Auth.currentCredentials();
+					userCredentials = credentials.authenticated
+						? USER_CREDENTIALS.auth
+						: USER_CREDENTIALS.unauth;
+				} catch (err) {
+					// best effort to get AWS credentials
+				}
+
+				try {
+					// retrieving current token info from Cognito UserPools
+					const session = await this.amplifyContext.Auth.currentSession();
+					cognitoTokenPayload = session.getIdToken().decodePayload();
+				} catch (err) {
+					// best effort to get jwt from Cognito
+				}
+
+				try {
+					// Checking for the Cognito region in config to see if Auth is configured
+					// before attempting to get federated token. We&#x27;re using the Cognito region
+					// because it will be there regardless of user/identity pool being present.
+					const { aws_cognito_region, Auth: AuthConfig } = this.amplifyConfig;
+					if (!aws_cognito_region || (AuthConfig &amp;&amp; !AuthConfig.region)) {
+						throw &#x27;Auth is not configured&#x27;;
+					}
+
+					let token;
+					// backwards compatibility
+					const federatedInfo = await this.amplifyContext.Cache.getItem(
+						&#x27;federatedInfo&#x27;
+					);
+					if (federatedInfo) {
+						token = federatedInfo.token;
+					} else {
+						const currentUser =
+							await this.amplifyContext.Auth.currentAuthenticatedUser();
+						if (currentUser) {
+							token = currentUser.token;
+						}
+					}
+
+					if (token) {
+						const payload = token.split(&#x27;.&#x27;)[1];
+						oidcTokenPayload = JSON.parse(
+							Buffer.from(payload, &#x27;base64&#x27;).toString(&#x27;utf8&#x27;)
+						);
+					}
+				} catch (err) {
+					logger.debug(&#x27;error getting OIDC JWT&#x27;, err);
+					// best effort to get oidc jwt
+				}
+
+				Object.values(this.schema.namespaces).forEach(namespace =&gt; {
+					Object.values(namespace.models)
+						.filter(({ syncable }) =&gt; syncable)
+						.forEach(async modelDefinition =&gt; {
+							const modelAuthModes = await getModelAuthModes({
+								authModeStrategy: this.authModeStrategy,
+								defaultAuthMode:
+									this.amplifyConfig.aws_appsync_authenticationType,
+								modelName: modelDefinition.name,
+								schema: this.schema,
+							});
+
+							// subscriptions are created only based on the READ auth mode(s)
+							const readAuthModes = modelAuthModes.READ;
+
+							subscriptions = {
+								...subscriptions,
+								[modelDefinition.name]: {
+									[TransformerMutationType.CREATE]: [],
+									[TransformerMutationType.UPDATE]: [],
+									[TransformerMutationType.DELETE]: [],
+								},
+							};
+
+							const operations = [
+								TransformerMutationType.CREATE,
+								TransformerMutationType.UPDATE,
+								TransformerMutationType.DELETE,
+							];
+
+							const operationAuthModeAttempts = {
+								[TransformerMutationType.CREATE]: 0,
+								[TransformerMutationType.UPDATE]: 0,
+								[TransformerMutationType.DELETE]: 0,
+							};
+
+							// Retry failed subscriptions with next auth mode (if available)
+							const authModeRetry = async operation =&gt; {
+								const {
+									opType: transformerMutationType,
+									opName,
+									query,
+									isOwner,
+									ownerField,
+									ownerValue,
+									authMode,
+								} = this.buildSubscription(
+									namespace,
+									modelDefinition,
+									operation,
+									userCredentials,
+									cognitoTokenPayload,
+									oidcTokenPayload,
+									readAuthModes[operationAuthModeAttempts[operation]]
+								);
+
+								const authToken = await getTokenForCustomAuth(
+									authMode,
+									this.amplifyConfig
+								);
+
+								const variables = {};
+
+								if (isOwner) {
+									if (!ownerValue) {
+										observer.error(
+											&#x27;Owner field required, sign in is needed in order to perform this operation&#x27;
+										);
+										return;
+									}
+
+									variables[ownerField] = ownerValue;
+								}
+
+								logger.debug(
+									`Attempting ${operation} subscription with authMode: ${
+										readAuthModes[operationAuthModeAttempts[operation]]
+									}`
+								);
+
+								const userAgentSuffix = USER_AGENT_SUFFIX_DATASTORE;
+
+								const queryObservable = &lt;
+									Observable&lt;{
+										value: GraphQLResult&lt;Record&lt;string, PersistentModel&gt;&gt;;
+									}&gt;
+								&gt;(&lt;unknown&gt;this.amplifyContext.API.graphql({ query, variables, ...{ authMode }, authToken, userAgentSuffix }));
+
+								let subscriptionReadyCallback: () =&gt; void;
+
+								subscriptions[modelDefinition.name][
+									transformerMutationType
+								].push(
+									queryObservable
+										.map(({ value }) =&gt; {
+											return value;
+										})
+										.subscribe({
+											next: ({ data, errors }) =&gt; {
+												if (Array.isArray(errors) &amp;&amp; errors.length &gt; 0) {
+													const messages = (&lt;
+														{
+															message: string;
+														}[]
+													&gt;errors).map(({ message }) =&gt; message);
+
+													logger.warn(
+														`Skipping incoming subscription. Messages: ${messages.join(
+															&#x27;\n&#x27;
+														)}`
+													);
+
+													this.drainBuffer();
+													return;
+												}
+
+												const predicatesGroup =
+													ModelPredicateCreator.getPredicates(
+														this.syncPredicates.get(modelDefinition),
+														false
+													);
+
+												const { [opName]: record } = data;
+
+												// checking incoming subscription against syncPredicate.
+												// once AppSync implements filters on subscriptions, we&#x27;ll be
+												// able to set these when establishing the subscription instead.
+												// Until then, we&#x27;ll need to filter inbound
+												if (
+													this.passesPredicateValidation(
+														record,
+														predicatesGroup
+													)
+												) {
+													this.pushToBuffer(
+														transformerMutationType,
+														modelDefinition,
+														record
+													);
+												}
+												this.drainBuffer();
+											},
+											error: async subscriptionError =&gt; {
+												const {
+													error: { errors: [{ message = &#x27;&#x27; } = {}] } = {
+														errors: [],
+													},
+												} = subscriptionError;
+
+												if (
+													message.includes(
+														PUBSUB_CONTROL_MSG.REALTIME_SUBSCRIPTION_INIT_ERROR
+													) ||
+													message.includes(PUBSUB_CONTROL_MSG.CONNECTION_FAILED)
+												) {
+													// Unsubscribe and clear subscription array for model/operation
+													subscriptions[modelDefinition.name][
+														transformerMutationType
+													].forEach(subscription =&gt; subscription.unsubscribe());
+													subscriptions[modelDefinition.name][
+														transformerMutationType
+													] = [];
+
+													operationAuthModeAttempts[operation]++;
+													if (
+														operationAuthModeAttempts[operation] &gt;=
+														readAuthModes.length
+													) {
+														// last auth mode retry. Continue with error
+														logger.debug(
+															`${operation} subscription failed with authMode: ${
+																readAuthModes[
+																	operationAuthModeAttempts[operation] - 1
+																]
+															}`
+														);
+													} else {
+														// retry with different auth mode. Do not trigger
+														// observer error or error handler
+														logger.debug(
+															`${operation} subscription failed with authMode: ${
+																readAuthModes[
+																	operationAuthModeAttempts[operation] - 1
+																]
+															}. Retrying with authMode: ${
+																readAuthModes[
+																	operationAuthModeAttempts[operation]
+																]
+															}`
+														);
+														authModeRetry(operation);
+														return;
+													}
+												}
+												logger.warn(&#x27;subscriptionError&#x27;, message);
+
+												try {
+													await this.errorHandler({
+														recoverySuggestion:
+															&#x27;Ensure app code is up to date, auth directives exist and are correct on each model, and that server-side data has not been invalidated by a schema change. If the problem persists, search for or create an issue: https://github.com/aws-amplify/amplify-js/issues&#x27;,
+														localModel: null,
+														message,
+														model: modelDefinition.name,
+														operation,
+														errorType:
+															getSubscriptionErrorType(subscriptionError),
+														process: ProcessName.subscribe,
+														remoteModel: null,
+														cause: subscriptionError,
+													});
+												} catch (e) {
+													logger.error(
+														&#x27;Subscription error handler failed with:&#x27;,
+														e
+													);
+												}
+
+												if (typeof subscriptionReadyCallback === &#x27;function&#x27;) {
+													subscriptionReadyCallback();
+												}
+
+												if (
+													message.includes(&#x27;&quot;errorType&quot;:&quot;Unauthorized&quot;&#x27;) ||
+													message.includes(&#x27;&quot;errorType&quot;:&quot;OperationDisabled&quot;&#x27;)
+												) {
+													return;
+												}
+												observer.error(message);
+											},
+										})
+								);
+
+								promises.push(
+									(async () =&gt; {
+										let boundFunction: any;
+
+										await new Promise(res =&gt; {
+											subscriptionReadyCallback = res;
+											boundFunction = this.hubQueryCompletionListener.bind(
+												this,
+												res
+											);
+											Hub.listen(&#x27;api&#x27;, boundFunction);
+										});
+										Hub.remove(&#x27;api&#x27;, boundFunction);
+									})()
+								);
+							};
+
+							operations.forEach(op =&gt; authModeRetry(op));
+						});
+				});
+
+				Promise.all(promises).then(() =&gt; observer.next(CONTROL_MSG.CONNECTED));
+			})();
+
+			return () =&gt; {
+				Object.keys(subscriptions).forEach(modelName =&gt; {
+					subscriptions[modelName][TransformerMutationType.CREATE].forEach(
+						subscription =&gt; subscription.unsubscribe()
+					);
+					subscriptions[modelName][TransformerMutationType.UPDATE].forEach(
+						subscription =&gt; subscription.unsubscribe()
+					);
+					subscriptions[modelName][TransformerMutationType.DELETE].forEach(
+						subscription =&gt; subscription.unsubscribe()
+					);
+				});
+			};
+		});
+
+		const dataObservable = new Observable&lt;
+			[TransformerMutationType, SchemaModel, PersistentModel]
+		&gt;(observer =&gt; {
+			this.dataObserver = observer;
+			this.drainBuffer();
+
+			return () =&gt; {
+				this.dataObserver = null;
+			};
+		});
+
+		return [ctlObservable, dataObservable];
+	}
+
+	private passesPredicateValidation(
+		record: PersistentModel,
+		predicatesGroup: PredicatesGroup&lt;any&gt;
+	): boolean {
+		if (!predicatesGroup) {
+			return true;
+		}
+
+		const { predicates, type } = predicatesGroup;
+
+		return validatePredicate(record, type, predicates);
+	}
+
+	private pushToBuffer(
+		transformerMutationType: TransformerMutationType,
+		modelDefinition: SchemaModel,
+		data: PersistentModel
+	) {
+		this.buffer.push([transformerMutationType, modelDefinition, data]);
+	}
+
+	private drainBuffer() {
+		if (this.dataObserver) {
+			this.buffer.forEach(data =&gt; this.dataObserver.next(data));
+			this.buffer = [];
+		}
+	}
+}
+
+export { SubscriptionProcessor };
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:84,&quot;character&quot;:10,&quot;text&quot;:&quot;aws_appsync_authenticationType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:9,&quot;text&quot;:&quot;ownerValue&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:177,&quot;character&quot;:7,&quot;text&quot;:&quot;ownerValue&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:202,&quot;character&quot;:9,&quot;text&quot;:&quot;ownerValue&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:204,&quot;character&quot;:7,&quot;text&quot;:&quot;ownerValue&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:262,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:270,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:278,&quot;character&quot;:13,&quot;text&quot;:&quot;aws_cognito_region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:278,&quot;character&quot;:39,&quot;text&quot;:&quot;AuthConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:279,&quot;character&quot;:10,&quot;text&quot;:&quot;aws_cognito_region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:279,&quot;character&quot;:33,&quot;text&quot;:&quot;AuthConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:279,&quot;character&quot;:48,&quot;text&quot;:&quot;AuthConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:279,&quot;character&quot;:59,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:9,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:285,&quot;character&quot;:11,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:288,&quot;character&quot;:9,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:289,&quot;character&quot;:6,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:289,&quot;character&quot;:14,&quot;text&quot;:&quot;federatedInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:289,&quot;character&quot;:28,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:291,&quot;character&quot;:12,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:293,&quot;character&quot;:10,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:294,&quot;character&quot;:7,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:294,&quot;character&quot;:15,&quot;text&quot;:&quot;currentUser&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:294,&quot;character&quot;:27,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:298,&quot;character&quot;:9,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:299,&quot;character&quot;:12,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:299,&quot;character&quot;:22,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:299,&quot;character&quot;:28,&quot;text&quot;:&quot;split&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:305,&quot;character&quot;:44,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:304,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:316,&quot;character&quot;:28,&quot;text&quot;:&quot;aws_appsync_authenticationType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:346,&quot;character&quot;:35,&quot;text&quot;:&quot;operation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:362,&quot;character&quot;:49,&quot;text&quot;:&quot;operation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:384,&quot;character&quot;:23,&quot;text&quot;:&quot;operation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:385,&quot;character&quot;:50,&quot;text&quot;:&quot;operation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:451,&quot;character&quot;:24,&quot;text&quot;:&quot;subscriptionError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:453,&quot;character&quot;:33,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:459,&quot;character&quot;:13,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:459,&quot;character&quot;:21,&quot;text&quot;:&quot;includes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:462,&quot;character&quot;:13,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:462,&quot;character&quot;:21,&quot;text&quot;:&quot;includes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:467,&quot;character&quot;:23,&quot;text&quot;:&quot;subscription&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:467,&quot;character&quot;:39,&quot;text&quot;:&quot;subscription&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:467,&quot;character&quot;:52,&quot;text&quot;:&quot;unsubscribe&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:472,&quot;character&quot;:39,&quot;text&quot;:&quot;operation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:474,&quot;character&quot;:40,&quot;text&quot;:&quot;operation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:479,&quot;character&quot;:18,&quot;text&quot;:&quot;operation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:481,&quot;character&quot;:43,&quot;text&quot;:&quot;operation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:489,&quot;character&quot;:18,&quot;text&quot;:&quot;operation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:491,&quot;character&quot;:43,&quot;text&quot;:&quot;operation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:495,&quot;character&quot;:43,&quot;text&quot;:&quot;operation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:499,&quot;character&quot;:28,&quot;text&quot;:&quot;operation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:503,&quot;character&quot;:45,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:522,&quot;character&quot;:14,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:519,&quot;character&quot;:21,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:531,&quot;character&quot;:13,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:531,&quot;character&quot;:21,&quot;text&quot;:&quot;includes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:532,&quot;character&quot;:13,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:532,&quot;character&quot;:21,&quot;text&quot;:&quot;includes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:536,&quot;character&quot;:27,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:543,&quot;character&quot;:14,&quot;text&quot;:&quot;boundFunction&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/sync/processors/subscription.ts&quot;,&quot;line&quot;:547,&quot;character&quot;:11,&quot;text&quot;:&quot;boundFunction&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:29 GMT</p>
+    </body>
+  </html>
+  

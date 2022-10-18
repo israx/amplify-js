@@ -1,0 +1,69 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>delegate.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/vendor/dom-utils/delegate.ts</td><td class="">31.37%</td><td class="">0%</td><td class="">51</td><td class="">16</td><td class="">35</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/**
+ * Copyright (c) 2017, Philip Walton &lt;philip@philipwalton.com&gt;
+ */
+
+import { closest } from &#x27;./closest&#x27;;
+import { matches } from &#x27;./matches&#x27;;
+
+/**
+ * Delegates the handling of events for an element matching a selector to an
+ * ancestor of the matching element.
+ * @param {!Node} ancestor The ancestor element to add the listener to.
+ * @param {string} eventType The event type to listen to.
+ * @param {string} selector A CSS selector to match against child elements.
+ * @param {!Function} callback A function to run any time the event happens.
+ * @param {Object=} opts A configuration options object. The available options:
+ *     - useCapture&lt;boolean&gt;: If true, bind to the event capture phase.
+ *     - deep&lt;boolean&gt;: If true, delegate into shadow trees.
+ * @return {Object} The delegate object. It contains a destroy method.
+ */
+export function delegate(ancestor, eventType, selector, callback, opts = {}) {
+	// Defines the event listener.
+	const listener = function(event) {
+		let delegateTarget;
+
+		// If opts.composed is true and the event originated from inside a Shadow
+		// tree, check the composed path nodes.
+		if (opts[&#x27;composed&#x27;] &amp;&amp; typeof event[&#x27;composedPath&#x27;] === &#x27;function&#x27;) {
+			const composedPath = event.composedPath();
+			for (let i = 0, node; (node = composedPath[i]); i++) {
+				if (node.nodeType === 1 &amp;&amp; matches(node, selector)) {
+					delegateTarget = node;
+				}
+			}
+		} else {
+			// Otherwise check the parents.
+			delegateTarget = closest(event.target, selector, true);
+		}
+
+		if (delegateTarget) {
+			callback.call(delegateTarget, event, delegateTarget);
+		}
+	};
+
+	ancestor.addEventListener(eventType, listener, opts[&#x27;useCapture&#x27;]);
+
+	return {
+		destroy: () =&gt; {
+			ancestor.removeEventListener(eventType, listener, opts[&#x27;useCapture&#x27;]);
+		},
+	};
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:19,&quot;character&quot;:25,&quot;text&quot;:&quot;ancestor&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:19,&quot;character&quot;:35,&quot;text&quot;:&quot;eventType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:19,&quot;character&quot;:46,&quot;text&quot;:&quot;selector&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:19,&quot;character&quot;:56,&quot;text&quot;:&quot;callback&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:21,&quot;character&quot;:27,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:22,&quot;character&quot;:6,&quot;text&quot;:&quot;delegateTarget&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:26,&quot;character&quot;:33,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:27,&quot;character&quot;:9,&quot;text&quot;:&quot;composedPath&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:27,&quot;character&quot;:24,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:27,&quot;character&quot;:30,&quot;text&quot;:&quot;composedPath&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:28,&quot;character&quot;:19,&quot;text&quot;:&quot;node&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:28,&quot;character&quot;:26,&quot;text&quot;:&quot;node&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:28,&quot;character&quot;:33,&quot;text&quot;:&quot;composedPath&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:29,&quot;character&quot;:8,&quot;text&quot;:&quot;node&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:29,&quot;character&quot;:13,&quot;text&quot;:&quot;nodeType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:29,&quot;character&quot;:39,&quot;text&quot;:&quot;node&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:29,&quot;character&quot;:45,&quot;text&quot;:&quot;selector&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:30,&quot;character&quot;:5,&quot;text&quot;:&quot;delegateTarget&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:30,&quot;character&quot;:22,&quot;text&quot;:&quot;node&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:35,&quot;character&quot;:3,&quot;text&quot;:&quot;delegateTarget&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:35,&quot;character&quot;:28,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:35,&quot;character&quot;:34,&quot;text&quot;:&quot;target&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:35,&quot;character&quot;:42,&quot;text&quot;:&quot;selector&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:38,&quot;character&quot;:6,&quot;text&quot;:&quot;delegateTarget&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:39,&quot;character&quot;:3,&quot;text&quot;:&quot;callback&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:39,&quot;character&quot;:12,&quot;text&quot;:&quot;call&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:39,&quot;character&quot;:17,&quot;text&quot;:&quot;delegateTarget&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:39,&quot;character&quot;:33,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:39,&quot;character&quot;:40,&quot;text&quot;:&quot;delegateTarget&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:1,&quot;text&quot;:&quot;ancestor&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:10,&quot;text&quot;:&quot;addEventListener&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:27,&quot;text&quot;:&quot;eventType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:47,&quot;character&quot;:3,&quot;text&quot;:&quot;ancestor&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:47,&quot;character&quot;:12,&quot;text&quot;:&quot;removeEventListener&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/delegate.ts&quot;,&quot;line&quot;:47,&quot;character&quot;:32,&quot;text&quot;:&quot;eventType&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:24 GMT</p>
+    </body>
+  </html>
+  

@@ -1,0 +1,225 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>ConsoleLogger.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Logger/ConsoleLogger.ts</td><td class="">93.04%</td><td class="">0%</td><td class="">230</td><td class="">214</td><td class="">16</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import { InputLogEvent } from &#x27;@aws-sdk/client-cloudwatch-logs&#x27;;
+import { LoggingProvider } from &#x27;../types&#x27;;
+import { AWS_CLOUDWATCH_CATEGORY } from &#x27;../Util/Constants&#x27;;
+import { Logger } from &#x27;./logger-interface&#x27;;
+
+const LOG_LEVELS = {
+	VERBOSE: 1,
+	DEBUG: 2,
+	INFO: 3,
+	WARN: 4,
+	ERROR: 5,
+};
+
+export enum LOG_TYPE {
+	DEBUG = &#x27;DEBUG&#x27;,
+	ERROR = &#x27;ERROR&#x27;,
+	INFO = &#x27;INFO&#x27;,
+	WARN = &#x27;WARN&#x27;,
+	VERBOSE = &#x27;VERBOSE&#x27;,
+}
+
+/**
+ * Write logs
+ * @class Logger
+ */
+export class ConsoleLogger implements Logger {
+	name: string;
+	level: LOG_TYPE | string;
+	private _pluggables: LoggingProvider[];
+	private _config: object;
+
+	/**
+	 * @constructor
+	 * @param {string} name - Name of the logger
+	 */
+	constructor(name: string, level: LOG_TYPE | string = LOG_TYPE.WARN) {
+		this.name = name;
+		this.level = level;
+		this._pluggables = [];
+	}
+
+	static LOG_LEVEL = null;
+
+	_padding(n) {
+		return n &lt; 10 ? &#x27;0&#x27; + n : &#x27;&#x27; + n;
+	}
+
+	_ts() {
+		const dt = new Date();
+		return (
+			[this._padding(dt.getMinutes()), this._padding(dt.getSeconds())].join(
+				&#x27;:&#x27;
+			) +
+			&#x27;.&#x27; +
+			dt.getMilliseconds()
+		);
+	}
+
+	configure(config?: object) {
+		if (!config) return this._config;
+
+		this._config = config;
+
+		return this._config;
+	}
+
+	/**
+	 * Write log
+	 * @method
+	 * @memeberof Logger
+	 * @param {LOG_TYPE|string} type - log type, default INFO
+	 * @param {string|object} msg - Logging message or object
+	 */
+	_log(type: LOG_TYPE | string, ...msg) {
+		let logger_level_name = this.level;
+		if (ConsoleLogger.LOG_LEVEL) {
+			logger_level_name = ConsoleLogger.LOG_LEVEL;
+		}
+		if (typeof (&lt;any&gt;window) !== &#x27;undefined&#x27; &amp;&amp; (&lt;any&gt;window).LOG_LEVEL) {
+			logger_level_name = (&lt;any&gt;window).LOG_LEVEL;
+		}
+		const logger_level = LOG_LEVELS[logger_level_name];
+		const type_level = LOG_LEVELS[type];
+		if (!(type_level &gt;= logger_level)) {
+			// Do nothing if type is not greater than or equal to logger level (handle undefined)
+			return;
+		}
+
+		let log = console.log.bind(console);
+		if (type === LOG_TYPE.ERROR &amp;&amp; console.error) {
+			log = console.error.bind(console);
+		}
+		if (type === LOG_TYPE.WARN &amp;&amp; console.warn) {
+			log = console.warn.bind(console);
+		}
+
+		const prefix = `[${type}] ${this._ts()} ${this.name}`;
+		let message = &#x27;&#x27;;
+
+		if (msg.length === 1 &amp;&amp; typeof msg[0] === &#x27;string&#x27;) {
+			message = `${prefix} - ${msg[0]}`;
+			log(message);
+		} else if (msg.length === 1) {
+			message = `${prefix} ${msg[0]}`;
+			log(prefix, msg[0]);
+		} else if (typeof msg[0] === &#x27;string&#x27;) {
+			let obj = msg.slice(1);
+			if (obj.length === 1) {
+				obj = obj[0];
+			}
+			message = `${prefix} - ${msg[0]} ${obj}`;
+			log(`${prefix} - ${msg[0]}`, obj);
+		} else {
+			message = `${prefix} ${msg}`;
+			log(prefix, msg);
+		}
+
+		for (const plugin of this._pluggables) {
+			const logEvent: InputLogEvent = { message, timestamp: Date.now() };
+			plugin.pushLogs([logEvent]);
+		}
+	}
+
+	/**
+	 * Write General log. Default to INFO
+	 * @method
+	 * @memeberof Logger
+	 * @param {string|object} msg - Logging message or object
+	 */
+	log(...msg) {
+		this._log(LOG_TYPE.INFO, ...msg);
+	}
+
+	/**
+	 * Write INFO log
+	 * @method
+	 * @memeberof Logger
+	 * @param {string|object} msg - Logging message or object
+	 */
+	info(...msg) {
+		this._log(LOG_TYPE.INFO, ...msg);
+	}
+
+	/**
+	 * Write WARN log
+	 * @method
+	 * @memeberof Logger
+	 * @param {string|object} msg - Logging message or object
+	 */
+	warn(...msg) {
+		this._log(LOG_TYPE.WARN, ...msg);
+	}
+
+	/**
+	 * Write ERROR log
+	 * @method
+	 * @memeberof Logger
+	 * @param {string|object} msg - Logging message or object
+	 */
+	error(...msg) {
+		this._log(LOG_TYPE.ERROR, ...msg);
+	}
+
+	/**
+	 * Write DEBUG log
+	 * @method
+	 * @memeberof Logger
+	 * @param {string|object} msg - Logging message or object
+	 */
+	debug(...msg) {
+		this._log(LOG_TYPE.DEBUG, ...msg);
+	}
+
+	/**
+	 * Write VERBOSE log
+	 * @method
+	 * @memeberof Logger
+	 * @param {string|object} msg - Logging message or object
+	 */
+	verbose(...msg) {
+		this._log(LOG_TYPE.VERBOSE, ...msg);
+	}
+
+	addPluggable(pluggable: LoggingProvider) {
+		if (pluggable &amp;&amp; pluggable.getCategoryName() === AWS_CLOUDWATCH_CATEGORY) {
+			this._pluggables.push(pluggable);
+			pluggable.configure(this._config);
+		}
+	}
+
+	listPluggables() {
+		return this._pluggables;
+	}
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Logger/ConsoleLogger.ts&quot;,&quot;line&quot;:54,&quot;character&quot;:8,&quot;text&quot;:&quot;LOG_LEVEL&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Logger/ConsoleLogger.ts&quot;,&quot;line&quot;:56,&quot;character&quot;:10,&quot;text&quot;:&quot;n&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Logger/ConsoleLogger.ts&quot;,&quot;line&quot;:57,&quot;character&quot;:9,&quot;text&quot;:&quot;n&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Logger/ConsoleLogger.ts&quot;,&quot;line&quot;:57,&quot;character&quot;:24,&quot;text&quot;:&quot;n&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Logger/ConsoleLogger.ts&quot;,&quot;line&quot;:57,&quot;character&quot;:33,&quot;text&quot;:&quot;n&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Logger/ConsoleLogger.ts&quot;,&quot;line&quot;:88,&quot;character&quot;:20,&quot;text&quot;:&quot;LOG_LEVEL&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Logger/ConsoleLogger.ts&quot;,&quot;line&quot;:89,&quot;character&quot;:37,&quot;text&quot;:&quot;LOG_LEVEL&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Logger/ConsoleLogger.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:60,&quot;text&quot;:&quot;LOG_LEVEL&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Logger/ConsoleLogger.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:37,&quot;text&quot;:&quot;LOG_LEVEL&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Logger/ConsoleLogger.ts&quot;,&quot;line&quot;:101,&quot;character&quot;:6,&quot;text&quot;:&quot;log&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Logger/ConsoleLogger.ts&quot;,&quot;line&quot;:103,&quot;character&quot;:3,&quot;text&quot;:&quot;log&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Logger/ConsoleLogger.ts&quot;,&quot;line&quot;:106,&quot;character&quot;:3,&quot;text&quot;:&quot;log&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Logger/ConsoleLogger.ts&quot;,&quot;line&quot;:114,&quot;character&quot;:3,&quot;text&quot;:&quot;log&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Logger/ConsoleLogger.ts&quot;,&quot;line&quot;:117,&quot;character&quot;:3,&quot;text&quot;:&quot;log&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Logger/ConsoleLogger.ts&quot;,&quot;line&quot;:124,&quot;character&quot;:3,&quot;text&quot;:&quot;log&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Logger/ConsoleLogger.ts&quot;,&quot;line&quot;:127,&quot;character&quot;:3,&quot;text&quot;:&quot;log&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:20 GMT</p>
+    </body>
+  </html>
+  

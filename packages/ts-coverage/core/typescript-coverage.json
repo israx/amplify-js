@@ -1,0 +1,9515 @@
+{
+  "fileCounts": {},
+  "anys": [
+    {
+      "file": "lib/Logger/ConsoleLogger.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "_pluggables",
+      "kind": 1
+    },
+    {
+      "file": "lib/Logger/ConsoleLogger.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib/Logger/ConsoleLogger.d.ts",
+      "line": 23,
+      "character": 11,
+      "text": "LOG_LEVEL",
+      "kind": 1
+    },
+    {
+      "file": "lib/Logger/ConsoleLogger.d.ts",
+      "line": 24,
+      "character": 13,
+      "text": "n",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 2,
+      "character": 12,
+      "text": "_components",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "_modules",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 5,
+      "character": 4,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 6,
+      "character": 4,
+      "text": "Analytics",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 7,
+      "character": 4,
+      "text": "API",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 8,
+      "character": 4,
+      "text": "Credentials",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 9,
+      "character": 4,
+      "text": "Storage",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 10,
+      "character": 4,
+      "text": "I18n",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 11,
+      "character": 4,
+      "text": "Cache",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 12,
+      "character": 4,
+      "text": "PubSub",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 13,
+      "character": 4,
+      "text": "Interactions",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 14,
+      "character": 4,
+      "text": "Pushnotification",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 15,
+      "character": 4,
+      "text": "UI",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 16,
+      "character": 4,
+      "text": "XR",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 17,
+      "character": 4,
+      "text": "Predictions",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 18,
+      "character": 4,
+      "text": "DataStore",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 19,
+      "character": 4,
+      "text": "Geo",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 21,
+      "character": 4,
+      "text": "ServiceWorker",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 22,
+      "character": 13,
+      "text": "comp",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 23,
+      "character": 14,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib/Amplify.d.ts",
+      "line": 24,
+      "character": 17,
+      "text": "pluggable",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 2,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "_credentials",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "_credentials_source",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "_gettingCredPromise",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 6,
+      "character": 12,
+      "text": "_refreshHandlers",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 7,
+      "character": 12,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "_identityId",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 10,
+      "character": 12,
+      "text": "_nextCredentialsRefresh",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 11,
+      "character": 4,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 12,
+      "character": 16,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 15,
+      "character": 14,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "_getCognitoIdentityIdStorageKey",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 18,
+      "character": 12,
+      "text": "_pickupCredentials",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 19,
+      "character": 12,
+      "text": "_keepAlive",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 20,
+      "character": 26,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 21,
+      "character": 12,
+      "text": "_providerRefreshWithRetry",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 22,
+      "character": 12,
+      "text": "_isExpired",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 23,
+      "character": 12,
+      "text": "_isPastTTL",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "_setCredentialsForGuest",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "_setCredentialsFromFederation",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 26,
+      "character": 12,
+      "text": "_setCredentialsFromSession",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 27,
+      "character": 12,
+      "text": "_loadCredentials",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 28,
+      "character": 8,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 28,
+      "character": 21,
+      "text": "source",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 30,
+      "character": 12,
+      "text": "_getGuestIdentityId",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 31,
+      "character": 12,
+      "text": "_setGuestIdentityId",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 32,
+      "character": 12,
+      "text": "_removeGuestIdentityId",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 38,
+      "character": 10,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 39,
+      "character": 8,
+      "text": "accessKeyId",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 40,
+      "character": 8,
+      "text": "sessionToken",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 41,
+      "character": 8,
+      "text": "secretAccessKey",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 42,
+      "character": 8,
+      "text": "identityId",
+      "kind": 1
+    },
+    {
+      "file": "lib/Credentials.d.ts",
+      "line": 43,
+      "character": 8,
+      "text": "authenticated",
+      "kind": 1
+    },
+    {
+      "file": "lib/Hub.d.ts",
+      "line": 8,
+      "character": 4,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "lib/Hub.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "listeners",
+      "kind": 1
+    },
+    {
+      "file": "lib/Hub.d.ts",
+      "line": 18,
+      "character": 12,
+      "text": "patterns",
+      "kind": 1
+    },
+    {
+      "file": "lib/Hub.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "_toListeners",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 1,
+      "character": 35,
+      "text": "list",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 1,
+      "character": 46,
+      "text": "field",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 1,
+      "character": 58,
+      "text": "dir",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 2,
+      "character": 44,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 2,
+      "character": 54,
+      "text": "less",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 3,
+      "character": 45,
+      "text": "filename",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 4,
+      "character": 34,
+      "text": "contentType",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 6,
+      "character": 43,
+      "text": "promise",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 18,
+      "character": 46,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 25,
+      "character": 46,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 31,
+      "character": 38,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 37,
+      "character": 25,
+      "text": "list",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 37,
+      "character": 36,
+      "text": "field",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 37,
+      "character": 48,
+      "text": "dir",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 38,
+      "character": 34,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 38,
+      "character": 44,
+      "text": "less",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 39,
+      "character": 35,
+      "text": "filename",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 40,
+      "character": 24,
+      "text": "contentType",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 42,
+      "character": 33,
+      "text": "promise",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 48,
+      "character": 36,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 49,
+      "character": 36,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/JS.d.ts",
+      "line": 50,
+      "character": 28,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib/Parser.d.ts",
+      "line": 1,
+      "character": 44,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib/Parser.d.ts",
+      "line": 6,
+      "character": 34,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib/Signer.d.ts",
+      "line": 37,
+      "character": 16,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "lib/Signer.d.ts",
+      "line": 37,
+      "character": 30,
+      "text": "access_info",
+      "kind": 1
+    },
+    {
+      "file": "lib/Signer.d.ts",
+      "line": 37,
+      "character": 48,
+      "text": "service_info",
+      "kind": 1
+    },
+    {
+      "file": "lib/Signer.d.ts",
+      "line": 38,
+      "character": 38,
+      "text": "accessInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib/Signer.d.ts",
+      "line": 38,
+      "character": 55,
+      "text": "serviceInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib/Signer.d.ts",
+      "line": 39,
+      "character": 19,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "lib/Signer.d.ts",
+      "line": 39,
+      "character": 33,
+      "text": "accessInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib/Signer.d.ts",
+      "line": 39,
+      "character": 50,
+      "text": "serviceInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/index.d.ts",
+      "line": 10,
+      "character": 21,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/index.d.ts",
+      "line": 23,
+      "character": 23,
+      "text": "lang",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/index.d.ts",
+      "line": 30,
+      "character": 15,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/index.d.ts",
+      "line": 30,
+      "character": 25,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/index.d.ts",
+      "line": 38,
+      "character": 38,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/index.d.ts",
+      "line": 38,
+      "character": 53,
+      "text": "vocabularies",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/index.d.ts",
+      "line": 46,
+      "character": 27,
+      "text": "vocabularies",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 6,
+      "character": 12,
+      "text": "_dataTracker",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 7,
+      "character": 12,
+      "text": "_currentLogBatch",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "_timer",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "_nextSequenceToken",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 21,
+      "character": 12,
+      "text": "_validateLogGroupExistsAndCreate",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 22,
+      "character": 12,
+      "text": "_validateLogStreamExists",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 23,
+      "character": 12,
+      "text": "_sendLogEvents",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "_initCloudWatchLogs",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "_ensureCredentials",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 26,
+      "character": 12,
+      "text": "_getNextSequenceToken",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 27,
+      "character": 12,
+      "text": "_safeUploadLogEvents",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 28,
+      "character": 12,
+      "text": "_getBufferedBatchOfLogs",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 29,
+      "character": 12,
+      "text": "_getNewSequenceTokenAndSubmit",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 30,
+      "character": 12,
+      "text": "_initiateLogPushInterval",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 31,
+      "character": 12,
+      "text": "_getDocUploadPermissibility",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuthHelper/GoogleOAuth.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "_refreshGoogleTokenImpl",
+      "kind": 1
+    },
+    {
+      "file": "lib/OAuthHelper/FacebookOAuth.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "_refreshFacebookTokenImpl",
+      "kind": 1
+    },
+    {
+      "file": "lib/RNComponents/index.d.ts",
+      "line": 2,
+      "character": 23,
+      "text": "action",
+      "kind": 1
+    },
+    {
+      "file": "lib/RNComponents/index.d.ts",
+      "line": 2,
+      "character": 36,
+      "text": "handler",
+      "kind": 1
+    },
+    {
+      "file": "lib/RNComponents/index.d.ts",
+      "line": 4,
+      "character": 21,
+      "text": "AsyncStorage",
+      "kind": 1
+    },
+    {
+      "file": "lib/ServiceWorker/ServiceWorker.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "_serviceWorker",
+      "kind": 1
+    },
+    {
+      "file": "lib/ServiceWorker/ServiceWorker.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "_registration",
+      "kind": 1
+    },
+    {
+      "file": "lib/ServiceWorker/ServiceWorker.d.ts",
+      "line": 15,
+      "character": 12,
+      "text": "_publicKey",
+      "kind": 1
+    },
+    {
+      "file": "lib/ServiceWorker/ServiceWorker.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "_subscription",
+      "kind": 1
+    },
+    {
+      "file": "lib/ServiceWorker/ServiceWorker.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "_logger",
+      "kind": 1
+    },
+    {
+      "file": "lib/ServiceWorker/ServiceWorker.d.ts",
+      "line": 52,
+      "character": 12,
+      "text": "_urlB64ToUint8Array",
+      "kind": 1
+    },
+    {
+      "file": "lib/StorageHelper/index.d.ts",
+      "line": 8,
+      "character": 32,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "lib/StorageHelper/index.d.ts",
+      "line": 29,
+      "character": 12,
+      "text": "storageWindow",
+      "kind": 1
+    },
+    {
+      "file": "lib/UniversalStorage/index.d.ts",
+      "line": 3,
+      "character": 4,
+      "text": "req",
+      "kind": 1
+    },
+    {
+      "file": "lib/Platform/index.d.ts",
+      "line": 3,
+      "character": 4,
+      "text": "navigator",
+      "kind": 1
+    },
+    {
+      "file": "lib/Util/Mutex.d.ts",
+      "line": 40,
+      "character": 12,
+      "text": "_dispatchNext",
+      "kind": 1
+    },
+    {
+      "file": "lib/Util/Mutex.d.ts",
+      "line": 41,
+      "character": 12,
+      "text": "_queue",
+      "kind": 1
+    },
+    {
+      "file": "lib/Util/Mutex.d.ts",
+      "line": 42,
+      "character": 12,
+      "text": "_pending",
+      "kind": 1
+    },
+    {
+      "file": "lib/Util/Reachability.d.ts",
+      "line": 5,
+      "character": 19,
+      "text": "_observers",
+      "kind": 1
+    },
+    {
+      "file": "lib/Util/Reachability.d.ts",
+      "line": 6,
+      "character": 19,
+      "text": "netInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib/Util/Reachability.d.ts",
+      "line": 7,
+      "character": 19,
+      "text": "_observerOverride",
+      "kind": 1
+    },
+    {
+      "file": "lib/Util/Reachability.d.ts",
+      "line": 10,
+      "character": 19,
+      "text": "netInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib/Util/DateUtils.d.ts",
+      "line": 6,
+      "character": 21,
+      "text": "DateUtils",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Logger/ConsoleLogger.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "_pluggables",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Logger/ConsoleLogger.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Logger/ConsoleLogger.d.ts",
+      "line": 23,
+      "character": 11,
+      "text": "LOG_LEVEL",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Logger/ConsoleLogger.d.ts",
+      "line": 24,
+      "character": 13,
+      "text": "n",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 2,
+      "character": 12,
+      "text": "_components",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "_modules",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 5,
+      "character": 4,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 6,
+      "character": 4,
+      "text": "Analytics",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 7,
+      "character": 4,
+      "text": "API",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 8,
+      "character": 4,
+      "text": "Credentials",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 9,
+      "character": 4,
+      "text": "Storage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 10,
+      "character": 4,
+      "text": "I18n",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 11,
+      "character": 4,
+      "text": "Cache",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 12,
+      "character": 4,
+      "text": "PubSub",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 13,
+      "character": 4,
+      "text": "Interactions",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 14,
+      "character": 4,
+      "text": "Pushnotification",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 15,
+      "character": 4,
+      "text": "UI",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 16,
+      "character": 4,
+      "text": "XR",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 17,
+      "character": 4,
+      "text": "Predictions",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 18,
+      "character": 4,
+      "text": "DataStore",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 19,
+      "character": 4,
+      "text": "Geo",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 21,
+      "character": 4,
+      "text": "ServiceWorker",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 22,
+      "character": 13,
+      "text": "comp",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 23,
+      "character": 14,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Amplify.d.ts",
+      "line": 24,
+      "character": 17,
+      "text": "pluggable",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 2,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "_credentials",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "_credentials_source",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "_gettingCredPromise",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 6,
+      "character": 12,
+      "text": "_refreshHandlers",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 7,
+      "character": 12,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "_identityId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 10,
+      "character": 12,
+      "text": "_nextCredentialsRefresh",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 11,
+      "character": 4,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 12,
+      "character": 16,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 15,
+      "character": 14,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "_getCognitoIdentityIdStorageKey",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 18,
+      "character": 12,
+      "text": "_pickupCredentials",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 19,
+      "character": 12,
+      "text": "_keepAlive",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 20,
+      "character": 26,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 21,
+      "character": 12,
+      "text": "_providerRefreshWithRetry",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 22,
+      "character": 12,
+      "text": "_isExpired",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 23,
+      "character": 12,
+      "text": "_isPastTTL",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "_setCredentialsForGuest",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "_setCredentialsFromFederation",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 26,
+      "character": 12,
+      "text": "_setCredentialsFromSession",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 27,
+      "character": 12,
+      "text": "_loadCredentials",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 28,
+      "character": 8,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 28,
+      "character": 21,
+      "text": "source",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 30,
+      "character": 12,
+      "text": "_getGuestIdentityId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 31,
+      "character": 12,
+      "text": "_setGuestIdentityId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 32,
+      "character": 12,
+      "text": "_removeGuestIdentityId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 38,
+      "character": 10,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 39,
+      "character": 8,
+      "text": "accessKeyId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 40,
+      "character": 8,
+      "text": "sessionToken",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 41,
+      "character": 8,
+      "text": "secretAccessKey",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 42,
+      "character": 8,
+      "text": "identityId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Credentials.d.ts",
+      "line": 43,
+      "character": 8,
+      "text": "authenticated",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Hub.d.ts",
+      "line": 8,
+      "character": 4,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Hub.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "listeners",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Hub.d.ts",
+      "line": 18,
+      "character": 12,
+      "text": "patterns",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Hub.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "_toListeners",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 1,
+      "character": 35,
+      "text": "list",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 1,
+      "character": 46,
+      "text": "field",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 1,
+      "character": 58,
+      "text": "dir",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 2,
+      "character": 44,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 2,
+      "character": 54,
+      "text": "less",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 3,
+      "character": 45,
+      "text": "filename",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 4,
+      "character": 34,
+      "text": "contentType",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 6,
+      "character": 43,
+      "text": "promise",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 18,
+      "character": 46,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 25,
+      "character": 46,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 31,
+      "character": 38,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 37,
+      "character": 25,
+      "text": "list",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 37,
+      "character": 36,
+      "text": "field",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 37,
+      "character": 48,
+      "text": "dir",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 38,
+      "character": 34,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 38,
+      "character": 44,
+      "text": "less",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 39,
+      "character": 35,
+      "text": "filename",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 40,
+      "character": 24,
+      "text": "contentType",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 42,
+      "character": 33,
+      "text": "promise",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 48,
+      "character": 36,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 49,
+      "character": 36,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/JS.d.ts",
+      "line": 50,
+      "character": 28,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Parser.d.ts",
+      "line": 1,
+      "character": 44,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Parser.d.ts",
+      "line": 6,
+      "character": 34,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Signer.d.ts",
+      "line": 37,
+      "character": 16,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Signer.d.ts",
+      "line": 37,
+      "character": 30,
+      "text": "access_info",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Signer.d.ts",
+      "line": 37,
+      "character": 48,
+      "text": "service_info",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Signer.d.ts",
+      "line": 38,
+      "character": 38,
+      "text": "accessInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Signer.d.ts",
+      "line": 38,
+      "character": 55,
+      "text": "serviceInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Signer.d.ts",
+      "line": 39,
+      "character": 19,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Signer.d.ts",
+      "line": 39,
+      "character": 33,
+      "text": "accessInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Signer.d.ts",
+      "line": 39,
+      "character": 50,
+      "text": "serviceInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/index.d.ts",
+      "line": 10,
+      "character": 21,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/index.d.ts",
+      "line": 23,
+      "character": 23,
+      "text": "lang",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/index.d.ts",
+      "line": 30,
+      "character": 15,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/index.d.ts",
+      "line": 30,
+      "character": 25,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/index.d.ts",
+      "line": 38,
+      "character": 38,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/index.d.ts",
+      "line": 38,
+      "character": 53,
+      "text": "vocabularies",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/index.d.ts",
+      "line": 46,
+      "character": 27,
+      "text": "vocabularies",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 5,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 6,
+      "character": 12,
+      "text": "_dataTracker",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 7,
+      "character": 12,
+      "text": "_currentLogBatch",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "_timer",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "_nextSequenceToken",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 21,
+      "character": 12,
+      "text": "_validateLogGroupExistsAndCreate",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 22,
+      "character": 12,
+      "text": "_validateLogStreamExists",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 23,
+      "character": 12,
+      "text": "_sendLogEvents",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "_initCloudWatchLogs",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "_ensureCredentials",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 26,
+      "character": 12,
+      "text": "_getNextSequenceToken",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 27,
+      "character": 12,
+      "text": "_safeUploadLogEvents",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 28,
+      "character": 12,
+      "text": "_getBufferedBatchOfLogs",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 29,
+      "character": 12,
+      "text": "_getNewSequenceTokenAndSubmit",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 30,
+      "character": 12,
+      "text": "_initiateLogPushInterval",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSCloudWatchProvider.d.ts",
+      "line": 31,
+      "character": 12,
+      "text": "_getDocUploadPermissibility",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuthHelper/GoogleOAuth.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "_refreshGoogleTokenImpl",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/OAuthHelper/FacebookOAuth.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "_refreshFacebookTokenImpl",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/RNComponents/index.d.ts",
+      "line": 2,
+      "character": 23,
+      "text": "action",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/RNComponents/index.d.ts",
+      "line": 2,
+      "character": 36,
+      "text": "handler",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/RNComponents/index.d.ts",
+      "line": 4,
+      "character": 21,
+      "text": "AsyncStorage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/ServiceWorker/ServiceWorker.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "_serviceWorker",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/ServiceWorker/ServiceWorker.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "_registration",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/ServiceWorker/ServiceWorker.d.ts",
+      "line": 15,
+      "character": 12,
+      "text": "_publicKey",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/ServiceWorker/ServiceWorker.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "_subscription",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/ServiceWorker/ServiceWorker.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "_logger",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/ServiceWorker/ServiceWorker.d.ts",
+      "line": 52,
+      "character": 12,
+      "text": "_urlB64ToUint8Array",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/StorageHelper/index.d.ts",
+      "line": 8,
+      "character": 32,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/StorageHelper/index.d.ts",
+      "line": 29,
+      "character": 12,
+      "text": "storageWindow",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/UniversalStorage/index.d.ts",
+      "line": 3,
+      "character": 4,
+      "text": "req",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Platform/index.d.ts",
+      "line": 3,
+      "character": 4,
+      "text": "navigator",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Util/Mutex.d.ts",
+      "line": 40,
+      "character": 12,
+      "text": "_dispatchNext",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Util/Mutex.d.ts",
+      "line": 41,
+      "character": 12,
+      "text": "_queue",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Util/Mutex.d.ts",
+      "line": 42,
+      "character": 12,
+      "text": "_pending",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Util/Reachability.d.ts",
+      "line": 5,
+      "character": 19,
+      "text": "_observers",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Util/Reachability.d.ts",
+      "line": 6,
+      "character": 19,
+      "text": "netInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Util/Reachability.d.ts",
+      "line": 7,
+      "character": 19,
+      "text": "_observerOverride",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Util/Reachability.d.ts",
+      "line": 10,
+      "character": 19,
+      "text": "netInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Util/DateUtils.d.ts",
+      "line": 6,
+      "character": 21,
+      "text": "DateUtils",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/types.d.ts",
+      "line": 1,
+      "character": 4,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/I18n.d.ts",
+      "line": 12,
+      "character": 4,
+      "text": "_lang",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/I18n.d.ts",
+      "line": 35,
+      "character": 8,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/I18n.d.ts",
+      "line": 35,
+      "character": 18,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/I18n.d.ts",
+      "line": 43,
+      "character": 18,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/I18n.d.ts",
+      "line": 43,
+      "character": 28,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/I18n.d.ts",
+      "line": 43,
+      "character": 43,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/I18n.d.ts",
+      "line": 50,
+      "character": 31,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/I18n.d.ts",
+      "line": 50,
+      "character": 46,
+      "text": "vocabularies",
+      "kind": 1
+    },
+    {
+      "file": "lib/I18n/I18n.d.ts",
+      "line": 57,
+      "character": 20,
+      "text": "vocabularies",
+      "kind": 1
+    },
+    {
+      "file": "lib/StorageHelper/reactnative.d.ts",
+      "line": 1,
+      "character": 12,
+      "text": "storageWindow",
+      "kind": 1
+    },
+    {
+      "file": "lib/Util/Reachability.native.d.ts",
+      "line": 5,
+      "character": 19,
+      "text": "netInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib/Util/Reachability.native.d.ts",
+      "line": 8,
+      "character": 19,
+      "text": "netInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/types.d.ts",
+      "line": 1,
+      "character": 4,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/I18n.d.ts",
+      "line": 12,
+      "character": 4,
+      "text": "_lang",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/I18n.d.ts",
+      "line": 35,
+      "character": 8,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/I18n.d.ts",
+      "line": 35,
+      "character": 18,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/I18n.d.ts",
+      "line": 43,
+      "character": 18,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/I18n.d.ts",
+      "line": 43,
+      "character": 28,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/I18n.d.ts",
+      "line": 43,
+      "character": 43,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/I18n.d.ts",
+      "line": 50,
+      "character": 31,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/I18n.d.ts",
+      "line": 50,
+      "character": 46,
+      "text": "vocabularies",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/I18n/I18n.d.ts",
+      "line": 57,
+      "character": 20,
+      "text": "vocabularies",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/StorageHelper/reactnative.d.ts",
+      "line": 1,
+      "character": 12,
+      "text": "storageWindow",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Util/Reachability.native.d.ts",
+      "line": 5,
+      "character": 19,
+      "text": "netInfo",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Util/Reachability.native.d.ts",
+      "line": 8,
+      "character": 19,
+      "text": "netInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Logger/ConsoleLogger.ts",
+      "line": 54,
+      "character": 8,
+      "text": "LOG_LEVEL",
+      "kind": 1
+    },
+    {
+      "file": "src/Logger/ConsoleLogger.ts",
+      "line": 56,
+      "character": 10,
+      "text": "n",
+      "kind": 1
+    },
+    {
+      "file": "src/Logger/ConsoleLogger.ts",
+      "line": 57,
+      "character": 9,
+      "text": "n",
+      "kind": 1
+    },
+    {
+      "file": "src/Logger/ConsoleLogger.ts",
+      "line": 57,
+      "character": 24,
+      "text": "n",
+      "kind": 1
+    },
+    {
+      "file": "src/Logger/ConsoleLogger.ts",
+      "line": 57,
+      "character": 33,
+      "text": "n",
+      "kind": 1
+    },
+    {
+      "file": "src/Logger/ConsoleLogger.ts",
+      "line": 88,
+      "character": 20,
+      "text": "LOG_LEVEL",
+      "kind": 1
+    },
+    {
+      "file": "src/Logger/ConsoleLogger.ts",
+      "line": 89,
+      "character": 37,
+      "text": "LOG_LEVEL",
+      "kind": 1
+    },
+    {
+      "file": "src/Logger/ConsoleLogger.ts",
+      "line": 91,
+      "character": 60,
+      "text": "LOG_LEVEL",
+      "kind": 1
+    },
+    {
+      "file": "src/Logger/ConsoleLogger.ts",
+      "line": 92,
+      "character": 37,
+      "text": "LOG_LEVEL",
+      "kind": 1
+    },
+    {
+      "file": "src/Logger/ConsoleLogger.ts",
+      "line": 101,
+      "character": 6,
+      "text": "log",
+      "kind": 1
+    },
+    {
+      "file": "src/Logger/ConsoleLogger.ts",
+      "line": 103,
+      "character": 3,
+      "text": "log",
+      "kind": 1
+    },
+    {
+      "file": "src/Logger/ConsoleLogger.ts",
+      "line": 106,
+      "character": 3,
+      "text": "log",
+      "kind": 1
+    },
+    {
+      "file": "src/Logger/ConsoleLogger.ts",
+      "line": 114,
+      "character": 3,
+      "text": "log",
+      "kind": 1
+    },
+    {
+      "file": "src/Logger/ConsoleLogger.ts",
+      "line": 117,
+      "character": 3,
+      "text": "log",
+      "kind": 1
+    },
+    {
+      "file": "src/Logger/ConsoleLogger.ts",
+      "line": 124,
+      "character": 3,
+      "text": "log",
+      "kind": 1
+    },
+    {
+      "file": "src/Logger/ConsoleLogger.ts",
+      "line": 127,
+      "character": 3,
+      "text": "log",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 14,
+      "character": 1,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 15,
+      "character": 1,
+      "text": "Analytics",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 16,
+      "character": 1,
+      "text": "API",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 17,
+      "character": 1,
+      "text": "Credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 18,
+      "character": 1,
+      "text": "Storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 19,
+      "character": 1,
+      "text": "I18n",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 20,
+      "character": 1,
+      "text": "Cache",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 21,
+      "character": 1,
+      "text": "PubSub",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 22,
+      "character": 1,
+      "text": "Interactions",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 23,
+      "character": 1,
+      "text": "Pushnotification",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 24,
+      "character": 1,
+      "text": "UI",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 25,
+      "character": 1,
+      "text": "XR",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 26,
+      "character": 1,
+      "text": "Predictions",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 27,
+      "character": 1,
+      "text": "DataStore",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 28,
+      "character": 1,
+      "text": "Geo",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 31,
+      "character": 1,
+      "text": "ServiceWorker",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 33,
+      "character": 10,
+      "text": "comp",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 34,
+      "character": 50,
+      "text": "comp",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 35,
+      "character": 24,
+      "text": "comp",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 36,
+      "character": 13,
+      "text": "comp",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 36,
+      "character": 18,
+      "text": "getModuleName",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 37,
+      "character": 17,
+      "text": "comp",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 37,
+      "character": 22,
+      "text": "getModuleName",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 38,
+      "character": 8,
+      "text": "comp",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 38,
+      "character": 13,
+      "text": "getModuleName",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 40,
+      "character": 57,
+      "text": "comp",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 49,
+      "character": 2,
+      "text": "comp",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 49,
+      "character": 7,
+      "text": "configure",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 52,
+      "character": 11,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 53,
+      "character": 7,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 55,
+      "character": 45,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 71,
+      "character": 23,
+      "text": "comp",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 72,
+      "character": 3,
+      "text": "comp",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 72,
+      "character": 8,
+      "text": "configure",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 78,
+      "character": 14,
+      "text": "pluggable",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 80,
+      "character": 3,
+      "text": "pluggable",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 81,
+      "character": 3,
+      "text": "pluggable",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 82,
+      "character": 10,
+      "text": "pluggable",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 84,
+      "character": 24,
+      "text": "comp",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 86,
+      "character": 5,
+      "text": "comp",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 87,
+      "character": 12,
+      "text": "comp",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 89,
+      "character": 5,
+      "text": "comp",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 89,
+      "character": 10,
+      "text": "addPluggable",
+      "kind": 1
+    },
+    {
+      "file": "src/Amplify.ts",
+      "line": 89,
+      "character": 23,
+      "text": "pluggable",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/index.ts",
+      "line": 23,
+      "character": 29,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/index.ts",
+      "line": 60,
+      "character": 9,
+      "text": "storageWindow",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/index.ts",
+      "line": 67,
+      "character": 8,
+      "text": "storageWindow",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/index.ts",
+      "line": 68,
+      "character": 8,
+      "text": "storageWindow",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/index.ts",
+      "line": 68,
+      "character": 22,
+      "text": "setItem",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/index.ts",
+      "line": 69,
+      "character": 8,
+      "text": "storageWindow",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/index.ts",
+      "line": 69,
+      "character": 22,
+      "text": "removeItem",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/index.ts",
+      "line": 71,
+      "character": 8,
+      "text": "storageWindow",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/index.ts",
+      "line": 70,
+      "character": 11,
+      "text": "exception",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/index.ts",
+      "line": 80,
+      "character": 14,
+      "text": "storageWindow",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 59,
+      "character": 28,
+      "text": "list",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 59,
+      "character": 34,
+      "text": "field",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 59,
+      "character": 41,
+      "text": "dir",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 60,
+      "character": 6,
+      "text": "list",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 60,
+      "character": 15,
+      "text": "list",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 60,
+      "character": 20,
+      "text": "sort",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 64,
+      "character": 14,
+      "text": "dir",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 64,
+      "character": 21,
+      "text": "dir",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 65,
+      "character": 1,
+      "text": "list",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 65,
+      "character": 6,
+      "text": "sort",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 65,
+      "character": 20,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 65,
+      "character": 23,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 66,
+      "character": 8,
+      "text": "a_val",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 66,
+      "character": 16,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 66,
+      "character": 18,
+      "text": "field",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 67,
+      "character": 8,
+      "text": "b_val",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 67,
+      "character": 16,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 67,
+      "character": 18,
+      "text": "field",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 69,
+      "character": 13,
+      "text": "b_val",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 70,
+      "character": 17,
+      "text": "a_val",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 73,
+      "character": 13,
+      "text": "a_val",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 77,
+      "character": 6,
+      "text": "a_val",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 77,
+      "character": 14,
+      "text": "b_val",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 80,
+      "character": 6,
+      "text": "a_val",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 80,
+      "character": 14,
+      "text": "b_val",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 90,
+      "character": 37,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 90,
+      "character": 42,
+      "text": "less",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 91,
+      "character": 7,
+      "text": "ret",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 91,
+      "character": 31,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 92,
+      "character": 5,
+      "text": "less",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 93,
+      "character": 13,
+      "text": "less",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 94,
+      "character": 10,
+      "text": "ret",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 96,
+      "character": 3,
+      "text": "less",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 96,
+      "character": 8,
+      "text": "forEach",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 96,
+      "character": 16,
+      "text": "attr",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 97,
+      "character": 11,
+      "text": "ret",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 97,
+      "character": 15,
+      "text": "attr",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 102,
+      "character": 8,
+      "text": "ret",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 106,
+      "character": 1,
+      "text": "filename",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 109,
+      "character": 7,
+      "text": "name",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 109,
+      "character": 14,
+      "text": "filename",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 109,
+      "character": 23,
+      "text": "toLowerCase",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 111,
+      "character": 42,
+      "text": "name",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 111,
+      "character": 47,
+      "text": "endsWith",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 115,
+      "character": 26,
+      "text": "contentType",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 116,
+      "character": 7,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 116,
+      "character": 14,
+      "text": "contentType",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 116,
+      "character": 26,
+      "text": "toLowerCase",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 117,
+      "character": 5,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 117,
+      "character": 10,
+      "text": "startsWith",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 121,
+      "character": 25,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 122,
+      "character": 24,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 123,
+      "character": 23,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 137,
+      "character": 35,
+      "text": "promise",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 138,
+      "character": 5,
+      "text": "promise",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 138,
+      "character": 13,
+      "text": "isResolved",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 138,
+      "character": 32,
+      "text": "promise",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 144,
+      "character": 7,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 144,
+      "character": 16,
+      "text": "promise",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 144,
+      "character": 24,
+      "text": "then",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 145,
+      "character": 2,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 148,
+      "character": 10,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 150,
+      "character": 2,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 153,
+      "character": 9,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 157,
+      "character": 1,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 157,
+      "character": 8,
+      "text": "isFullfilled",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 158,
+      "character": 1,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 158,
+      "character": 8,
+      "text": "isPending",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 159,
+      "character": 1,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 159,
+      "character": 8,
+      "text": "isRejected",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 161,
+      "character": 8,
+      "text": "result",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 168,
+      "character": 31,
+      "text": "WorkerGlobalScope",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 169,
+      "character": 27,
+      "text": "WorkerGlobalScope",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 170,
+      "character": 30,
+      "text": "WorkerGlobalScope",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 194,
+      "character": 1,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 198,
+      "character": 21,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 198,
+      "character": 34,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 201,
+      "character": 19,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 202,
+      "character": 6,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 208,
+      "character": 6,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 210,
+      "character": 6,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 227,
+      "character": 1,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 231,
+      "character": 21,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 231,
+      "character": 34,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 234,
+      "character": 19,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 235,
+      "character": 6,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 241,
+      "character": 6,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 243,
+      "character": 6,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 257,
+      "character": 30,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 259,
+      "character": 2,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 260,
+      "character": 4,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 261,
+      "character": 4,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 262,
+      "character": 4,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 263,
+      "character": 4,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/JS.ts",
+      "line": 264,
+      "character": 4,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Retry.ts",
+      "line": 11,
+      "character": 29,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Retry.ts",
+      "line": 13,
+      "character": 8,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Retry.ts",
+      "line": 13,
+      "character": 15,
+      "text": "obj",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Retry.ts",
+      "line": 38,
+      "character": 51,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Retry.ts",
+      "line": 40,
+      "character": 26,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Retry.ts",
+      "line": 52,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Retry.ts",
+      "line": 37,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Mutex.ts",
+      "line": 67,
+      "character": 10,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Mutex.ts",
+      "line": 65,
+      "character": 12,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Mutex.ts",
+      "line": 72,
+      "character": 4,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Mutex.ts",
+      "line": 74,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Reachability.ts",
+      "line": 12,
+      "character": 16,
+      "text": "netInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Reachability.ts",
+      "line": 56,
+      "character": 16,
+      "text": "netInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 11,
+      "character": 13,
+      "text": "DateUtils",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 18,
+      "character": 6,
+      "text": "DateUtils",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 18,
+      "character": 16,
+      "text": "clockOffset",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 19,
+      "character": 42,
+      "text": "DateUtils",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 19,
+      "character": 52,
+      "text": "clockOffset",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 29,
+      "character": 9,
+      "text": "DateUtils",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 29,
+      "character": 19,
+      "text": "clockOffset",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 32,
+      "character": 38,
+      "text": "DateUtils",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 32,
+      "character": 48,
+      "text": "getDateWithClockOffset",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 57,
+      "character": 27,
+      "text": "DateUtils",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 57,
+      "character": 37,
+      "text": "getDateWithClockOffset",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 57,
+      "character": 62,
+      "text": "getTime",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 62,
+      "character": 18,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 63,
+      "character": 7,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 63,
+      "character": 13,
+      "text": "response",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 63,
+      "character": 26,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 63,
+      "character": 32,
+      "text": "response",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 63,
+      "character": 41,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 67,
+      "character": 10,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 67,
+      "character": 22,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 67,
+      "character": 28,
+      "text": "response",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 71,
+      "character": 4,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 73,
+      "character": 5,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 73,
+      "character": 13,
+      "text": "date",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 73,
+      "character": 21,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 73,
+      "character": 29,
+      "text": "Date",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 81,
+      "character": 2,
+      "text": "DateUtils",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/DateUtils.ts",
+      "line": 81,
+      "character": 12,
+      "text": "clockOffset",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 23,
+      "character": 7,
+      "text": "ga",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 25,
+      "character": 5,
+      "text": "ga",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 55,
+      "character": 6,
+      "text": "ga",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 57,
+      "character": 3,
+      "text": "ga",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 58,
+      "character": 7,
+      "text": "ga",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 64,
+      "character": 3,
+      "text": "ga",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 64,
+      "character": 6,
+      "text": "getAuthInstance",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 65,
+      "character": 5,
+      "text": "then",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 65,
+      "character": 10,
+      "text": "googleAuth",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 66,
+      "character": 10,
+      "text": "googleAuth",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 71,
+      "character": 11,
+      "text": "googleUser",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 71,
+      "character": 24,
+      "text": "googleAuth",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 71,
+      "character": 35,
+      "text": "currentUser",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 71,
+      "character": 47,
+      "text": "get",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 73,
+      "character": 9,
+      "text": "googleUser",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 73,
+      "character": 20,
+      "text": "isSignedIn",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 75,
+      "character": 6,
+      "text": "googleUser",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 76,
+      "character": 8,
+      "text": "reloadAuthResponse",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 77,
+      "character": 8,
+      "text": "then",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 77,
+      "character": 13,
+      "text": "authResponse",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 78,
+      "character": 16,
+      "text": "id_token",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 78,
+      "character": 26,
+      "text": "expires_at",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 79,
+      "character": 14,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 79,
+      "character": 21,
+      "text": "id_token",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 79,
+      "character": 31,
+      "text": "expires_at",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 81,
+      "character": 8,
+      "text": "catch",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 81,
+      "character": 14,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 82,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 82,
+      "character": 19,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 82,
+      "character": 23,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 97,
+      "character": 5,
+      "text": "catch",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 97,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/GoogleOAuth.ts",
+      "line": 98,
+      "character": 52,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 54,
+      "character": 6,
+      "text": "fb",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 55,
+      "character": 33,
+      "text": "fb",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 56,
+      "character": 7,
+      "text": "fb",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 63,
+      "character": 3,
+      "text": "fb",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 63,
+      "character": 6,
+      "text": "getLoginStatus",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 64,
+      "character": 4,
+      "text": "fbResponse",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 65,
+      "character": 10,
+      "text": "fbResponse",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 65,
+      "character": 25,
+      "text": "fbResponse",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 65,
+      "character": 36,
+      "text": "authResponse",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 73,
+      "character": 12,
+      "text": "response",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 73,
+      "character": 23,
+      "text": "fbResponse",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 73,
+      "character": 34,
+      "text": "authResponse",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 74,
+      "character": 14,
+      "text": "accessToken",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 74,
+      "character": 27,
+      "text": "expiresIn",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 76,
+      "character": 25,
+      "text": "expiresIn",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 77,
+      "character": 11,
+      "text": "accessToken",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 83,
+      "character": 7,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/OAuthHelper/FacebookOAuth.ts",
+      "line": 83,
+      "character": 14,
+      "text": "accessToken",
+      "kind": 1
+    },
+    {
+      "file": "src/Platform/index.ts",
+      "line": 24,
+      "character": 10,
+      "text": "navigator",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 28,
+      "character": 9,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 29,
+      "character": 9,
+      "text": "_credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 30,
+      "character": 9,
+      "text": "_credentials_source",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 31,
+      "character": 9,
+      "text": "_gettingCredPromise",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 33,
+      "character": 9,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 34,
+      "character": 9,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 35,
+      "character": 9,
+      "text": "_identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 39,
+      "character": 1,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 41,
+      "character": 13,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 42,
+      "character": 17,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 52,
+      "character": 14,
+      "text": "_credentials_source",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 55,
+      "character": 18,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 56,
+      "character": 7,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 56,
+      "character": 27,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 58,
+      "character": 7,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 58,
+      "character": 40,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 58,
+      "character": 49,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 59,
+      "character": 10,
+      "text": "refreshHandlers",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 59,
+      "character": 35,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 62,
+      "character": 6,
+      "text": "refreshHandlers",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 69,
+      "character": 7,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 69,
+      "character": 23,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 69,
+      "character": 31,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 71,
+      "character": 12,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 72,
+      "character": 8,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 75,
+      "character": 7,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 76,
+      "character": 18,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 77,
+      "character": 8,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 77,
+      "character": 28,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 80,
+      "character": 14,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 95,
+      "character": 12,
+      "text": "_gettingCredPromise",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 95,
+      "character": 41,
+      "text": "_gettingCredPromise",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 95,
+      "character": 61,
+      "text": "isPending",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 97,
+      "character": 8,
+      "text": "_gettingCredPromise",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 101,
+      "character": 14,
+      "text": "_gettingCredPromise",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 106,
+      "character": 8,
+      "text": "cred",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 106,
+      "character": 20,
+      "text": "_credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 107,
+      "character": 6,
+      "text": "cred",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 107,
+      "character": 31,
+      "text": "cred",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 109,
+      "character": 26,
+      "text": "cred",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 116,
+      "character": 10,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 116,
+      "character": 25,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 118,
+      "character": 7,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 118,
+      "character": 22,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 118,
+      "character": 27,
+      "text": "currentUserCredentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 122,
+      "character": 23,
+      "text": "cred",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 125,
+      "character": 10,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 125,
+      "character": 23,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 125,
+      "character": 28,
+      "text": "currentUserPoolUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 126,
+      "character": 10,
+      "text": "session",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 126,
+      "character": 26,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 126,
+      "character": 31,
+      "text": "currentSession",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 127,
+      "character": 10,
+      "text": "refreshToken",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 127,
+      "character": 25,
+      "text": "session",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 127,
+      "character": 33,
+      "text": "refreshToken",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 129,
+      "character": 5,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 129,
+      "character": 10,
+      "text": "refreshSession",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 129,
+      "character": 25,
+      "text": "refreshToken",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 129,
+      "character": 40,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 129,
+      "character": 45,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 130,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 130,
+      "character": 23,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 136,
+      "character": 63,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 134,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 139,
+      "character": 9,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 139,
+      "character": 14,
+      "text": "currentUserCredentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 142,
+      "character": 30,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 144,
+      "character": 10,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 144,
+      "character": 20,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 144,
+      "character": 26,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 144,
+      "character": 33,
+      "text": "identity_id",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 145,
+      "character": 8,
+      "text": "expires_at",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 148,
+      "character": 2,
+      "text": "expires_at",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 150,
+      "character": 6,
+      "text": "expires_at",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 151,
+      "character": 6,
+      "text": "expires_at",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 155,
+      "character": 6,
+      "text": "expires_at",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 159,
+      "character": 4,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 160,
+      "character": 4,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 161,
+      "character": 4,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 162,
+      "character": 4,
+      "text": "identity_id",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 163,
+      "character": 4,
+      "text": "expires_at",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 168,
+      "character": 26,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 169,
+      "character": 33,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 173,
+      "character": 43,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 174,
+      "character": 5,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 175,
+      "character": 5,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 178,
+      "character": 53,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 185,
+      "character": 37,
+      "text": "refreshHandler",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 185,
+      "character": 53,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 185,
+      "character": 63,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 190,
+      "character": 4,
+      "text": "then",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 190,
+      "character": 9,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 191,
+      "character": 56,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 193,
+      "character": 5,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 194,
+      "character": 5,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 194,
+      "character": 12,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 194,
+      "character": 17,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 195,
+      "character": 5,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 196,
+      "character": 5,
+      "text": "identity_id",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 196,
+      "character": 18,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 196,
+      "character": 23,
+      "text": "identity_id",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 197,
+      "character": 5,
+      "text": "expires_at",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 197,
+      "character": 17,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 197,
+      "character": 22,
+      "text": "expires_at",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 200,
+      "character": 4,
+      "text": "catch",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 200,
+      "character": 10,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 202,
+      "character": 12,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 209,
+      "character": 51,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 210,
+      "character": 67,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 214,
+      "character": 20,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 215,
+      "character": 7,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 219,
+      "character": 49,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 225,
+      "character": 10,
+      "text": "expiration",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 226,
+      "character": 9,
+      "text": "expiration",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 226,
+      "character": 20,
+      "text": "getTime",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 235,
+      "character": 10,
+      "text": "identityPoolId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 235,
+      "character": 26,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 235,
+      "character": 34,
+      "text": "mandatorySignIn",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 235,
+      "character": 59,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 236,
+      "character": 6,
+      "text": "mandatorySignIn",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 242,
+      "character": 7,
+      "text": "identityPoolId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 251,
+      "character": 7,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 258,
+      "character": 26,
+      "text": "_identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 265,
+      "character": 6,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 271,
+      "character": 3,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 285,
+      "character": 9,
+      "text": "_identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 298,
+      "character": 3,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 298,
+      "character": 51,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 299,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 303,
+      "character": 31,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 307,
+      "character": 16,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 311,
+      "character": 5,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 311,
+      "character": 7,
+      "text": "name",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 312,
+      "character": 5,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 312,
+      "character": 7,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 323,
+      "character": 11,
+      "text": "_identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 336,
+      "character": 5,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 336,
+      "character": 53,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 337,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 340,
+      "character": 34,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 342,
+      "character": 12,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 347,
+      "character": 39,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 348,
+      "character": 10,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 348,
+      "character": 20,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 348,
+      "character": 27,
+      "text": "identity_id",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 357,
+      "character": 8,
+      "text": "domain",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 357,
+      "character": 25,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 358,
+      "character": 7,
+      "text": "domain",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 363,
+      "character": 9,
+      "text": "domain",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 365,
+      "character": 10,
+      "text": "identityPoolId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 365,
+      "character": 26,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 365,
+      "character": 42,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 366,
+      "character": 7,
+      "text": "identityPoolId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 370,
+      "character": 7,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 382,
+      "character": 6,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 383,
+      "character": 6,
+      "text": "identity_id",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 389,
+      "character": 3,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 396,
+      "character": 3,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 398,
+      "character": 31,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 398,
+      "character": 63,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 401,
+      "character": 36,
+      "text": "session",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 403,
+      "character": 8,
+      "text": "idToken",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 403,
+      "character": 18,
+      "text": "session",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 403,
+      "character": 26,
+      "text": "getIdToken",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 403,
+      "character": 39,
+      "text": "getJwtToken",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 404,
+      "character": 10,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 404,
+      "character": 18,
+      "text": "userPoolId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 404,
+      "character": 30,
+      "text": "identityPoolId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 404,
+      "character": 54,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 405,
+      "character": 7,
+      "text": "identityPoolId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 409,
+      "character": 7,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 415,
+      "character": 31,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 415,
+      "character": 60,
+      "text": "userPoolId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 434,
+      "character": 7,
+      "text": "generatedOrRetrievedIdentityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 444,
+      "character": 4,
+      "text": "generatedOrRetrievedIdentityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 464,
+      "character": 8,
+      "text": "_identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 486,
+      "character": 56,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 487,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 494,
+      "character": 2,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 495,
+      "character": 2,
+      "text": "source",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 496,
+      "character": 2,
+      "text": "authenticated",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 497,
+      "character": 2,
+      "text": "info",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 501,
+      "character": 3,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 502,
+      "character": 5,
+      "text": "then",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 502,
+      "character": 16,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 503,
+      "character": 51,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 504,
+      "character": 14,
+      "text": "_identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 504,
+      "character": 30,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 504,
+      "character": 42,
+      "text": "identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 505,
+      "character": 6,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 505,
+      "character": 39,
+      "text": "_identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 508,
+      "character": 10,
+      "text": "_credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 508,
+      "character": 25,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 509,
+      "character": 10,
+      "text": "_credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 509,
+      "character": 23,
+      "text": "authenticated",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 509,
+      "character": 39,
+      "text": "authenticated",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 510,
+      "character": 10,
+      "text": "_credentials_source",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 510,
+      "character": 32,
+      "text": "source",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 512,
+      "character": 9,
+      "text": "source",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 513,
+      "character": 12,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 514,
+      "character": 9,
+      "text": "id",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 514,
+      "character": 18,
+      "text": "_credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 514,
+      "character": 31,
+      "text": "identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 515,
+      "character": 7,
+      "text": "info",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 515,
+      "character": 12,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 517,
+      "character": 14,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 517,
+      "character": 24,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 517,
+      "character": 31,
+      "text": "expires_at",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 517,
+      "character": 43,
+      "text": "identity_id",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 519,
+      "character": 12,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 519,
+      "character": 21,
+      "text": "setItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 522,
+      "character": 9,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 523,
+      "character": 9,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 524,
+      "character": 9,
+      "text": "user",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 525,
+      "character": 9,
+      "text": "expires_at",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 526,
+      "character": 9,
+      "text": "identity_id",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 530,
+      "character": 70,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 529,
+      "character": 15,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 533,
+      "character": 9,
+      "text": "source",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 534,
+      "character": 37,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 534,
+      "character": 49,
+      "text": "identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 536,
+      "character": 14,
+      "text": "_credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 539,
+      "character": 5,
+      "text": "catch",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 539,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 540,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 541,
+      "character": 49,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 542,
+      "character": 48,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 543,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 550,
+      "character": 12,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 550,
+      "character": 20,
+      "text": "source",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 551,
+      "character": 6,
+      "text": "source",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 552,
+      "character": 42,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 553,
+      "character": 13,
+      "text": "source",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 554,
+      "character": 45,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 555,
+      "character": 13,
+      "text": "source",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 564,
+      "character": 7,
+      "text": "_credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 565,
+      "character": 7,
+      "text": "_credentials_source",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 567,
+      "character": 7,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 567,
+      "character": 16,
+      "text": "removeItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 572,
+      "character": 10,
+      "text": "identityPoolId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 572,
+      "character": 34,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 574,
+      "character": 14,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 575,
+      "character": 15,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 575,
+      "character": 24,
+      "text": "getItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 579,
+      "character": 61,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 578,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 584,
+      "character": 10,
+      "text": "identityPoolId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 584,
+      "character": 34,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 586,
+      "character": 14,
+      "text": "_storageSync",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 587,
+      "character": 8,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 587,
+      "character": 17,
+      "text": "setItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 592,
+      "character": 52,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 591,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 597,
+      "character": 10,
+      "text": "identityPoolId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 597,
+      "character": 34,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 603,
+      "character": 7,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 603,
+      "character": 16,
+      "text": "removeItem",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 613,
+      "character": 14,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 615,
+      "character": 3,
+      "text": "accessKeyId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 615,
+      "character": 16,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 615,
+      "character": 28,
+      "text": "accessKeyId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 616,
+      "character": 3,
+      "text": "sessionToken",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 616,
+      "character": 17,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 616,
+      "character": 29,
+      "text": "sessionToken",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 617,
+      "character": 3,
+      "text": "secretAccessKey",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 617,
+      "character": 20,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 617,
+      "character": 32,
+      "text": "secretAccessKey",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 618,
+      "character": 3,
+      "text": "identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 618,
+      "character": 15,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 618,
+      "character": 27,
+      "text": "identityId",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 619,
+      "character": 3,
+      "text": "authenticated",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 619,
+      "character": 18,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Credentials.ts",
+      "line": 619,
+      "character": 30,
+      "text": "authenticated",
+      "kind": 1
+    },
+    {
+      "file": "src/Hub.ts",
+      "line": 40,
+      "character": 1,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Hub.ts",
+      "line": 48,
+      "character": 26,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "src/Hub.ts",
+      "line": 91,
+      "character": 24,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "src/Hub.ts",
+      "line": 91,
+      "character": 39,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "src/Hub.ts",
+      "line": 122,
+      "character": 16,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Hub.ts",
+      "line": 121,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Hub.ts",
+      "line": 173,
+      "character": 18,
+      "text": "listener",
+      "kind": 1
+    },
+    {
+      "file": "src/Hub.ts",
+      "line": 176,
+      "character": 5,
+      "text": "listener",
+      "kind": 1
+    },
+    {
+      "file": "src/Hub.ts",
+      "line": 176,
+      "character": 14,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "src/Hub.ts",
+      "line": 178,
+      "character": 18,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Hub.ts",
+      "line": 177,
+      "character": 13,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Hub.ts",
+      "line": 202,
+      "character": 19,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Hub.ts",
+      "line": 201,
+      "character": 14,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 5,
+      "character": 37,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 8,
+      "character": 5,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 11,
+      "character": 4,
+      "text": "appId",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 11,
+      "character": 11,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 12,
+      "character": 4,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 12,
+      "character": 12,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 19,
+      "character": 5,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 19,
+      "character": 47,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 21,
+      "character": 3,
+      "text": "userPoolId",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 21,
+      "character": 15,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 22,
+      "character": 3,
+      "text": "userPoolWebClientId",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 22,
+      "character": 24,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 23,
+      "character": 3,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 23,
+      "character": 11,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 24,
+      "character": 3,
+      "text": "identityPoolId",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 24,
+      "character": 19,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 25,
+      "character": 3,
+      "text": "identityPoolRegion",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 25,
+      "character": 23,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 26,
+      "character": 20,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 27,
+      "character": 3,
+      "text": "signUpVerificationMethod",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 28,
+      "character": 4,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 33,
+      "character": 5,
+      "text": "storageConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 34,
+      "character": 5,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 35,
+      "character": 2,
+      "text": "storageConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 37,
+      "character": 4,
+      "text": "bucket",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 37,
+      "character": 12,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 38,
+      "character": 4,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 38,
+      "character": 12,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 39,
+      "character": 4,
+      "text": "dangerouslyConnectToHttpEndpointForTesting",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 40,
+      "character": 5,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 46,
+      "character": 2,
+      "text": "storageConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 46,
+      "character": 18,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 46,
+      "character": 27,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 46,
+      "character": 34,
+      "text": "Storage",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 46,
+      "character": 45,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 50,
+      "character": 5,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 52,
+      "character": 6,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 53,
+      "character": 3,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 53,
+      "character": 11,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 58,
+      "character": 5,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 59,
+      "character": 40,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 59,
+      "character": 47,
+      "text": "geo",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 60,
+      "character": 6,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 60,
+      "character": 13,
+      "text": "geo",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 62,
+      "character": 4,
+      "text": "AmazonLocationService",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 62,
+      "character": 27,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 62,
+      "character": 34,
+      "text": "geo",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 70,
+      "character": 2,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 70,
+      "character": 9,
+      "text": "Analytics",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 72,
+      "character": 60,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 72,
+      "character": 67,
+      "text": "Auth",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 73,
+      "character": 43,
+      "text": "storageConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 77,
+      "character": 2,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 77,
+      "character": 9,
+      "text": "Logging",
+      "kind": 1
+    },
+    {
+      "file": "src/Parser.ts",
+      "line": 79,
+      "character": 30,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 17,
+      "character": 9,
+      "text": "DateUtils",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 24,
+      "character": 25,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 24,
+      "character": 30,
+      "text": "src",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 30,
+      "character": 22,
+      "text": "src",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 31,
+      "character": 7,
+      "text": "arg",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 31,
+      "character": 13,
+      "text": "src",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 41,
+      "character": 32,
+      "text": "component",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 42,
+      "character": 8,
+      "text": "component",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 42,
+      "character": 18,
+      "text": "replace",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 42,
+      "character": 47,
+      "text": "c",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 43,
+      "character": 15,
+      "text": "c",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 43,
+      "character": 17,
+      "text": "charCodeAt",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 43,
+      "character": 44,
+      "text": "toUpperCase",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 52,
+      "character": 33,
+      "text": "query",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 53,
+      "character": 6,
+      "text": "query",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 53,
+      "character": 15,
+      "text": "query",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 53,
+      "character": 21,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 57,
+      "character": 8,
+      "text": "query",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 58,
+      "character": 3,
+      "text": "split",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 59,
+      "character": 3,
+      "text": "map",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 59,
+      "character": 7,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 60,
+      "character": 9,
+      "text": "key_val",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 60,
+      "character": 19,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 60,
+      "character": 21,
+      "text": "split",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 62,
+      "character": 7,
+      "text": "key_val",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 62,
+      "character": 15,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 63,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 65,
+      "character": 10,
+      "text": "reencoded_val",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 65,
+      "character": 41,
+      "text": "key_val",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 66,
+      "character": 11,
+      "text": "key_val",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 66,
+      "character": 30,
+      "text": "reencoded_val",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 69,
+      "character": 3,
+      "text": "sort",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 69,
+      "character": 9,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 69,
+      "character": 12,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 70,
+      "character": 9,
+      "text": "key_a",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 70,
+      "character": 17,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 70,
+      "character": 19,
+      "text": "split",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 71,
+      "character": 9,
+      "text": "key_b",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 71,
+      "character": 17,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 71,
+      "character": 19,
+      "text": "split",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 72,
+      "character": 7,
+      "text": "key_a",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 72,
+      "character": 17,
+      "text": "key_b",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 73,
+      "character": 11,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 73,
+      "character": 15,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 75,
+      "character": 11,
+      "text": "key_a",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 75,
+      "character": 19,
+      "text": "key_b",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 78,
+      "character": 3,
+      "text": "join",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 92,
+      "character": 35,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 93,
+      "character": 6,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 102,
+      "character": 5,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 102,
+      "character": 12,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 102,
+      "character": 27,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 102,
+      "character": 40,
+      "text": "trim",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 102,
+      "character": 47,
+      "text": "replace",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 109,
+      "character": 33,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 119,
+      "character": 32,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 144,
+      "character": 35,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 145,
+      "character": 24,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 145,
+      "character": 32,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 148,
+      "character": 2,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 148,
+      "character": 10,
+      "text": "method",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 151,
+      "character": 20,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 151,
+      "character": 28,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 152,
+      "character": 17,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 152,
+      "character": 25,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 153,
+      "character": 7,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 153,
+      "character": 15,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 157,
+      "character": 36,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 158,
+      "character": 24,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 158,
+      "character": 32,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 170,
+      "character": 2,
+      "text": "service",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 170,
+      "character": 11,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 170,
+      "character": 19,
+      "text": "service",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 171,
+      "character": 2,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 171,
+      "character": 10,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 171,
+      "character": 18,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 175,
+      "character": 34,
+      "text": "d_str",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 175,
+      "character": 41,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 175,
+      "character": 49,
+      "text": "service",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 176,
+      "character": 9,
+      "text": "d_str",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 176,
+      "character": 16,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 176,
+      "character": 24,
+      "text": "service",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 193,
+      "character": 32,
+      "text": "algorithm",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 193,
+      "character": 43,
+      "text": "canonical_request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 193,
+      "character": 62,
+      "text": "dt_str",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 193,
+      "character": 70,
+      "text": "scope",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 194,
+      "character": 9,
+      "text": "algorithm",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 194,
+      "character": 20,
+      "text": "dt_str",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 194,
+      "character": 28,
+      "text": "scope",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 194,
+      "character": 40,
+      "text": "canonical_request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 211,
+      "character": 33,
+      "text": "secret_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 211,
+      "character": 45,
+      "text": "d_str",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 211,
+      "character": 52,
+      "text": "service_info",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 212,
+      "character": 14,
+      "text": "service_info",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 213,
+      "character": 20,
+      "text": "secret_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 214,
+      "character": 22,
+      "text": "d_str",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 215,
+      "character": 29,
+      "text": "service_info",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 215,
+      "character": 42,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 216,
+      "character": 32,
+      "text": "service_info",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 216,
+      "character": 45,
+      "text": "service",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 222,
+      "character": 31,
+      "text": "signing_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 222,
+      "character": 44,
+      "text": "str_to_sign",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 223,
+      "character": 22,
+      "text": "signing_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 223,
+      "character": 35,
+      "text": "str_to_sign",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 233,
+      "character": 1,
+      "text": "algorithm",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 234,
+      "character": 1,
+      "text": "access_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 235,
+      "character": 1,
+      "text": "scope",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 236,
+      "character": 1,
+      "text": "signed_headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 237,
+      "character": 1,
+      "text": "signature",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 240,
+      "character": 2,
+      "text": "algorithm",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 240,
+      "character": 36,
+      "text": "access_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 240,
+      "character": 55,
+      "text": "scope",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 241,
+      "character": 21,
+      "text": "signed_headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 242,
+      "character": 17,
+      "text": "signature",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 283,
+      "character": 13,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 283,
+      "character": 22,
+      "text": "access_info",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 283,
+      "character": 35,
+      "text": "service_info",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 284,
+      "character": 2,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 284,
+      "character": 10,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 284,
+      "character": 20,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 284,
+      "character": 28,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 286,
+      "character": 6,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 286,
+      "character": 14,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 286,
+      "character": 23,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 286,
+      "character": 31,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 293,
+      "character": 8,
+      "text": "dt",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 293,
+      "character": 13,
+      "text": "DateUtils",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 293,
+      "character": 23,
+      "text": "getDateWithClockOffset",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 294,
+      "character": 3,
+      "text": "dt_str",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 294,
+      "character": 12,
+      "text": "dt",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 294,
+      "character": 15,
+      "text": "toISOString",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 294,
+      "character": 29,
+      "text": "replace",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 295,
+      "character": 3,
+      "text": "d_str",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 295,
+      "character": 11,
+      "text": "dt_str",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 295,
+      "character": 18,
+      "text": "substr",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 297,
+      "character": 25,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 297,
+      "character": 33,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 298,
+      "character": 2,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 298,
+      "character": 10,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 299,
+      "character": 2,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 299,
+      "character": 10,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 299,
+      "character": 34,
+      "text": "dt_str",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 300,
+      "character": 6,
+      "text": "access_info",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 300,
+      "character": 18,
+      "text": "session_token",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 301,
+      "character": 3,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 301,
+      "character": 11,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 301,
+      "character": 45,
+      "text": "access_info",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 301,
+      "character": 57,
+      "text": "session_token",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 305,
+      "character": 40,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 309,
+      "character": 8,
+      "text": "serviceInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 309,
+      "character": 22,
+      "text": "service_info",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 309,
+      "character": 57,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 310,
+      "character": 28,
+      "text": "d_str",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 310,
+      "character": 35,
+      "text": "serviceInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 310,
+      "character": 47,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 310,
+      "character": 55,
+      "text": "serviceInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 310,
+      "character": 67,
+      "text": "service",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 314,
+      "character": 4,
+      "text": "dt_str",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 320,
+      "character": 4,
+      "text": "access_info",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 320,
+      "character": 16,
+      "text": "secret_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 321,
+      "character": 4,
+      "text": "d_str",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 322,
+      "character": 4,
+      "text": "serviceInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 329,
+      "character": 3,
+      "text": "access_info",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 329,
+      "character": 15,
+      "text": "access_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 331,
+      "character": 18,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 331,
+      "character": 26,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 334,
+      "character": 2,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 334,
+      "character": 10,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 336,
+      "character": 9,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 341,
+      "character": 2,
+      "text": "accessInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 342,
+      "character": 2,
+      "text": "serviceInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 346,
+      "character": 2,
+      "text": "request",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 347,
+      "character": 2,
+      "text": "accessInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 348,
+      "character": 2,
+      "text": "serviceInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 352,
+      "character": 2,
+      "text": "urlOrRequest",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 353,
+      "character": 2,
+      "text": "accessInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 354,
+      "character": 2,
+      "text": "serviceInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 358,
+      "character": 10,
+      "text": "urlOrRequest",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 358,
+      "character": 38,
+      "text": "urlOrRequest",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 358,
+      "character": 51,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 360,
+      "character": 10,
+      "text": "urlOrRequest",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 360,
+      "character": 38,
+      "text": "urlOrRequest",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 360,
+      "character": 51,
+      "text": "method",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 361,
+      "character": 8,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 362,
+      "character": 10,
+      "text": "urlOrRequest",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 362,
+      "character": 38,
+      "text": "urlOrRequest",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 362,
+      "character": 51,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 364,
+      "character": 8,
+      "text": "now",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 364,
+      "character": 14,
+      "text": "DateUtils",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 364,
+      "character": 24,
+      "text": "getDateWithClockOffset",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 365,
+      "character": 4,
+      "text": "toISOString",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 366,
+      "character": 4,
+      "text": "replace",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 367,
+      "character": 8,
+      "text": "today",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 367,
+      "character": 16,
+      "text": "now",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 367,
+      "character": 20,
+      "text": "substr",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 373,
+      "character": 10,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 373,
+      "character": 18,
+      "text": "service",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 375,
+      "character": 43,
+      "text": "today",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 375,
+      "character": 50,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 375,
+      "character": 58,
+      "text": "service",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 380,
+      "character": 3,
+      "text": "accessInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 380,
+      "character": 14,
+      "text": "session_token",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 380,
+      "character": 31,
+      "text": "service",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 383,
+      "character": 24,
+      "text": "accessInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 383,
+      "character": 35,
+      "text": "access_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 384,
+      "character": 17,
+      "text": "now",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 384,
+      "character": 21,
+      "text": "substr",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 386,
+      "character": 35,
+      "text": "accessInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 386,
+      "character": 46,
+      "text": "session_token",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 402,
+      "character": 3,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 402,
+      "character": 9,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 408,
+      "character": 3,
+      "text": "now",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 412,
+      "character": 38,
+      "text": "accessInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 412,
+      "character": 49,
+      "text": "secret_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 412,
+      "character": 61,
+      "text": "today",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 413,
+      "character": 3,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 414,
+      "character": 3,
+      "text": "service",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 420,
+      "character": 7,
+      "text": "accessInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 420,
+      "character": 18,
+      "text": "session_token",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 421,
+      "character": 28,
+      "text": "accessInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Signer.ts",
+      "line": 421,
+      "character": 39,
+      "text": "session_token",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/types.ts",
+      "line": 14,
+      "character": 1,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 30,
+      "character": 1,
+      "text": "_lang",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 44,
+      "character": 7,
+      "text": "_lang",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 44,
+      "character": 29,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 47,
+      "character": 9,
+      "text": "_lang",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 52,
+      "character": 8,
+      "text": "_lang",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 55,
+      "character": 20,
+      "text": "_lang",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 64,
+      "character": 7,
+      "text": "_lang",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 73,
+      "character": 5,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 73,
+      "character": 10,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 74,
+      "character": 12,
+      "text": "_lang",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 75,
+      "character": 17,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 75,
+      "character": 42,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 75,
+      "character": 51,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 78,
+      "character": 8,
+      "text": "lang",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 78,
+      "character": 20,
+      "text": "_lang",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 79,
+      "character": 6,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 79,
+      "character": 31,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 79,
+      "character": 36,
+      "text": "lang",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 80,
+      "character": 6,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 81,
+      "character": 10,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 84,
+      "character": 6,
+      "text": "lang",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 84,
+      "character": 11,
+      "text": "indexOf",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 85,
+      "character": 3,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 85,
+      "character": 28,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 85,
+      "character": 33,
+      "text": "lang",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 85,
+      "character": 38,
+      "text": "split",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 87,
+      "character": 6,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 88,
+      "character": 10,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 91,
+      "character": 16,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 91,
+      "character": 41,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 91,
+      "character": 50,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 101,
+      "character": 15,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 101,
+      "character": 20,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 101,
+      "character": 30,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 102,
+      "character": 7,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 103,
+      "character": 10,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 106,
+      "character": 31,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 108,
+      "character": 10,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 111,
+      "character": 19,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 120,
+      "character": 28,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 120,
+      "character": 38,
+      "text": "vocabularies",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 121,
+      "character": 29,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 123,
+      "character": 26,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 125,
+      "character": 27,
+      "text": "vocabularies",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 134,
+      "character": 17,
+      "text": "vocabularies",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/I18n.ts",
+      "line": 136,
+      "character": 40,
+      "text": "vocabularies",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 20,
+      "character": 4,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 21,
+      "character": 4,
+      "text": "_i18n",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 33,
+      "character": 18,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 35,
+      "character": 7,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 36,
+      "character": 10,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 39,
+      "character": 2,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 39,
+      "character": 30,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 39,
+      "character": 39,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 39,
+      "character": 46,
+      "text": "I18n",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 39,
+      "character": 54,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 43,
+      "character": 9,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 57,
+      "character": 6,
+      "text": "_i18n",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 60,
+      "character": 2,
+      "text": "_i18n",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 68,
+      "character": 20,
+      "text": "lang",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 71,
+      "character": 9,
+      "text": "_i18n",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 71,
+      "character": 15,
+      "text": "setLanguage",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 71,
+      "character": 27,
+      "text": "lang",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 80,
+      "character": 12,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 80,
+      "character": 17,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 82,
+      "character": 17,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 82,
+      "character": 42,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 82,
+      "character": 48,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 85,
+      "character": 9,
+      "text": "_i18n",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 85,
+      "character": 15,
+      "text": "get",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 85,
+      "character": 19,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 85,
+      "character": 24,
+      "text": "defVal",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 95,
+      "character": 35,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 95,
+      "character": 45,
+      "text": "vocabularies",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 98,
+      "character": 9,
+      "text": "_i18n",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 98,
+      "character": 15,
+      "text": "putVocabulariesForLanguage",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 98,
+      "character": 42,
+      "text": "language",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 98,
+      "character": 52,
+      "text": "vocabularies",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 108,
+      "character": 24,
+      "text": "vocabularies",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 111,
+      "character": 9,
+      "text": "_i18n",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 111,
+      "character": 15,
+      "text": "putVocabularies",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 111,
+      "character": 31,
+      "text": "vocabularies",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 115,
+      "character": 7,
+      "text": "_i18n",
+      "kind": 1
+    },
+    {
+      "file": "src/I18n/index.ts",
+      "line": 116,
+      "character": 3,
+      "text": "_i18n",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 65,
+      "character": 9,
+      "text": "_timer",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 116,
+      "character": 9,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 117,
+      "character": 8,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 125,
+      "character": 46,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 126,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 124,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 138,
+      "character": 9,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 139,
+      "character": 8,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 147,
+      "character": 45,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 148,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 146,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 162,
+      "character": 9,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 163,
+      "character": 8,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 171,
+      "character": 47,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 172,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 170,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 183,
+      "character": 9,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 184,
+      "character": 8,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 192,
+      "character": 46,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 193,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 191,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 204,
+      "character": 9,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 205,
+      "character": 8,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 213,
+      "character": 46,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 214,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 212,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 231,
+      "character": 9,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 232,
+      "character": 8,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 259,
+      "character": 57,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 261,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 258,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 270,
+      "character": 9,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 271,
+      "character": 8,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 302,
+      "character": 58,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 304,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 301,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 312,
+      "character": 9,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 313,
+      "character": 8,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 324,
+      "character": 49,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 323,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 340,
+      "character": 4,
+      "text": "then",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 340,
+      "character": 9,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 341,
+      "character": 9,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 342,
+      "character": 35,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 348,
+      "character": 4,
+      "text": "catch",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 348,
+      "character": 10,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 349,
+      "character": 44,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 381,
+      "character": 62,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 382,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 380,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 418,
+      "character": 54,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 420,
+      "character": 34,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 420,
+      "character": 38,
+      "text": "name",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 428,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 417,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 489,
+      "character": 67,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 493,
+      "character": 9,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 487,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 498,
+      "character": 11,
+      "text": "_timer",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 499,
+      "character": 22,
+      "text": "_timer",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 502,
+      "character": 7,
+      "text": "_timer",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 509,
+      "character": 72,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSCloudWatchProvider.ts",
+      "line": 507,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/RNComponents/index.ts",
+      "line": 18,
+      "character": 20,
+      "text": "action",
+      "kind": 1
+    },
+    {
+      "file": "src/RNComponents/index.ts",
+      "line": 18,
+      "character": 28,
+      "text": "handler",
+      "kind": 1
+    },
+    {
+      "file": "src/RNComponents/index.ts",
+      "line": 22,
+      "character": 13,
+      "text": "AsyncStorage",
+      "kind": 1
+    },
+    {
+      "file": "src/ServiceWorker/ServiceWorker.ts",
+      "line": 89,
+      "character": 12,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/ServiceWorker/ServiceWorker.ts",
+      "line": 90,
+      "character": 63,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/ServiceWorker/ServiceWorker.ts",
+      "line": 91,
+      "character": 20,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/ServiceWorker/ServiceWorker.ts",
+      "line": 136,
+      "character": 14,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/ServiceWorker/ServiceWorker.ts",
+      "line": 137,
+      "character": 27,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/ServiceWorker/ServiceWorker.ts",
+      "line": 190,
+      "character": 15,
+      "text": "Analytics",
+      "kind": 1
+    },
+    {
+      "file": "src/ServiceWorker/ServiceWorker.ts",
+      "line": 190,
+      "character": 43,
+      "text": "Analytics",
+      "kind": 1
+    },
+    {
+      "file": "src/ServiceWorker/ServiceWorker.ts",
+      "line": 190,
+      "character": 53,
+      "text": "record",
+      "kind": 1
+    },
+    {
+      "file": "src/ServiceWorker/ServiceWorker.ts",
+      "line": 191,
+      "character": 12,
+      "text": "Analytics",
+      "kind": 1
+    },
+    {
+      "file": "src/ServiceWorker/ServiceWorker.ts",
+      "line": 191,
+      "character": 22,
+      "text": "record",
+      "kind": 1
+    },
+    {
+      "file": "src/UniversalStorage/index.ts",
+      "line": 8,
+      "character": 17,
+      "text": "req",
+      "kind": 1
+    },
+    {
+      "file": "src/UniversalStorage/index.ts",
+      "line": 15,
+      "character": 25,
+      "text": "req",
+      "kind": 1
+    },
+    {
+      "file": "src/UniversalStorage/index.ts",
+      "line": 16,
+      "character": 25,
+      "text": "req",
+      "kind": 1
+    },
+    {
+      "file": "src/UniversalStorage/index.ts",
+      "line": 16,
+      "character": 29,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/UniversalStorage/index.ts",
+      "line": 16,
+      "character": 37,
+      "text": "cookie",
+      "kind": 1
+    },
+    {
+      "file": "src/UniversalStorage/index.ts",
+      "line": 28,
+      "character": 9,
+      "text": "_",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 33,
+      "character": 19,
+      "text": "dim",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 34,
+      "character": 7,
+      "text": "height",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 34,
+      "character": 15,
+      "text": "width",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 35,
+      "character": 5,
+      "text": "height",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 35,
+      "character": 14,
+      "text": "width",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 36,
+      "character": 8,
+      "text": "tmp",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 36,
+      "character": 14,
+      "text": "height",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 37,
+      "character": 2,
+      "text": "height",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 37,
+      "character": 11,
+      "text": "width",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 38,
+      "character": 2,
+      "text": "width",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 38,
+      "character": 10,
+      "text": "tmp",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 41,
+      "character": 5,
+      "text": "width",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 41,
+      "character": 22,
+      "text": "height",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 44,
+      "character": 5,
+      "text": "width",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 44,
+      "character": 22,
+      "text": "height",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 47,
+      "character": 5,
+      "text": "width",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 47,
+      "character": 22,
+      "text": "height",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 50,
+      "character": 5,
+      "text": "width",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 50,
+      "character": 22,
+      "text": "height",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 53,
+      "character": 5,
+      "text": "width",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 53,
+      "character": 22,
+      "text": "height",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 56,
+      "character": 5,
+      "text": "width",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 56,
+      "character": 22,
+      "text": "height",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 59,
+      "character": 5,
+      "text": "width",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 59,
+      "character": 22,
+      "text": "height",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 62,
+      "character": 5,
+      "text": "width",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 62,
+      "character": 23,
+      "text": "height",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 65,
+      "character": 5,
+      "text": "width",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 65,
+      "character": 22,
+      "text": "height",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 68,
+      "character": 5,
+      "text": "width",
+      "kind": 1
+    },
+    {
+      "file": "src/ClientDevice/ios.ts",
+      "line": 68,
+      "character": 22,
+      "text": "height",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 19,
+      "character": 8,
+      "text": "syncPromise",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 26,
+      "character": 16,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 26,
+      "character": 21,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 27,
+      "character": 6,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 28,
+      "character": 44,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 29,
+      "character": 14,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 30,
+      "character": 21,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 40,
+      "character": 16,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 41,
+      "character": 58,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 42,
+      "character": 16,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 51,
+      "character": 19,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 52,
+      "character": 46,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 53,
+      "character": 27,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 70,
+      "character": 21,
+      "text": "syncPromise",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 71,
+      "character": 17,
+      "text": "syncPromise",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 90,
+      "character": 23,
+      "text": "syncPromise",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 95,
+      "character": 9,
+      "text": "storageWindow",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 101,
+      "character": 7,
+      "text": "storageWindow",
+      "kind": 1
+    },
+    {
+      "file": "src/StorageHelper/reactnative.ts",
+      "line": 109,
+      "character": 14,
+      "text": "storageWindow",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Reachability.native.ts",
+      "line": 10,
+      "character": 16,
+      "text": "netInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Reachability.native.ts",
+      "line": 18,
+      "character": 8,
+      "text": "netInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Reachability.native.ts",
+      "line": 18,
+      "character": 19,
+      "text": "netInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Reachability.native.ts",
+      "line": 18,
+      "character": 27,
+      "text": "addEventListener",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Reachability.native.ts",
+      "line": 26,
+      "character": 9,
+      "text": "unsubscribe",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Reachability.native.ts",
+      "line": 26,
+      "character": 23,
+      "text": "netInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Reachability.native.ts",
+      "line": 26,
+      "character": 31,
+      "text": "addEventListener",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Reachability.native.ts",
+      "line": 27,
+      "character": 7,
+      "text": "isInternetReachable",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Reachability.native.ts",
+      "line": 30,
+      "character": 16,
+      "text": "isInternetReachable",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Reachability.native.ts",
+      "line": 39,
+      "character": 4,
+      "text": "unsubscribe",
+      "kind": 1
+    },
+    {
+      "file": "src/Util/Reachability.native.ts",
+      "line": 46,
+      "character": 16,
+      "text": "netInfo",
+      "kind": 1
+    }
+  ],
+  "percentage": 78.413606739787,
+  "total": 6291,
+  "covered": 4933,
+  "uncovered": 1358
+}

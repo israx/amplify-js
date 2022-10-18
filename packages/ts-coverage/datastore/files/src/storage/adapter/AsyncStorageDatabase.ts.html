@@ -1,0 +1,372 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>AsyncStorageDatabase.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/storage/adapter/AsyncStorageDatabase.ts</td><td class="">98.61%</td><td class="">0%</td><td class="">575</td><td class="">567</td><td class="">8</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import { ULID } from &#x27;ulid&#x27;;
+import {
+	ModelInstanceMetadata,
+	OpType,
+	PaginationInput,
+	PersistentModel,
+	QueryOne,
+} from &#x27;../../types&#x27;;
+import {
+	DEFAULT_PRIMARY_KEY_VALUE_SEPARATOR,
+	indexNameFromKeys,
+	monotonicUlidFactory,
+} from &#x27;../../util&#x27;;
+import { createInMemoryStore } from &#x27;./InMemoryStore&#x27;;
+
+const DB_NAME = &#x27;@AmplifyDatastore&#x27;;
+const COLLECTION = &#x27;Collection&#x27;;
+const DATA = &#x27;Data&#x27;;
+
+const monotonicFactoriesMap = new Map&lt;string, ULID&gt;();
+
+class AsyncStorageDatabase {
+	/**
+	 * Maps storeNames to a map of ulid-&gt;id
+	 */
+	private _collectionInMemoryIndex = new Map&lt;string, Map&lt;string, string&gt;&gt;();
+
+	private storage = createInMemoryStore();
+
+	/**
+	 * Collection index is map of stores (i.e. sync, metadata, mutation event, and data)
+	 * @param storeName {string} - Name of the store
+	 * @returns Map of ulid-&gt;id
+	 */
+	private getCollectionIndex(storeName: string) {
+		if (!this._collectionInMemoryIndex.has(storeName)) {
+			this._collectionInMemoryIndex.set(storeName, new Map());
+		}
+
+		return this._collectionInMemoryIndex.get(storeName);
+	}
+
+	/**
+	 * Return ULID for store if it exists, otherwise create a new one
+	 * @param storeName {string} - Name of the store
+	 * @returns ulid
+	 */
+	private getMonotonicFactory(storeName: string): ULID {
+		if (!monotonicFactoriesMap.has(storeName)) {
+			monotonicFactoriesMap.set(storeName, monotonicUlidFactory());
+		}
+
+		return monotonicFactoriesMap.get(storeName);
+	}
+
+	async init(): Promise&lt;void&gt; {
+		this._collectionInMemoryIndex.clear();
+
+		const allKeys: string[] = await this.storage.getAllKeys();
+
+		const keysForCollectionEntries = [];
+
+		for (const key of allKeys) {
+			const [dbName, storeName, recordType, ulidOrId, id] = key.split(&#x27;::&#x27;);
+
+			if (dbName === DB_NAME) {
+				if (recordType === DATA) {
+					let ulid: string;
+
+					if (id === undefined) {
+						// It is an old entry (without ulid). Need to migrate to new key format
+
+						const id = ulidOrId;
+
+						const newUlid = this.getMonotonicFactory(storeName)();
+
+						const oldKey = this.getLegacyKeyForItem(storeName, id);
+						const newKey = this.getKeyForItem(storeName, id, newUlid);
+
+						const item = await this.storage.getItem(oldKey);
+
+						await this.storage.setItem(newKey, item);
+						await this.storage.removeItem(oldKey);
+
+						ulid = newUlid;
+					} else {
+						ulid = ulidOrId;
+					}
+
+					this.getCollectionIndex(storeName).set(id, ulid);
+				} else if (recordType === COLLECTION) {
+					keysForCollectionEntries.push(key);
+				}
+			}
+		}
+
+		if (keysForCollectionEntries.length &gt; 0) {
+			await this.storage.multiRemove(keysForCollectionEntries);
+		}
+	}
+
+	async save&lt;T extends PersistentModel&gt;(
+		item: T,
+		storeName: string,
+		keys: string[],
+		keyValuesPath: string
+	) {
+		const idxName = indexNameFromKeys(keys);
+
+		const ulid =
+			this.getCollectionIndex(storeName).get(idxName) ||
+			this.getMonotonicFactory(storeName)();
+
+		// Retrieve db key for item
+		const itemKey = this.getKeyForItem(storeName, keyValuesPath, ulid);
+
+		// Set key in collection index
+		this.getCollectionIndex(storeName).set(keyValuesPath, ulid);
+
+		// Save item in db
+		await this.storage.setItem(itemKey, JSON.stringify(item));
+	}
+
+	async batchSave&lt;T extends PersistentModel&gt;(
+		storeName: string,
+		items: ModelInstanceMetadata[],
+		keys: string[]
+	): Promise&lt;[T, OpType][]&gt; {
+		if (items.length === 0) {
+			return [];
+		}
+
+		const result: [T, OpType][] = [];
+		const collection = this.getCollectionIndex(storeName);
+
+		const keysToDelete = new Set&lt;string&gt;();
+		const keysToSave = new Set&lt;string&gt;();
+		const allItemsKeys = [];
+		const itemsMap: Record&lt;string, { ulid: string; model: T }&gt; = {};
+
+		/* Populate allItemKeys, keysToDelete, and keysToSave */
+		for (const item of items) {
+			// Extract keys from concatenated key path, map to item values
+			const keyValues = keys.map(field =&gt; item[field]);
+
+			const { _deleted } = item;
+
+			// If id is in the store, retrieve, otherwise generate new ULID
+			const ulid =
+				collection.get(keyValues.join(DEFAULT_PRIMARY_KEY_VALUE_SEPARATOR)) ||
+				this.getMonotonicFactory(storeName)();
+
+			// Generate the &quot;longer key&quot; for the item
+			const key = this.getKeyForItem(
+				storeName,
+				keyValues.join(DEFAULT_PRIMARY_KEY_VALUE_SEPARATOR),
+				ulid
+			);
+
+			allItemsKeys.push(key);
+			itemsMap[key] = { ulid, model: &lt;T&gt;(&lt;unknown&gt;item) };
+
+			if (_deleted) {
+				keysToDelete.add(key);
+			} else {
+				keysToSave.add(key);
+			}
+		}
+
+		const existingRecordsMap: [string, string][] = await this.storage.multiGet(
+			allItemsKeys
+		);
+		const existingRecordsKeys = existingRecordsMap
+			.filter(([, v]) =&gt; !!v)
+			.reduce((set, [k]) =&gt; set.add(k), new Set&lt;string&gt;());
+
+		// Delete
+		await new Promise((resolve, reject) =&gt; {
+			if (keysToDelete.size === 0) {
+				resolve();
+				return;
+			}
+
+			const keysToDeleteArray = Array.from(keysToDelete);
+
+			keysToDeleteArray.forEach(key =&gt; {
+				// key: full db key
+				// keys: PK and/or SK keys
+				const primaryKeyValues: string = keys
+					.map(field =&gt; itemsMap[key].model[field])
+					.join(DEFAULT_PRIMARY_KEY_VALUE_SEPARATOR);
+
+				collection.delete(primaryKeyValues);
+			});
+
+			this.storage.multiRemove(keysToDeleteArray, (errors?: Error[]) =&gt; {
+				if (errors &amp;&amp; errors.length &gt; 0) {
+					reject(errors);
+				} else {
+					resolve();
+				}
+			});
+		});
+
+		// Save
+		await new Promise((resolve, reject) =&gt; {
+			if (keysToSave.size === 0) {
+				resolve();
+				return;
+			}
+
+			const entriesToSet = Array.from(keysToSave).map(key =&gt; [
+				key,
+				JSON.stringify(itemsMap[key].model),
+			]);
+
+			keysToSave.forEach(key =&gt; {
+				const { model, ulid } = itemsMap[key];
+
+				// Retrieve values from model, use as key for collection index
+				const keyValues: string = keys
+					.map(field =&gt; model[field])
+					.join(DEFAULT_PRIMARY_KEY_VALUE_SEPARATOR);
+
+				collection.set(keyValues, ulid);
+			});
+
+			this.storage.multiSet(entriesToSet, (errors?: Error[]) =&gt; {
+				if (errors &amp;&amp; errors.length &gt; 0) {
+					reject(errors);
+				} else {
+					resolve();
+				}
+			});
+		});
+
+		for (const key of allItemsKeys) {
+			if (keysToDelete.has(key) &amp;&amp; existingRecordsKeys.has(key)) {
+				result.push([itemsMap[key].model, OpType.DELETE]);
+			} else if (keysToSave.has(key)) {
+				result.push([
+					itemsMap[key].model,
+					existingRecordsKeys.has(key) ? OpType.UPDATE : OpType.INSERT,
+				]);
+			}
+		}
+
+		return result;
+	}
+
+	async get&lt;T extends PersistentModel&gt;(
+		keyValuePath: string,
+		storeName: string
+	): Promise&lt;T&gt; {
+		const ulid = this.getCollectionIndex(storeName).get(keyValuePath);
+		const itemKey = this.getKeyForItem(storeName, keyValuePath, ulid);
+		const recordAsString = await this.storage.getItem(itemKey);
+		const record = recordAsString &amp;&amp; JSON.parse(recordAsString);
+		return record;
+	}
+
+	async getOne(firstOrLast: QueryOne, storeName: string) {
+		const collection = this.getCollectionIndex(storeName);
+
+		const [itemId, ulid] =
+			firstOrLast === QueryOne.FIRST
+				? (() =&gt; {
+						let id: string, ulid: string;
+						for ([id, ulid] of collection) break; // Get first element of the set
+						return [id, ulid];
+				  })()
+				: (() =&gt; {
+						let id: string, ulid: string;
+						for ([id, ulid] of collection); // Get last element of the set
+						return [id, ulid];
+				  })();
+		const itemKey = this.getKeyForItem(storeName, itemId, ulid);
+
+		const itemString = itemKey &amp;&amp; (await this.storage.getItem(itemKey));
+
+		const result = itemString ? JSON.parse(itemString) || undefined : undefined;
+
+		return result;
+	}
+
+	/**
+	 * This function gets all the records stored in async storage for a particular storeName
+	 * It then loads all the records for that filtered set of keys using multiGet()
+	 */
+	async getAll&lt;T extends PersistentModel&gt;(
+		storeName: string,
+		pagination?: PaginationInput&lt;T&gt;
+	): Promise&lt;T[]&gt; {
+		const collection = this.getCollectionIndex(storeName);
+
+		const { page = 0, limit = 0 } = pagination || {};
+		const start = Math.max(0, page * limit) || 0;
+		const end = limit &gt; 0 ? start + limit : undefined;
+
+		const keysForStore: string[] = [];
+		let count = 0;
+		for (const [id, ulid] of collection) {
+			count++;
+
+			if (count &lt;= start) {
+				continue;
+			}
+
+			keysForStore.push(this.getKeyForItem(storeName, id, ulid));
+
+			if (count === end) {
+				break;
+			}
+		}
+
+		const storeRecordStrings = await this.storage.multiGet(keysForStore);
+		const records = storeRecordStrings
+			.filter(([, value]) =&gt; value)
+			.map(([, value]) =&gt; JSON.parse(value));
+
+		return records;
+	}
+
+	async delete(key: string, storeName: string) {
+		const ulid = this.getCollectionIndex(storeName).get(key);
+		const itemKey = this.getKeyForItem(storeName, key, ulid);
+		this.getCollectionIndex(storeName).delete(key);
+		await this.storage.removeItem(itemKey);
+	}
+
+	/**
+	 * Clear the AsyncStorage of all DataStore entries
+	 */
+	async clear() {
+		const allKeys = await this.storage.getAllKeys();
+		const allDataStoreKeys = allKeys.filter(key =&gt; key.startsWith(DB_NAME));
+		await this.storage.multiRemove(allDataStoreKeys);
+		this._collectionInMemoryIndex.clear();
+	}
+
+	private getKeyForItem(storeName: string, id: string, ulid: string): string {
+		return `${this.getKeyPrefixForStoreItems(storeName)}::${ulid}::${id}`;
+	}
+
+	private getLegacyKeyForItem(storeName: string, id: string): string {
+		return `${this.getKeyPrefixForStoreItems(storeName)}::${id}`;
+	}
+
+	private getKeyPrefixForStoreItems(storeName: string): string {
+		return `${DB_NAME}::${storeName}::${DATA}`;
+	}
+}
+
+export default AsyncStorageDatabase;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageDatabase.ts&quot;,&quot;line&quot;:236,&quot;character&quot;:13,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageDatabase.ts&quot;,&quot;line&quot;:238,&quot;character&quot;:26,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageDatabase.ts&quot;,&quot;line&quot;:241,&quot;character&quot;:14,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageDatabase.ts&quot;,&quot;line&quot;:257,&quot;character&quot;:8,&quot;text&quot;:&quot;record&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageDatabase.ts&quot;,&quot;line&quot;:280,&quot;character&quot;:8,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageDatabase.ts&quot;,&quot;line&quot;:282,&quot;character&quot;:9,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageDatabase.ts&quot;,&quot;line&quot;:317,&quot;character&quot;:15,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/storage/adapter/AsyncStorageDatabase.ts&quot;,&quot;line&quot;:318,&quot;character&quot;:12,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:29 GMT</p>
+    </body>
+  </html>
+  

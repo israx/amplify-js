@@ -1,0 +1,77 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>AWSIotProvider.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Providers/AWSIotProvider.ts</td><td class="">72.34%</td><td class="">0%</td><td class="">47</td><td class="">34</td><td class="">13</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import { MqttOverWSProvider, MqttProviderOptions } from &#x27;./MqttOverWSProvider&#x27;;
+import { Signer, Credentials } from &#x27;@aws-amplify/core&#x27;;
+
+const SERVICE_NAME = &#x27;iotdevicegateway&#x27;;
+
+export interface AWSIoTProviderOptions extends MqttProviderOptions {
+	aws_pubsub_region?: string;
+	aws_pubsub_endpoint?: string;
+}
+
+export class AWSIoTProvider extends MqttOverWSProvider {
+	constructor(options: AWSIoTProviderOptions = {}) {
+		super(options);
+	}
+
+	protected get region() {
+		return this.options.aws_pubsub_region;
+	}
+
+	public getProviderName() {
+		return &#x27;AWSIoTProvider&#x27;;
+	}
+
+	protected get endpoint() {
+		return (async () =&gt; {
+			const endpoint = this.options.aws_pubsub_endpoint;
+
+			const serviceInfo = {
+				service: SERVICE_NAME,
+				region: this.region,
+			};
+			const {
+				accessKeyId: access_key,
+				secretAccessKey: secret_key,
+				sessionToken: session_token,
+			} = await Credentials.get();
+
+			const result = Signer.signUrl(
+				endpoint,
+				{ access_key, secret_key, session_token },
+				serviceInfo
+			);
+
+			return result;
+		})();
+	}
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Providers/AWSIotProvider.ts&quot;,&quot;line&quot;:27,&quot;character&quot;:15,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSIotProvider.ts&quot;,&quot;line&quot;:28,&quot;character&quot;:22,&quot;text&quot;:&quot;aws_pubsub_region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSIotProvider.ts&quot;,&quot;line&quot;:37,&quot;character&quot;:9,&quot;text&quot;:&quot;endpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSIotProvider.ts&quot;,&quot;line&quot;:37,&quot;character&quot;:33,&quot;text&quot;:&quot;aws_pubsub_endpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSIotProvider.ts&quot;,&quot;line&quot;:41,&quot;character&quot;:4,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSIotProvider.ts&quot;,&quot;line&quot;:41,&quot;character&quot;:17,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSIotProvider.ts&quot;,&quot;line&quot;:44,&quot;character&quot;:17,&quot;text&quot;:&quot;access_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSIotProvider.ts&quot;,&quot;line&quot;:45,&quot;character&quot;:21,&quot;text&quot;:&quot;secret_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSIotProvider.ts&quot;,&quot;line&quot;:46,&quot;character&quot;:18,&quot;text&quot;:&quot;session_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSIotProvider.ts&quot;,&quot;line&quot;:50,&quot;character&quot;:4,&quot;text&quot;:&quot;endpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSIotProvider.ts&quot;,&quot;line&quot;:51,&quot;character&quot;:6,&quot;text&quot;:&quot;access_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSIotProvider.ts&quot;,&quot;line&quot;:51,&quot;character&quot;:18,&quot;text&quot;:&quot;secret_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSIotProvider.ts&quot;,&quot;line&quot;:51,&quot;character&quot;:30,&quot;text&quot;:&quot;session_token&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:25 GMT</p>
+    </body>
+  </html>
+  

@@ -1,0 +1,760 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>AWSPinpointProvider.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Providers/AWSPinpointProvider.ts</td><td class="">64.19%</td><td class="">0%</td><td class="">1011</td><td class="">649</td><td class="">362</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import {
+	ConsoleLogger as Logger,
+	ClientDevice,
+	Credentials,
+	Signer,
+	JS,
+	Hub,
+	getAmplifyUserAgent,
+} from &#x27;@aws-amplify/core&#x27;;
+import {
+	EventsBatch,
+	PinpointClient,
+	PutEventsCommand,
+	PutEventsCommandInput,
+	UpdateEndpointCommand,
+} from &#x27;@aws-sdk/client-pinpoint&#x27;;
+import Cache from &#x27;@aws-amplify/cache&#x27;;
+
+import {
+	AnalyticsProvider,
+	PromiseHandlers,
+	EndpointBuffer,
+	EventParams,
+	EventObject,
+	EndpointFailureData,
+} from &#x27;../types&#x27;;
+import { v1 as uuid } from &#x27;uuid&#x27;;
+import EventsBuffer from &#x27;./EventBuffer&#x27;;
+
+const AMPLIFY_SYMBOL = (typeof Symbol !== &#x27;undefined&#x27; &amp;&amp;
+typeof Symbol.for === &#x27;function&#x27;
+	? Symbol.for(&#x27;amplify_default&#x27;)
+	: &#x27;@@amplify_default&#x27;) as Symbol;
+
+const dispatchAnalyticsEvent = (event, data) =&gt; {
+	Hub.dispatch(&#x27;analytics&#x27;, { event, data }, &#x27;Analytics&#x27;, AMPLIFY_SYMBOL);
+};
+
+const logger = new Logger(&#x27;AWSPinpointProvider&#x27;);
+const RETRYABLE_CODES = [429, 500];
+const ACCEPTED_CODES = [202];
+const FORBIDDEN_CODE = 403;
+const MOBILE_SERVICE_NAME = &#x27;mobiletargeting&#x27;;
+const EXPIRED_TOKEN_CODE = &#x27;ExpiredTokenException&#x27;;
+const UPDATE_ENDPOINT = &#x27;_update_endpoint&#x27;;
+const SESSION_START = &#x27;_session.start&#x27;;
+const SESSION_STOP = &#x27;_session.stop&#x27;;
+
+const BEACON_SUPPORTED =
+	typeof navigator !== &#x27;undefined&#x27; &amp;&amp;
+	navigator &amp;&amp;
+	typeof navigator.sendBeacon === &#x27;function&#x27;;
+
+// events buffer
+const BUFFER_SIZE = 1000;
+const FLUSH_SIZE = 100;
+const FLUSH_INTERVAL = 5 * 1000; // 5s
+const RESEND_LIMIT = 5;
+
+// params: { event: {name: , .... }, timeStamp, config, resendLimits }
+export class AWSPinpointProvider implements AnalyticsProvider {
+	static category = &#x27;Analytics&#x27;;
+	static providerName = &#x27;AWSPinpoint&#x27;;
+
+	private _config;
+	private pinpointClient;
+	private _sessionId;
+	private _sessionStartTimestamp;
+	private _buffer: EventsBuffer;
+	private _endpointBuffer: EndpointBuffer;
+	private _clientInfo;
+	private _endpointGenerating = true;
+	private _endpointUpdateInProgress = false;
+
+	constructor(config?) {
+		this._buffer = null;
+		this._endpointBuffer = [];
+		this._config = config ? config : {};
+		this._config.bufferSize = this._config.bufferSize || BUFFER_SIZE;
+		this._config.flushSize = this._config.flushSize || FLUSH_SIZE;
+		this._config.flushInterval = this._config.flushInterval || FLUSH_INTERVAL;
+		this._config.resendLimit = this._config.resendLimit || RESEND_LIMIT;
+		this._clientInfo = ClientDevice.clientInfo();
+	}
+
+	/**
+	 * get the category of the plugin
+	 */
+	getCategory(): string {
+		return AWSPinpointProvider.category;
+	}
+
+	/**
+	 * get provider name of the plugin
+	 */
+	getProviderName(): string {
+		return AWSPinpointProvider.providerName;
+	}
+
+	/**
+	 * configure the plugin
+	 * @param {Object} config - configuration
+	 */
+	public configure(config): object {
+		logger.debug(&#x27;configure Analytics&#x27;, config);
+		const conf = config || {};
+		this._config = Object.assign({}, this._config, conf);
+
+		// If autoSessionRecord is enabled, we need to wait for the endpoint to be
+		// updated before sending any events. See `sendEvents` in `Analytics.ts`
+		this._endpointGenerating = !!config[&#x27;autoSessionRecord&#x27;];
+
+		if (this._config.appId &amp;&amp; !this._config.disabled) {
+			if (!this._config.endpointId) {
+				const cacheKey = this.getProviderName() + &#x27;_&#x27; + this._config.appId;
+				this._getEndpointId(cacheKey)
+					.then(endpointId =&gt; {
+						logger.debug(&#x27;setting endpoint id from the cache&#x27;, endpointId);
+						this._config.endpointId = endpointId;
+						dispatchAnalyticsEvent(&#x27;pinpointProvider_configured&#x27;, null);
+					})
+					.catch(err =&gt; {
+						logger.debug(&#x27;Failed to generate endpointId&#x27;, err);
+					});
+			} else {
+				dispatchAnalyticsEvent(&#x27;pinpointProvider_configured&#x27;, null);
+			}
+		} else {
+			this._flushBuffer();
+		}
+		return this._config;
+	}
+
+	/**
+	 * record an event
+	 * @param {Object} params - the params of an event
+	 */
+	public async record(params: EventParams, handlers: PromiseHandlers) {
+		logger.debug(&#x27;_public record&#x27;, params);
+		const credentials = await this._getCredentials();
+		if (!credentials || !this._config.appId || !this._config.region) {
+			logger.debug(
+				&#x27;cannot send events without credentials, applicationId or region&#x27;
+			);
+			return handlers.reject(
+				new Error(&#x27;No credentials, applicationId or region&#x27;)
+			);
+		}
+
+		this._initClients(credentials);
+
+		const timestamp = new Date().getTime();
+		// attach the session and eventId
+		this._generateSession(params);
+		params.event.eventId = uuid();
+
+		Object.assign(params, { timestamp, config: this._config });
+
+		if (params.event.immediate) {
+			return this._send(params, handlers);
+		} else {
+			this._putToBuffer(params, handlers);
+		}
+	}
+
+	private async _sendEndpointUpdate(endpointObject: EventObject) {
+		if (this._endpointUpdateInProgress) {
+			this._endpointBuffer.push(endpointObject);
+			return;
+		}
+
+		this._endpointUpdateInProgress = true;
+		await this._updateEndpoint(endpointObject);
+
+		const next = this._endpointBuffer.shift();
+		this._endpointUpdateInProgress = false;
+
+		next &amp;&amp; this._sendEndpointUpdate(next);
+	}
+
+	/**
+	 * @private
+	 * @param params - params for event recording
+	 * Put events into buffer
+	 */
+	private _putToBuffer(params, handlers) {
+		if (params.event.name === UPDATE_ENDPOINT) {
+			this._sendEndpointUpdate({ params, handlers });
+			return;
+		}
+
+		this._buffer &amp;&amp; this._buffer.push({ params, handlers });
+	}
+
+	private _generateSession(params) {
+		this._sessionId = this._sessionId || uuid();
+		const { event } = params;
+
+		switch (event.name) {
+			case SESSION_START:
+				// refresh the session id and session start time
+				this._sessionStartTimestamp = new Date().getTime();
+				this._sessionId = uuid();
+				event.session = {
+					Id: this._sessionId,
+					StartTimestamp: new Date(this._sessionStartTimestamp).toISOString(),
+				};
+				break;
+			case SESSION_STOP:
+				const stopTimestamp = new Date().getTime();
+				this._sessionStartTimestamp =
+					this._sessionStartTimestamp || new Date().getTime();
+				this._sessionId = this._sessionId || uuid();
+				event.session = {
+					Id: this._sessionId,
+					Duration: stopTimestamp - this._sessionStartTimestamp,
+					StartTimestamp: new Date(this._sessionStartTimestamp).toISOString(),
+					StopTimestamp: new Date(stopTimestamp).toISOString(),
+				};
+				this._sessionId = undefined;
+				this._sessionStartTimestamp = undefined;
+				break;
+			default:
+				this._sessionStartTimestamp =
+					this._sessionStartTimestamp || new Date().getTime();
+				this._sessionId = this._sessionId || uuid();
+				event.session = {
+					Id: this._sessionId,
+					StartTimestamp: new Date(this._sessionStartTimestamp).toISOString(),
+				};
+		}
+	}
+
+	private async _send(params, handlers) {
+		const { event } = params;
+
+		switch (event.name) {
+			case UPDATE_ENDPOINT:
+				return this._updateEndpoint({ params, handlers });
+			case SESSION_STOP:
+				return this._pinpointSendStopSession(params, handlers);
+			default:
+				return this._pinpointPutEvents(params, handlers);
+		}
+	}
+
+	private _generateBatchItemContext(params) {
+		const { event, timestamp, config } = params;
+		const { name, attributes, metrics, eventId, session } = event;
+		const { appId, endpointId } = config;
+
+		const endpointContext = {};
+
+		const eventParams: PutEventsCommandInput = {
+			ApplicationId: appId,
+			EventsRequest: {
+				BatchItem: {},
+			},
+		};
+
+		const endpointObj: EventsBatch = {} as EventsBatch;
+		endpointObj.Endpoint = endpointContext;
+		endpointObj.Events = {
+			[eventId]: {
+				EventType: name,
+				Timestamp: new Date(timestamp).toISOString(),
+				Attributes: attributes,
+				Metrics: metrics,
+				Session: session,
+			},
+		};
+		eventParams.EventsRequest.BatchItem[endpointId] = endpointObj;
+
+		return eventParams;
+	}
+
+	private async _pinpointPutEvents(params, handlers) {
+		const {
+			event: { eventId },
+			config: { endpointId },
+		} = params;
+		const eventParams = this._generateBatchItemContext(params);
+		const command: PutEventsCommand = new PutEventsCommand(eventParams);
+
+		try {
+			const data = await this.pinpointClient.send(command);
+			const {
+				EventsResponse: {
+					Results: {
+						[endpointId]: {
+							EventsItemResponse: {
+								[eventId]: { StatusCode, Message },
+							},
+						},
+					},
+				},
+			} = data;
+			if (ACCEPTED_CODES.includes(StatusCode)) {
+				logger.debug(&#x27;record event success. &#x27;, data);
+				return handlers.resolve(data);
+			} else {
+				if (RETRYABLE_CODES.includes(StatusCode)) {
+					this._retry(params, handlers);
+				} else {
+					logger.error(
+						`Event ${eventId} is not accepted, the error is ${Message}`
+					);
+					return handlers.reject(data);
+				}
+			}
+		} catch (err) {
+			this._eventError(err);
+			return handlers.reject(err);
+		}
+	}
+
+	private _pinpointSendStopSession(params, handlers): Promise&lt;string&gt; {
+		if (!BEACON_SUPPORTED) {
+			this._pinpointPutEvents(params, handlers);
+			return;
+		}
+
+		const eventParams = this._generateBatchItemContext(params);
+
+		const { region } = this._config;
+		const { ApplicationId, EventsRequest } = eventParams;
+
+		const accessInfo = {
+			secret_key: this._config.credentials.secretAccessKey,
+			access_key: this._config.credentials.accessKeyId,
+			session_token: this._config.credentials.sessionToken,
+		};
+
+		const url = `https://pinpoint.${region}.amazonaws.com/v1/apps/${ApplicationId}/events/legacy`;
+		const body = JSON.stringify(EventsRequest);
+		const method = &#x27;POST&#x27;;
+
+		const request = {
+			url,
+			body,
+			method,
+		};
+
+		const serviceInfo = { region, service: MOBILE_SERVICE_NAME };
+
+		const requestUrl: string = Signer.signUrl(
+			request,
+			accessInfo,
+			serviceInfo,
+			null
+		);
+
+		const success: boolean = navigator.sendBeacon(requestUrl, body);
+
+		if (success) {
+			return handlers.resolve(&#x27;sendBeacon success&#x27;);
+		}
+		return handlers.reject(&#x27;sendBeacon failure&#x27;);
+	}
+
+	private _retry(params, handlers) {
+		const {
+			config: { resendLimit },
+		} = params;
+		// For backward compatibility
+		params.resendLimit =
+			typeof params.resendLimit === &#x27;number&#x27; ? params.resendLimit : resendLimit;
+		if (params.resendLimit-- &gt; 0) {
+			logger.debug(
+				`resending event ${params.eventName} with ${params.resendLimit} retry times left`
+			);
+			this._pinpointPutEvents(params, handlers);
+		} else {
+			logger.debug(`retry times used up for event ${params.eventName}`);
+		}
+	}
+
+	private async _updateEndpoint(endpointObject: EventObject) {
+		const { params, handlers } = endpointObject;
+		const { config, event } = params;
+		const { appId, endpointId } = config;
+
+		const request = this._endpointRequest(
+			config,
+			JS.transferKeyToLowerCase(
+				event,
+				[],
+				[&#x27;attributes&#x27;, &#x27;userAttributes&#x27;, &#x27;Attributes&#x27;, &#x27;UserAttributes&#x27;]
+			)
+		);
+		const update_params = {
+			ApplicationId: appId,
+			EndpointId: endpointId,
+			EndpointRequest: request,
+		};
+
+		try {
+			const command: UpdateEndpointCommand = new UpdateEndpointCommand(
+				update_params
+			);
+			const data = await this.pinpointClient.send(command);
+
+			logger.debug(&#x27;updateEndpoint success&#x27;, data);
+			this._endpointGenerating = false;
+			this._resumeBuffer();
+
+			handlers.resolve(data);
+			return;
+		} catch (err) {
+			const failureData: EndpointFailureData = {
+				err,
+				update_params,
+				endpointObject,
+			};
+
+			return this._handleEndpointUpdateFailure(failureData);
+		}
+	}
+
+	private async _handleEndpointUpdateFailure(failureData: EndpointFailureData) {
+		const { err, endpointObject } = failureData;
+		const statusCode = err.$metadata &amp;&amp; err.$metadata.httpStatusCode;
+
+		logger.debug(&#x27;updateEndpoint error&#x27;, err);
+
+		switch (statusCode) {
+			case FORBIDDEN_CODE:
+				return this._handleEndpointUpdateForbidden(failureData);
+			default:
+				if (RETRYABLE_CODES.includes(statusCode)) {
+					// Server error. Attempt exponential retry
+					const exponential = true;
+					return this._retryEndpointUpdate(endpointObject, exponential);
+				}
+				logger.error(&#x27;updateEndpoint failed&#x27;, err);
+				endpointObject.handlers.reject(err);
+		}
+	}
+
+	private _handleEndpointUpdateForbidden(failureData: EndpointFailureData) {
+		const { err, endpointObject } = failureData;
+
+		const { code, retryable } = err;
+
+		if (code !== EXPIRED_TOKEN_CODE &amp;&amp; !retryable) {
+			return endpointObject.handlers.reject(err);
+		}
+
+		this._retryEndpointUpdate(endpointObject);
+	}
+
+	private _retryEndpointUpdate(
+		endpointObject: EventObject,
+		exponential: boolean = false
+	) {
+		logger.debug(&#x27;_retryEndpointUpdate&#x27;, endpointObject);
+		const { params } = endpointObject;
+
+		// TODO: implement retry with exp back off once exp function is available
+		const {
+			config: { resendLimit },
+		} = params;
+
+		params.resendLimit =
+			typeof params.resendLimit === &#x27;number&#x27; ? params.resendLimit : resendLimit;
+
+		if (params.resendLimit-- &gt; 0) {
+			logger.debug(
+				`resending endpoint update ${params.event.eventId} with ${params.resendLimit} retry attempts remaining`
+			);
+			// insert at the front of endpointBuffer
+			this._endpointBuffer.length
+				? this._endpointBuffer.unshift(endpointObject)
+				: this._updateEndpoint(endpointObject);
+			return;
+		}
+
+		logger.warn(
+			`resending endpoint update ${params.event.eventId} failed after ${params.config.resendLimit} attempts`
+		);
+
+		if (this._endpointGenerating) {
+			logger.error(&#x27;Initial endpoint update failed. &#x27;);
+		}
+	}
+
+	/**
+	 * @private
+	 * @param config
+	 * Init the clients
+	 */
+	private async _initClients(credentials) {
+		logger.debug(&#x27;init clients&#x27;);
+
+		if (
+			this.pinpointClient &amp;&amp;
+			this._config.credentials &amp;&amp;
+			this._config.credentials.sessionToken === credentials.sessionToken &amp;&amp;
+			this._config.credentials.identityId === credentials.identityId
+		) {
+			logger.debug(&#x27;no change for aws credentials, directly return from init&#x27;);
+			return;
+		}
+
+		const identityId = this._config.credentials
+			? this._config.credentials.identityId
+			: null;
+
+		this._config.credentials = credentials;
+		const { region } = this._config;
+		logger.debug(&#x27;init clients with credentials&#x27;, credentials);
+		this.pinpointClient = new PinpointClient({
+			region,
+			credentials,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+
+		// TODO: remove this middleware once a long term fix is implemented by aws-sdk-js team.
+		this.pinpointClient.middlewareStack.addRelativeTo(
+			next =&gt; args =&gt; {
+				delete args.request.headers[&#x27;amz-sdk-invocation-id&#x27;];
+				delete args.request.headers[&#x27;amz-sdk-request&#x27;];
+				return next(args);
+			},
+			{
+				step: &#x27;finalizeRequest&#x27;,
+				relation: &#x27;after&#x27;,
+				toMiddleware: &#x27;retryMiddleware&#x27;,
+			}
+		);
+
+		if (this._bufferExists() &amp;&amp; identityId === credentials.identityId) {
+			// if the identity has remained the same, pass the updated client to the buffer
+			this._updateBufferClient();
+		} else {
+			// otherwise flush the buffer and instantiate a new one
+			// this will cause the old buffer to send any remaining events
+			// with the old credentials and then stop looping and shortly thereafter get picked up by GC
+			this._initBuffer();
+		}
+
+		this._customizePinpointClientReq();
+	}
+
+	private _bufferExists() {
+		return this._buffer &amp;&amp; this._buffer instanceof EventsBuffer;
+	}
+
+	private _initBuffer() {
+		if (this._bufferExists()) {
+			this._flushBuffer();
+		}
+
+		this._buffer = new EventsBuffer(this.pinpointClient, this._config);
+
+		// if the first endpoint update hasn&#x27;t yet resolved pause the buffer to
+		// prevent race conditions. It will be resumed as soon as that request succeeds
+		if (this._endpointGenerating) {
+			this._buffer.pause();
+		}
+	}
+
+	private _updateBufferClient() {
+		if (this._bufferExists()) {
+			this._buffer.updateClient(this.pinpointClient);
+		}
+	}
+
+	private _flushBuffer() {
+		if (this._bufferExists()) {
+			this._buffer.flush();
+			this._buffer = null;
+		}
+	}
+
+	private _resumeBuffer() {
+		if (this._bufferExists()) {
+			this._buffer.resume();
+		}
+	}
+
+	private _customizePinpointClientReq() {
+		// TODO FIXME: Find a middleware to do this with AWS V3 SDK
+		// if (Platform.isReactNative) {
+		// 	this.pinpointClient.customizeRequests(request =&gt; {
+		// 		request.on(&#x27;build&#x27;, req =&gt; {
+		// 			req.httpRequest.headers[&#x27;user-agent&#x27;] = Platform.userAgent;
+		// 		});
+		// 	});
+		// }
+	}
+
+	private async _getEndpointId(cacheKey) {
+		// try to get from cache
+		let endpointId = await Cache.getItem(cacheKey);
+		logger.debug(
+			&#x27;endpointId from cache&#x27;,
+			endpointId,
+			&#x27;type&#x27;,
+			typeof endpointId
+		);
+		if (!endpointId) {
+			endpointId = uuid();
+			// set a longer TTL to avoid endpoint id being deleted after the default TTL (3 days)
+			// also set its priority to the highest to reduce its chance of being deleted when cache is full
+			const ttl = 1000 * 60 * 60 * 24 * 365 * 100; // 100 years
+			const expiration = new Date().getTime() + ttl;
+			Cache.setItem(cacheKey, endpointId, {
+				expires: expiration,
+				priority: 1,
+			});
+		}
+		return endpointId;
+	}
+
+	/**
+	 * EndPoint request
+	 * @return {Object} - The request of updating endpoint
+	 */
+	private _endpointRequest(config, event) {
+		const { credentials } = config;
+		const clientInfo = this._clientInfo || {};
+		const clientContext = config.clientContext || {};
+		// for now we have three different ways for default endpoint configurations
+		// clientInfo
+		// clientContext (deprecated)
+		// config.endpoint
+		const defaultEndpointConfig = config.endpoint || {};
+		const demographicByClientInfo = {
+			appVersion: clientInfo.appVersion,
+			make: clientInfo.make,
+			model: clientInfo.model,
+			modelVersion: clientInfo.version,
+			platform: clientInfo.platform,
+		};
+		// for backward compatibility
+		const {
+			clientId,
+			appTitle,
+			appVersionName,
+			appVersionCode,
+			appPackageName,
+			...demographicByClientContext
+		} = clientContext;
+		const channelType = event.address
+			? clientInfo.platform === &#x27;android&#x27;
+				? &#x27;GCM&#x27;
+				: &#x27;APNS&#x27;
+			: undefined;
+		const tmp = {
+			channelType,
+			requestId: uuid(),
+			effectiveDate: new Date().toISOString(),
+			...defaultEndpointConfig,
+			...event,
+			attributes: {
+				...defaultEndpointConfig.attributes,
+				...event.attributes,
+			},
+			demographic: {
+				...demographicByClientInfo,
+				...demographicByClientContext,
+				...defaultEndpointConfig.demographic,
+				...event.demographic,
+			},
+			location: {
+				...defaultEndpointConfig.location,
+				...event.location,
+			},
+			metrics: {
+				...defaultEndpointConfig.metrics,
+				...event.metrics,
+			},
+			user: {
+				userId:
+					event.userId ||
+					defaultEndpointConfig.userId ||
+					credentials.identityId,
+				userAttributes: {
+					...defaultEndpointConfig.userAttributes,
+					...event.userAttributes,
+				},
+			},
+		};
+
+		// eliminate unnecessary params
+		const {
+			userId,
+			userAttributes,
+			name,
+			session,
+			eventId,
+			immediate,
+			...ret
+		} = tmp;
+		return JS.transferKeyToUpperCase(
+			ret,
+			[],
+			[&#x27;metrics&#x27;, &#x27;userAttributes&#x27;, &#x27;attributes&#x27;]
+		);
+	}
+
+	private _eventError(err: any) {
+		logger.error(&#x27;record event failed.&#x27;, err);
+		logger.warn(
+			`Please ensure you have updated your Pinpoint IAM Policy ` +
+				`with the Action: &quot;mobiletargeting:PutEvents&quot; ` +
+				`in order to record events`
+		);
+	}
+
+	private async _getCredentials() {
+		try {
+			const credentials = await Credentials.get();
+			if (!credentials) return null;
+
+			logger.debug(&#x27;set credentials for analytics&#x27;, credentials);
+			return Credentials.shear(credentials);
+		} catch (err) {
+			logger.debug(&#x27;ensure credentials error&#x27;, err);
+			return null;
+		}
+	}
+}
+
+/**
+ * @deprecated use named import
+ */
+export default AWSPinpointProvider;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:47,&quot;character&quot;:32,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:47,&quot;character&quot;:39,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:48,&quot;character&quot;:36,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:77,&quot;character&quot;:9,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:78,&quot;character&quot;:9,&quot;text&quot;:&quot;pinpointClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:79,&quot;character&quot;:9,&quot;text&quot;:&quot;_sessionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:80,&quot;character&quot;:9,&quot;text&quot;:&quot;_sessionStartTimestamp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:83,&quot;character&quot;:9,&quot;text&quot;:&quot;_clientInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:87,&quot;character&quot;:13,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:90,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:90,&quot;character&quot;:17,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:90,&quot;character&quot;:26,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:15,&quot;text&quot;:&quot;bufferSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:33,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:41,&quot;text&quot;:&quot;bufferSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:15,&quot;text&quot;:&quot;flushSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:32,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:40,&quot;text&quot;:&quot;flushSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:93,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:93,&quot;character&quot;:15,&quot;text&quot;:&quot;flushInterval&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:93,&quot;character&quot;:36,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:93,&quot;character&quot;:44,&quot;text&quot;:&quot;flushInterval&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:94,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:94,&quot;character&quot;:15,&quot;text&quot;:&quot;resendLimit&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:94,&quot;character&quot;:34,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:94,&quot;character&quot;:42,&quot;text&quot;:&quot;resendLimit&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:95,&quot;character&quot;:7,&quot;text&quot;:&quot;_clientInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:18,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:117,&quot;character&quot;:38,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:118,&quot;character&quot;:8,&quot;text&quot;:&quot;conf&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:118,&quot;character&quot;:15,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:119,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:119,&quot;character&quot;:40,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:119,&quot;character&quot;:49,&quot;text&quot;:&quot;conf&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:123,&quot;character&quot;:31,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:125,&quot;character&quot;:11,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:125,&quot;character&quot;:19,&quot;text&quot;:&quot;appId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:125,&quot;character&quot;:34,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:125,&quot;character&quot;:42,&quot;text&quot;:&quot;disabled&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:126,&quot;character&quot;:13,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:126,&quot;character&quot;:21,&quot;text&quot;:&quot;endpointId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:127,&quot;character&quot;:57,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:127,&quot;character&quot;:65,&quot;text&quot;:&quot;appId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:129,&quot;character&quot;:11,&quot;text&quot;:&quot;endpointId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:130,&quot;character&quot;:57,&quot;text&quot;:&quot;endpointId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:11,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:19,&quot;text&quot;:&quot;endpointId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:32,&quot;text&quot;:&quot;endpointId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:134,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:135,&quot;character&quot;:52,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:143,&quot;character&quot;:14,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:153,&quot;character&quot;:28,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:153,&quot;character&quot;:36,&quot;text&quot;:&quot;appId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:153,&quot;character&quot;:51,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:153,&quot;character&quot;:59,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:169,&quot;character&quot;:37,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:169,&quot;character&quot;:50,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:198,&quot;character&quot;:22,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:198,&quot;character&quot;:30,&quot;text&quot;:&quot;handlers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:199,&quot;character&quot;:6,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:199,&quot;character&quot;:13,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:199,&quot;character&quot;:19,&quot;text&quot;:&quot;name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:207,&quot;character&quot;:26,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:208,&quot;character&quot;:7,&quot;text&quot;:&quot;_sessionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:208,&quot;character&quot;:25,&quot;text&quot;:&quot;_sessionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:209,&quot;character&quot;:10,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:10,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:16,&quot;text&quot;:&quot;name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:214,&quot;character&quot;:9,&quot;text&quot;:&quot;_sessionStartTimestamp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:215,&quot;character&quot;:9,&quot;text&quot;:&quot;_sessionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:216,&quot;character&quot;:4,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:216,&quot;character&quot;:10,&quot;text&quot;:&quot;session&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:217,&quot;character&quot;:5,&quot;text&quot;:&quot;Id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:217,&quot;character&quot;:14,&quot;text&quot;:&quot;_sessionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:218,&quot;character&quot;:35,&quot;text&quot;:&quot;_sessionStartTimestamp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:223,&quot;character&quot;:9,&quot;text&quot;:&quot;_sessionStartTimestamp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:224,&quot;character&quot;:10,&quot;text&quot;:&quot;_sessionStartTimestamp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:225,&quot;character&quot;:9,&quot;text&quot;:&quot;_sessionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:225,&quot;character&quot;:27,&quot;text&quot;:&quot;_sessionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:226,&quot;character&quot;:4,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:226,&quot;character&quot;:10,&quot;text&quot;:&quot;session&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:227,&quot;character&quot;:5,&quot;text&quot;:&quot;Id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:227,&quot;character&quot;:14,&quot;text&quot;:&quot;_sessionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:228,&quot;character&quot;:36,&quot;text&quot;:&quot;_sessionStartTimestamp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:229,&quot;character&quot;:35,&quot;text&quot;:&quot;_sessionStartTimestamp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:232,&quot;character&quot;:9,&quot;text&quot;:&quot;_sessionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:233,&quot;character&quot;:9,&quot;text&quot;:&quot;_sessionStartTimestamp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:236,&quot;character&quot;:9,&quot;text&quot;:&quot;_sessionStartTimestamp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:237,&quot;character&quot;:10,&quot;text&quot;:&quot;_sessionStartTimestamp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:238,&quot;character&quot;:9,&quot;text&quot;:&quot;_sessionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:238,&quot;character&quot;:27,&quot;text&quot;:&quot;_sessionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:239,&quot;character&quot;:4,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:239,&quot;character&quot;:10,&quot;text&quot;:&quot;session&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:240,&quot;character&quot;:5,&quot;text&quot;:&quot;Id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:240,&quot;character&quot;:14,&quot;text&quot;:&quot;_sessionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:241,&quot;character&quot;:35,&quot;text&quot;:&quot;_sessionStartTimestamp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:246,&quot;character&quot;:21,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:246,&quot;character&quot;:29,&quot;text&quot;:&quot;handlers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:247,&quot;character&quot;:10,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:249,&quot;character&quot;:10,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:249,&quot;character&quot;:16,&quot;text&quot;:&quot;name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:253,&quot;character&quot;:41,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:253,&quot;character&quot;:49,&quot;text&quot;:&quot;handlers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:255,&quot;character&quot;:35,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:255,&quot;character&quot;:43,&quot;text&quot;:&quot;handlers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:259,&quot;character&quot;:35,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:260,&quot;character&quot;:10,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:260,&quot;character&quot;:17,&quot;text&quot;:&quot;timestamp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:260,&quot;character&quot;:28,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:261,&quot;character&quot;:10,&quot;text&quot;:&quot;name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:261,&quot;character&quot;:16,&quot;text&quot;:&quot;attributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:261,&quot;character&quot;:28,&quot;text&quot;:&quot;metrics&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:261,&quot;character&quot;:37,&quot;text&quot;:&quot;eventId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:261,&quot;character&quot;:46,&quot;text&quot;:&quot;session&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:262,&quot;character&quot;:10,&quot;text&quot;:&quot;appId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:262,&quot;character&quot;:17,&quot;text&quot;:&quot;endpointId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:276,&quot;character&quot;:4,&quot;text&quot;:&quot;eventId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:284,&quot;character&quot;:38,&quot;text&quot;:&quot;endpointId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:289,&quot;character&quot;:34,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:289,&quot;character&quot;:42,&quot;text&quot;:&quot;handlers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:291,&quot;character&quot;:12,&quot;text&quot;:&quot;eventId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:292,&quot;character&quot;:13,&quot;text&quot;:&quot;endpointId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:294,&quot;character&quot;:53,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:298,&quot;character&quot;:9,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:298,&quot;character&quot;:27,&quot;text&quot;:&quot;pinpointClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:298,&quot;character&quot;:42,&quot;text&quot;:&quot;send&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:304,&quot;character&quot;:21,&quot;text&quot;:&quot;StatusCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:304,&quot;character&quot;:33,&quot;text&quot;:&quot;Message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:304,&quot;character&quot;:9,&quot;text&quot;:&quot;eventId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:302,&quot;character&quot;:7,&quot;text&quot;:&quot;endpointId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:311,&quot;character&quot;:43,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:312,&quot;character&quot;:11,&quot;text&quot;:&quot;handlers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:312,&quot;character&quot;:20,&quot;text&quot;:&quot;resolve&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:312,&quot;character&quot;:28,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:315,&quot;character&quot;:17,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:315,&quot;character&quot;:25,&quot;text&quot;:&quot;handlers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:318,&quot;character&quot;:15,&quot;text&quot;:&quot;eventId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:318,&quot;character&quot;:56,&quot;text&quot;:&quot;Message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:320,&quot;character&quot;:12,&quot;text&quot;:&quot;handlers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:320,&quot;character&quot;:21,&quot;text&quot;:&quot;reject&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:320,&quot;character&quot;:28,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:324,&quot;character&quot;:20,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:325,&quot;character&quot;:10,&quot;text&quot;:&quot;handlers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:325,&quot;character&quot;:19,&quot;text&quot;:&quot;reject&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:325,&quot;character&quot;:26,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:323,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:329,&quot;character&quot;:34,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:329,&quot;character&quot;:42,&quot;text&quot;:&quot;handlers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:331,&quot;character&quot;:27,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:331,&quot;character&quot;:35,&quot;text&quot;:&quot;handlers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:335,&quot;character&quot;:53,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:337,&quot;character&quot;:10,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:337,&quot;character&quot;:26,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:341,&quot;character&quot;:3,&quot;text&quot;:&quot;secret_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:341,&quot;character&quot;:20,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:341,&quot;character&quot;:28,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:341,&quot;character&quot;:40,&quot;text&quot;:&quot;secretAccessKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:342,&quot;character&quot;:3,&quot;text&quot;:&quot;access_key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:342,&quot;character&quot;:20,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:342,&quot;character&quot;:28,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:342,&quot;character&quot;:40,&quot;text&quot;:&quot;accessKeyId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:343,&quot;character&quot;:3,&quot;text&quot;:&quot;session_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:343,&quot;character&quot;:23,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:343,&quot;character&quot;:31,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:343,&quot;character&quot;:43,&quot;text&quot;:&quot;sessionToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:346,&quot;character&quot;:34,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:356,&quot;character&quot;:24,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:368,&quot;character&quot;:10,&quot;text&quot;:&quot;handlers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:368,&quot;character&quot;:19,&quot;text&quot;:&quot;resolve&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:370,&quot;character&quot;:9,&quot;text&quot;:&quot;handlers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:370,&quot;character&quot;:18,&quot;text&quot;:&quot;reject&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:373,&quot;character&quot;:16,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:373,&quot;character&quot;:24,&quot;text&quot;:&quot;handlers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:375,&quot;character&quot;:13,&quot;text&quot;:&quot;resendLimit&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:378,&quot;character&quot;:2,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:378,&quot;character&quot;:9,&quot;text&quot;:&quot;resendLimit&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:379,&quot;character&quot;:10,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:379,&quot;character&quot;:17,&quot;text&quot;:&quot;resendLimit&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:379,&quot;character&quot;:44,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:379,&quot;character&quot;:51,&quot;text&quot;:&quot;resendLimit&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:379,&quot;character&quot;:65,&quot;text&quot;:&quot;resendLimit&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:380,&quot;character&quot;:6,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:380,&quot;character&quot;:13,&quot;text&quot;:&quot;resendLimit&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:382,&quot;character&quot;:23,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:382,&quot;character&quot;:30,&quot;text&quot;:&quot;eventName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:382,&quot;character&quot;:48,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:382,&quot;character&quot;:55,&quot;text&quot;:&quot;resendLimit&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:384,&quot;character&quot;:27,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:384,&quot;character&quot;:35,&quot;text&quot;:&quot;handlers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:386,&quot;character&quot;:49,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:386,&quot;character&quot;:56,&quot;text&quot;:&quot;eventName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:395,&quot;character&quot;:8,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:406,&quot;character&quot;:3,&quot;text&quot;:&quot;EndpointRequest&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:406,&quot;character&quot;:20,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:413,&quot;character&quot;:9,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:413,&quot;character&quot;:27,&quot;text&quot;:&quot;pinpointClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:413,&quot;character&quot;:42,&quot;text&quot;:&quot;send&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:415,&quot;character&quot;:42,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:419,&quot;character&quot;:20,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:423,&quot;character&quot;:4,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:421,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:433,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:434,&quot;character&quot;:8,&quot;text&quot;:&quot;statusCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:434,&quot;character&quot;:21,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:434,&quot;character&quot;:25,&quot;text&quot;:&quot;$metadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:434,&quot;character&quot;:38,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:434,&quot;character&quot;:42,&quot;text&quot;:&quot;$metadata&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:434,&quot;character&quot;:52,&quot;text&quot;:&quot;httpStatusCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:436,&quot;character&quot;:39,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:438,&quot;character&quot;:10,&quot;text&quot;:&quot;statusCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:447,&quot;character&quot;:42,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:448,&quot;character&quot;:35,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:453,&quot;character&quot;:10,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:455,&quot;character&quot;:10,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:455,&quot;character&quot;:16,&quot;text&quot;:&quot;retryable&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:457,&quot;character&quot;:6,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:457,&quot;character&quot;:38,&quot;text&quot;:&quot;retryable&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:458,&quot;character&quot;:41,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:504,&quot;character&quot;:28,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:508,&quot;character&quot;:8,&quot;text&quot;:&quot;pinpointClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:509,&quot;character&quot;:8,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:509,&quot;character&quot;:16,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:510,&quot;character&quot;:8,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:510,&quot;character&quot;:16,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:510,&quot;character&quot;:28,&quot;text&quot;:&quot;sessionToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:510,&quot;character&quot;:45,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:510,&quot;character&quot;:57,&quot;text&quot;:&quot;sessionToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:511,&quot;character&quot;:8,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:511,&quot;character&quot;:16,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:511,&quot;character&quot;:28,&quot;text&quot;:&quot;identityId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:511,&quot;character&quot;:43,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:511,&quot;character&quot;:55,&quot;text&quot;:&quot;identityId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:517,&quot;character&quot;:8,&quot;text&quot;:&quot;identityId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:517,&quot;character&quot;:26,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:517,&quot;character&quot;:34,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:518,&quot;character&quot;:10,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:518,&quot;character&quot;:18,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:518,&quot;character&quot;:30,&quot;text&quot;:&quot;identityId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:521,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:521,&quot;character&quot;:15,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:521,&quot;character&quot;:29,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:522,&quot;character&quot;:10,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:522,&quot;character&quot;:26,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:523,&quot;character&quot;:48,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:524,&quot;character&quot;:7,&quot;text&quot;:&quot;pinpointClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:531,&quot;character&quot;:7,&quot;text&quot;:&quot;pinpointClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:531,&quot;character&quot;:22,&quot;text&quot;:&quot;middlewareStack&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:531,&quot;character&quot;:38,&quot;text&quot;:&quot;addRelativeTo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:532,&quot;character&quot;:3,&quot;text&quot;:&quot;next&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:532,&quot;character&quot;:11,&quot;text&quot;:&quot;args&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:533,&quot;character&quot;:11,&quot;text&quot;:&quot;args&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:533,&quot;character&quot;:16,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:533,&quot;character&quot;:24,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:534,&quot;character&quot;:11,&quot;text&quot;:&quot;args&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:534,&quot;character&quot;:16,&quot;text&quot;:&quot;request&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:534,&quot;character&quot;:24,&quot;text&quot;:&quot;headers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:535,&quot;character&quot;:11,&quot;text&quot;:&quot;next&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:535,&quot;character&quot;:16,&quot;text&quot;:&quot;args&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:544,&quot;character&quot;:30,&quot;text&quot;:&quot;identityId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:544,&quot;character&quot;:45,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:544,&quot;character&quot;:57,&quot;text&quot;:&quot;identityId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:566,&quot;character&quot;:39,&quot;text&quot;:&quot;pinpointClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:566,&quot;character&quot;:60,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:577,&quot;character&quot;:34,&quot;text&quot;:&quot;pinpointClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:605,&quot;character&quot;:30,&quot;text&quot;:&quot;cacheKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:607,&quot;character&quot;:6,&quot;text&quot;:&quot;endpointId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:610,&quot;character&quot;:3,&quot;text&quot;:&quot;endpointId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:612,&quot;character&quot;:10,&quot;text&quot;:&quot;endpointId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:614,&quot;character&quot;:7,&quot;text&quot;:&quot;endpointId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:615,&quot;character&quot;:3,&quot;text&quot;:&quot;endpointId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:620,&quot;character&quot;:27,&quot;text&quot;:&quot;endpointId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:625,&quot;character&quot;:9,&quot;text&quot;:&quot;endpointId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:632,&quot;character&quot;:26,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:632,&quot;character&quot;:34,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:633,&quot;character&quot;:10,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:634,&quot;character&quot;:8,&quot;text&quot;:&quot;clientInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:634,&quot;character&quot;:26,&quot;text&quot;:&quot;_clientInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:635,&quot;character&quot;:8,&quot;text&quot;:&quot;clientContext&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:635,&quot;character&quot;:24,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:635,&quot;character&quot;:31,&quot;text&quot;:&quot;clientContext&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:640,&quot;character&quot;:8,&quot;text&quot;:&quot;defaultEndpointConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:640,&quot;character&quot;:32,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:640,&quot;character&quot;:39,&quot;text&quot;:&quot;endpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:642,&quot;character&quot;:3,&quot;text&quot;:&quot;appVersion&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:642,&quot;character&quot;:15,&quot;text&quot;:&quot;clientInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:642,&quot;character&quot;:26,&quot;text&quot;:&quot;appVersion&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:643,&quot;character&quot;:3,&quot;text&quot;:&quot;make&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:643,&quot;character&quot;:9,&quot;text&quot;:&quot;clientInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:643,&quot;character&quot;:20,&quot;text&quot;:&quot;make&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:644,&quot;character&quot;:3,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:644,&quot;character&quot;:10,&quot;text&quot;:&quot;clientInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:644,&quot;character&quot;:21,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:645,&quot;character&quot;:3,&quot;text&quot;:&quot;modelVersion&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:645,&quot;character&quot;:17,&quot;text&quot;:&quot;clientInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:645,&quot;character&quot;:28,&quot;text&quot;:&quot;version&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:646,&quot;character&quot;:3,&quot;text&quot;:&quot;platform&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:646,&quot;character&quot;:13,&quot;text&quot;:&quot;clientInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:646,&quot;character&quot;:24,&quot;text&quot;:&quot;platform&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:650,&quot;character&quot;:3,&quot;text&quot;:&quot;clientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:651,&quot;character&quot;:3,&quot;text&quot;:&quot;appTitle&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:652,&quot;character&quot;:3,&quot;text&quot;:&quot;appVersionName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:653,&quot;character&quot;:3,&quot;text&quot;:&quot;appVersionCode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:654,&quot;character&quot;:3,&quot;text&quot;:&quot;appPackageName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:655,&quot;character&quot;:6,&quot;text&quot;:&quot;demographicByClientContext&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:657,&quot;character&quot;:22,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:657,&quot;character&quot;:28,&quot;text&quot;:&quot;address&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:658,&quot;character&quot;:5,&quot;text&quot;:&quot;clientInfo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:658,&quot;character&quot;:16,&quot;text&quot;:&quot;platform&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:662,&quot;character&quot;:8,&quot;text&quot;:&quot;tmp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:666,&quot;character&quot;:6,&quot;text&quot;:&quot;defaultEndpointConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:667,&quot;character&quot;:6,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:668,&quot;character&quot;:3,&quot;text&quot;:&quot;attributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:669,&quot;character&quot;:7,&quot;text&quot;:&quot;defaultEndpointConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:669,&quot;character&quot;:29,&quot;text&quot;:&quot;attributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:670,&quot;character&quot;:7,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:670,&quot;character&quot;:13,&quot;text&quot;:&quot;attributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:672,&quot;character&quot;:3,&quot;text&quot;:&quot;demographic&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:674,&quot;character&quot;:7,&quot;text&quot;:&quot;demographicByClientContext&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:675,&quot;character&quot;:7,&quot;text&quot;:&quot;defaultEndpointConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:675,&quot;character&quot;:29,&quot;text&quot;:&quot;demographic&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:676,&quot;character&quot;:7,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:676,&quot;character&quot;:13,&quot;text&quot;:&quot;demographic&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:678,&quot;character&quot;:3,&quot;text&quot;:&quot;location&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:679,&quot;character&quot;:7,&quot;text&quot;:&quot;defaultEndpointConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:679,&quot;character&quot;:29,&quot;text&quot;:&quot;location&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:680,&quot;character&quot;:7,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:680,&quot;character&quot;:13,&quot;text&quot;:&quot;location&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:682,&quot;character&quot;:3,&quot;text&quot;:&quot;metrics&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:683,&quot;character&quot;:7,&quot;text&quot;:&quot;defaultEndpointConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:683,&quot;character&quot;:29,&quot;text&quot;:&quot;metrics&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:684,&quot;character&quot;:7,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:684,&quot;character&quot;:13,&quot;text&quot;:&quot;metrics&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:687,&quot;character&quot;:4,&quot;text&quot;:&quot;userId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:688,&quot;character&quot;:5,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:688,&quot;character&quot;:11,&quot;text&quot;:&quot;userId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:689,&quot;character&quot;:5,&quot;text&quot;:&quot;defaultEndpointConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:689,&quot;character&quot;:27,&quot;text&quot;:&quot;userId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:690,&quot;character&quot;:5,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:690,&quot;character&quot;:17,&quot;text&quot;:&quot;identityId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:691,&quot;character&quot;:4,&quot;text&quot;:&quot;userAttributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:692,&quot;character&quot;:8,&quot;text&quot;:&quot;defaultEndpointConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:692,&quot;character&quot;:30,&quot;text&quot;:&quot;userAttributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:693,&quot;character&quot;:8,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:693,&quot;character&quot;:14,&quot;text&quot;:&quot;userAttributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:700,&quot;character&quot;:3,&quot;text&quot;:&quot;userId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:701,&quot;character&quot;:3,&quot;text&quot;:&quot;userAttributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:702,&quot;character&quot;:3,&quot;text&quot;:&quot;name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:703,&quot;character&quot;:3,&quot;text&quot;:&quot;session&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:704,&quot;character&quot;:3,&quot;text&quot;:&quot;eventId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:705,&quot;character&quot;:3,&quot;text&quot;:&quot;immediate&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:706,&quot;character&quot;:6,&quot;text&quot;:&quot;ret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:709,&quot;character&quot;:3,&quot;text&quot;:&quot;ret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:715,&quot;character&quot;:21,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:716,&quot;character&quot;:39,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:726,&quot;character&quot;:9,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:727,&quot;character&quot;:8,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:729,&quot;character&quot;:49,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:730,&quot;character&quot;:28,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:732,&quot;character&quot;:44,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSPinpointProvider.ts&quot;,&quot;line&quot;:731,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:24 GMT</p>
+    </body>
+  </html>
+  

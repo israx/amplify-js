@@ -1,0 +1,262 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>API.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/API.ts</td><td class="">92.34%</td><td class="">0%</td><td class="">248</td><td class="">229</td><td class="">19</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import { Auth } from &#x27;@aws-amplify/auth&#x27;;
+import Cache from &#x27;@aws-amplify/cache&#x27;;
+import { AWSAppSyncRealTimeProvider } from &#x27;@aws-amplify/pubsub&#x27;;
+import { RestAPIClass } from &#x27;@aws-amplify/api-rest&#x27;;
+import {
+	GraphQLAPIClass,
+	GraphQLOptions,
+	GraphQLResult,
+	GraphQLOperation,
+	OperationTypeNode,
+} from &#x27;@aws-amplify/api-graphql&#x27;;
+import {
+	Amplify,
+	ConsoleLogger as Logger,
+	Credentials,
+} from &#x27;@aws-amplify/core&#x27;;
+import Observable from &#x27;zen-observable-ts&#x27;;
+import { GraphQLQuery, GraphQLSubscription } from &#x27;./types&#x27;;
+
+const logger = new Logger(&#x27;API&#x27;);
+/**
+ * @deprecated
+ * Use RestApi or GraphQLAPI to reduce your application bundle size
+ * Export Cloud Logic APIs
+ */
+export class APIClass {
+	/**
+	 * Initialize API with AWS configuration
+	 * @param {Object} options - Configuration object for API
+	 */
+	private _options;
+	private _restApi: RestAPIClass;
+	private _graphqlApi: GraphQLAPIClass;
+
+	Auth = Auth;
+	Cache = Cache;
+	Credentials = Credentials;
+
+	/**
+	 * Initialize API with AWS configuration
+	 * @param {Object} options - Configuration object for API
+	 */
+	constructor(options) {
+		this._options = options;
+		this._restApi = new RestAPIClass(options);
+		this._graphqlApi = new GraphQLAPIClass(options);
+		logger.debug(&#x27;API Options&#x27;, this._options);
+	}
+
+	public getModuleName() {
+		return &#x27;API&#x27;;
+	}
+
+	/**
+	 * Configure API part with aws configurations
+	 * @param {Object} config - Configuration of the API
+	 * @return {Object} - The current configuration
+	 */
+	configure(options) {
+		this._options = Object.assign({}, this._options, options);
+
+		// Share Amplify instance with client for SSR
+		this._restApi.Credentials = this.Credentials;
+
+		this._graphqlApi.Auth = this.Auth;
+		this._graphqlApi.Cache = this.Cache;
+		this._graphqlApi.Credentials = this.Credentials;
+
+		const restAPIConfig = this._restApi.configure(this._options);
+		const graphQLAPIConfig = this._graphqlApi.configure(this._options);
+
+		return { ...restAPIConfig, ...graphQLAPIConfig };
+	}
+
+	/**
+	 * Make a GET request
+	 * @param apiName - The api name of the request
+	 * @param path - The path of the request
+	 * @param [init] - Request extra params
+	 * @return A promise that resolves to an object with response status and JSON data, if successful.
+	 */
+	get(
+		apiName: string,
+		path: string,
+		init: { [key: string]: any }
+	): Promise&lt;any&gt; {
+		return this._restApi.get(apiName, path, init);
+	}
+
+	/**
+	 * Make a POST request
+	 * @param apiName - The api name of the request
+	 * @param path - The path of the request
+	 * @param [init] - Request extra params
+	 * @return A promise that resolves to an object with response status and JSON data, if successful.
+	 */
+	post(
+		apiName: string,
+		path: string,
+		init: { [key: string]: any }
+	): Promise&lt;any&gt; {
+		return this._restApi.post(apiName, path, init);
+	}
+
+	/**
+	 * Make a PUT request
+	 * @param apiName - The api name of the request
+	 * @param path - The path of the request
+	 * @param [init] - Request extra params
+	 * @return A promise that resolves to an object with response status and JSON data, if successful.
+	 */
+	put(
+		apiName: string,
+		path: string,
+		init: { [key: string]: any }
+	): Promise&lt;any&gt; {
+		return this._restApi.put(apiName, path, init);
+	}
+
+	/**
+	 * Make a PATCH request
+	 * @param apiName - The api name of the request
+	 * @param path - The path of the request
+	 * @param [init] - Request extra params
+	 * @return A promise that resolves to an object with response status and JSON data, if successful.
+	 */
+	patch(
+		apiName: string,
+		path: string,
+		init: { [key: string]: any }
+	): Promise&lt;any&gt; {
+		return this._restApi.patch(apiName, path, init);
+	}
+
+	/**
+	 * Make a DEL request
+	 * @param apiName - The api name of the request
+	 * @param path - The path of the request
+	 * @param [init] - Request extra params
+	 * @return A promise that resolves to an object with response status and JSON data, if successful.
+	 */
+	del(
+		apiName: string,
+		path: string,
+		init: { [key: string]: any }
+	): Promise&lt;any&gt; {
+		return this._restApi.del(apiName, path, init);
+	}
+
+	/**
+	 * Make a HEAD request
+	 * @param apiName - The api name of the request
+	 * @param path - The path of the request
+	 * @param [init] - Request extra params
+	 * @return A promise that resolves to an object with response status and JSON data, if successful.
+	 */
+	head(
+		apiName: string,
+		path: string,
+		init: { [key: string]: any }
+	): Promise&lt;any&gt; {
+		return this._restApi.head(apiName, path, init);
+	}
+
+	/**
+	 * Checks to see if an error thrown is from an api request cancellation
+	 * @param error - Any error
+	 * @return If the error was from an api request cancellation
+	 */
+	isCancel(error: any): boolean {
+		return this._restApi.isCancel(error);
+	}
+	/**
+	 * Cancels an inflight request for either a GraphQL request or a Rest API request.
+	 * @param request - request to cancel
+	 * @param [message] - custom error message
+	 * @return If the request was cancelled
+	 */
+	cancel(request: Promise&lt;any&gt;, message?: string): boolean {
+		if (this._restApi.hasCancelToken(request)) {
+			return this._restApi.cancel(request, message);
+		} else if (this._graphqlApi.hasCancelToken(request)) {
+			return this._graphqlApi.cancel(request, message);
+		}
+		return false;
+	}
+
+	/**
+	 * Getting endpoint for API
+	 * @param apiName - The name of the api
+	 * @return The endpoint of the api
+	 */
+	async endpoint(apiName: string): Promise&lt;string&gt; {
+		return this._restApi.endpoint(apiName);
+	}
+
+	/**
+	 * to get the operation type
+	 * @param operation
+	 */
+	getGraphqlOperationType(operation: GraphQLOperation): OperationTypeNode {
+		return this._graphqlApi.getGraphqlOperationType(operation);
+	}
+
+	/**
+	 * Executes a GraphQL operation
+	 *
+	 * @param options - GraphQL Options
+	 * @param [additionalHeaders] - headers to merge in after any `graphql_headers` set in the config
+	 * @returns An Observable if queryType is &#x27;subscription&#x27;, else a promise of the graphql result from the query.
+	 */
+	graphql&lt;T&gt;(
+		options: GraphQLOptions,
+		additionalHeaders?: { [key: string]: string }
+	): T extends GraphQLQuery&lt;T&gt;
+		? Promise&lt;GraphQLResult&lt;T&gt;&gt;
+		: T extends GraphQLSubscription&lt;T&gt;
+		? Observable&lt;{
+				provider: AWSAppSyncRealTimeProvider;
+				value: GraphQLResult&lt;T&gt;;
+		  }&gt;
+		: Promise&lt;GraphQLResult&lt;any&gt;&gt; | Observable&lt;object&gt;;
+	graphql&lt;T = any&gt;(
+		options: GraphQLOptions,
+		additionalHeaders?: { [key: string]: string }
+	): Promise&lt;GraphQLResult&lt;any&gt;&gt; | Observable&lt;object&gt; {
+		return this._graphqlApi.graphql(options, additionalHeaders);
+	}
+}
+
+export const API = new APIClass(null);
+Amplify.register(API);
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:42,&quot;character&quot;:9,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:54,&quot;character&quot;:13,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:55,&quot;character&quot;:7,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:55,&quot;character&quot;:18,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:56,&quot;character&quot;:35,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:57,&quot;character&quot;:41,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:58,&quot;character&quot;:35,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:70,&quot;character&quot;:11,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:7,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:41,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:51,&quot;text&quot;:&quot;options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:80,&quot;character&quot;:8,&quot;text&quot;:&quot;restAPIConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:80,&quot;character&quot;:53,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:81,&quot;character&quot;:8,&quot;text&quot;:&quot;graphQLAPIConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:81,&quot;character&quot;:59,&quot;text&quot;:&quot;_options&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:83,&quot;character&quot;:14,&quot;text&quot;:&quot;restAPIConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:83,&quot;character&quot;:32,&quot;text&quot;:&quot;graphQLAPIConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:181,&quot;character&quot;:10,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/API.ts&quot;,&quot;line&quot;:182,&quot;character&quot;:32,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:27 GMT</p>
+    </body>
+  </html>
+  

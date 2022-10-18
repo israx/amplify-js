@@ -1,0 +1,92 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>ios.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/ClientDevice/ios.ts</td><td class="">64.77%</td><td class="">0%</td><td class="">88</td><td class="">57</td><td class="">31</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import { Platform, Dimensions } from &#x27;react-native&#x27;;
+import { ConsoleLogger as Logger } from &#x27;../Logger&#x27;;
+
+const logger = new Logger(&#x27;DeviceInfo&#x27;);
+
+export const clientInfo = () =&gt; {
+	const dim = Dimensions.get(&#x27;screen&#x27;);
+	logger.debug(Platform, dim);
+	const OS = &#x27;ios&#x27;;
+	const { Version } = Platform;
+	const { make, model } = dimToMake(dim);
+	return {
+		platform: OS,
+		version: String(Version),
+		appVersion: [OS, String(Version)].join(&#x27;/&#x27;),
+		make,
+		model,
+	};
+};
+
+function dimToMake(dim) {
+	let { height, width } = dim;
+	if (height &lt; width) {
+		const tmp = height;
+		height = width;
+		width = tmp;
+	}
+
+	if (width === 320 &amp;&amp; height === 568) {
+		return { make: &#x27;iPhone&#x27;, model: &#x27;iPhone 5&#x27; };
+	}
+	if (width === 375 &amp;&amp; height === 667) {
+		return { make: &#x27;iPhone&#x27;, model: &#x27;iPhone 6/7/8&#x27; };
+	}
+	if (width === 414 &amp;&amp; height === 736) {
+		return { make: &#x27;iPhone&#x27;, model: &#x27;iPhone 6/7/8 plus&#x27; };
+	}
+	if (width === 375 &amp;&amp; height === 812) {
+		return { make: &#x27;iPhone&#x27;, model: &#x27;iPhone X&#x27; };
+	}
+	if (width === 414 &amp;&amp; height === 896) {
+		return { make: &#x27;iPhone&#x27;, model: &#x27;iPhone XR&#x27; };
+	}
+	if (width === 768 &amp;&amp; height === 1024) {
+		return { make: &#x27;iPad&#x27;, model: &#x27;iPad Mini/Air&#x27; };
+	}
+	if (width === 834 &amp;&amp; height === 1112) {
+		return { make: &#x27;iPad&#x27;, model: &#x27;iPad Pro&#x27; };
+	}
+	if (width === 1024 &amp;&amp; height === 1366) {
+		return { make: &#x27;iPad&#x27;, model: &#x27;iPad Pro&#x27; };
+	}
+	if (width === 272 &amp;&amp; height === 340) {
+		return { make: &#x27;Watch&#x27;, model: &#x27;Watch 38mm&#x27; };
+	}
+	if (width === 312 &amp;&amp; height === 390) {
+		return { make: &#x27;Watch&#x27;, model: &#x27;Watch 42mm&#x27; };
+	}
+
+	return { make: null, model: null };
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:33,&quot;character&quot;:19,&quot;text&quot;:&quot;dim&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:34,&quot;character&quot;:7,&quot;text&quot;:&quot;height&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:34,&quot;character&quot;:15,&quot;text&quot;:&quot;width&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:35,&quot;character&quot;:5,&quot;text&quot;:&quot;height&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:35,&quot;character&quot;:14,&quot;text&quot;:&quot;width&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:36,&quot;character&quot;:8,&quot;text&quot;:&quot;tmp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:36,&quot;character&quot;:14,&quot;text&quot;:&quot;height&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:37,&quot;character&quot;:2,&quot;text&quot;:&quot;height&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:37,&quot;character&quot;:11,&quot;text&quot;:&quot;width&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:38,&quot;character&quot;:2,&quot;text&quot;:&quot;width&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:38,&quot;character&quot;:10,&quot;text&quot;:&quot;tmp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:41,&quot;character&quot;:5,&quot;text&quot;:&quot;width&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:41,&quot;character&quot;:22,&quot;text&quot;:&quot;height&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:44,&quot;character&quot;:5,&quot;text&quot;:&quot;width&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:44,&quot;character&quot;:22,&quot;text&quot;:&quot;height&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:47,&quot;character&quot;:5,&quot;text&quot;:&quot;width&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:47,&quot;character&quot;:22,&quot;text&quot;:&quot;height&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:50,&quot;character&quot;:5,&quot;text&quot;:&quot;width&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:50,&quot;character&quot;:22,&quot;text&quot;:&quot;height&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:53,&quot;character&quot;:5,&quot;text&quot;:&quot;width&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:53,&quot;character&quot;:22,&quot;text&quot;:&quot;height&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:56,&quot;character&quot;:5,&quot;text&quot;:&quot;width&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:56,&quot;character&quot;:22,&quot;text&quot;:&quot;height&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:5,&quot;text&quot;:&quot;width&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:22,&quot;text&quot;:&quot;height&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:5,&quot;text&quot;:&quot;width&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:23,&quot;text&quot;:&quot;height&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:5,&quot;text&quot;:&quot;width&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:22,&quot;text&quot;:&quot;height&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:68,&quot;character&quot;:5,&quot;text&quot;:&quot;width&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/ClientDevice/ios.ts&quot;,&quot;line&quot;:68,&quot;character&quot;:22,&quot;text&quot;:&quot;height&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:20 GMT</p>
+    </body>
+  </html>
+  

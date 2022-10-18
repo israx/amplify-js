@@ -1,0 +1,471 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Analytics.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Analytics.ts</td><td class="">81.34%</td><td class="">0%</td><td class="">477</td><td class="">388</td><td class="">89</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import {
+	Amplify,
+	ConsoleLogger as Logger,
+	Hub,
+	Parser,
+} from &#x27;@aws-amplify/core&#x27;;
+import { AWSPinpointProvider } from &#x27;./Providers/AWSPinpointProvider&#x27;;
+
+import {
+	AnalyticsProvider,
+	EventAttributes,
+	EventMetrics,
+	AnalyticsEvent,
+	AutoTrackSessionOpts,
+	AutoTrackPageViewOpts,
+	AutoTrackEventOpts,
+	PersonalizeAnalyticsEvent,
+	KinesisAnalyticsEvent,
+} from &#x27;./types&#x27;;
+import { PageViewTracker, EventTracker, SessionTracker } from &#x27;./trackers&#x27;;
+
+const logger = new Logger(&#x27;AnalyticsClass&#x27;);
+
+const AMPLIFY_SYMBOL = (
+	typeof Symbol !== &#x27;undefined&#x27; &amp;&amp; typeof Symbol.for === &#x27;function&#x27;
+		? Symbol.for(&#x27;amplify_default&#x27;)
+		: &#x27;@@amplify_default&#x27;
+) as Symbol;
+
+const dispatchAnalyticsEvent = (event: string, data: any, message: string) =&gt; {
+	Hub.dispatch(
+		&#x27;analytics&#x27;,
+		{ event, data, message },
+		&#x27;Analytics&#x27;,
+		AMPLIFY_SYMBOL
+	);
+};
+
+const trackers = {
+	pageView: PageViewTracker,
+	event: EventTracker,
+	session: SessionTracker,
+};
+
+type TrackerTypes = keyof typeof trackers;
+type Trackers = typeof trackers[TrackerTypes];
+let _instance = null;
+
+/**
+ * Provide mobile analytics client functions
+ */
+export class AnalyticsClass {
+	private _config;
+	private _pluggables: AnalyticsProvider[];
+	private _disabled: boolean;
+	private _trackers: Trackers | {};
+
+	/**
+	 * Initialize Analtyics
+	 * @param config - Configuration of the Analytics
+	 */
+	constructor() {
+		this._config = {};
+		this._pluggables = [];
+		this._disabled = false;
+		this._trackers = {};
+		_instance = this;
+
+		this.record = this.record.bind(this);
+		Hub.listen(&#x27;auth&#x27;, listener);
+		Hub.listen(&#x27;storage&#x27;, listener);
+		Hub.listen(&#x27;analytics&#x27;, listener);
+	}
+
+	public getModuleName() {
+		return &#x27;Analytics&#x27;;
+	}
+	/**
+	 * configure Analytics
+	 * @param {Object} config - Configuration of the Analytics
+	 */
+	public configure(config?) {
+		if (!config) return this._config;
+		logger.debug(&#x27;configure Analytics&#x27;, config);
+		const amplifyConfig = Parser.parseMobilehubConfig(config);
+		this._config = Object.assign(
+			{},
+			this._config,
+			amplifyConfig.Analytics,
+			config
+		);
+
+		if (this._config[&#x27;disabled&#x27;]) {
+			this._disabled = true;
+		}
+
+		// turn on the autoSessionRecord if not specified
+		if (this._config[&#x27;autoSessionRecord&#x27;] === undefined) {
+			this._config[&#x27;autoSessionRecord&#x27;] = true;
+		}
+
+		this._pluggables.forEach(pluggable =&gt; {
+			// for backward compatibility
+			const providerConfig =
+				pluggable.getProviderName() === &#x27;AWSPinpoint&#x27; &amp;&amp;
+				!this._config[&#x27;AWSPinpoint&#x27;]
+					? this._config
+					: this._config[pluggable.getProviderName()];
+
+			pluggable.configure({
+				disabled: this._config[&#x27;disabled&#x27;],
+				autoSessionRecord: this._config[&#x27;autoSessionRecord&#x27;],
+				...providerConfig,
+			});
+		});
+
+		if (this._pluggables.length === 0) {
+			this.addPluggable(new AWSPinpointProvider());
+		}
+
+		dispatchAnalyticsEvent(
+			&#x27;configured&#x27;,
+			null,
+			`The Analytics category has been configured successfully`
+		);
+		logger.debug(&#x27;current configuration&#x27;, this._config);
+		return this._config;
+	}
+
+	/**
+	 * add plugin into Analytics category
+	 * @param pluggable - an instance of the plugin
+	 */
+	public addPluggable(pluggable: AnalyticsProvider) {
+		if (pluggable &amp;&amp; pluggable.getCategory() === &#x27;Analytics&#x27;) {
+			this._pluggables.push(pluggable);
+			// for backward compatibility
+			const providerConfig =
+				pluggable.getProviderName() === &#x27;AWSPinpoint&#x27; &amp;&amp;
+				!this._config[&#x27;AWSPinpoint&#x27;]
+					? this._config
+					: this._config[pluggable.getProviderName()];
+			const config = { disabled: this._config[&#x27;disabled&#x27;], ...providerConfig };
+			pluggable.configure(config);
+			return config;
+		}
+	}
+
+	/**
+	 * Get the plugin object
+	 * @param providerName - the name of the provider to be removed
+	 */
+	public getPluggable(providerName: string): AnalyticsProvider {
+		for (let i = 0; i &lt; this._pluggables.length; i += 1) {
+			const pluggable = this._pluggables[i];
+			if (pluggable.getProviderName() === providerName) {
+				return pluggable;
+			}
+		}
+
+		logger.debug(&#x27;No plugin found with providerName&#x27;, providerName);
+		return null;
+	}
+
+	/**
+	 * Remove the plugin object
+	 * @param providerName - the name of the provider to be removed
+	 */
+	public removePluggable(providerName: string): void {
+		let idx = 0;
+		while (idx &lt; this._pluggables.length) {
+			if (this._pluggables[idx].getProviderName() === providerName) {
+				break;
+			}
+			idx += 1;
+		}
+
+		if (idx === this._pluggables.length) {
+			logger.debug(&#x27;No plugin found with providerName&#x27;, providerName);
+			return;
+		} else {
+			this._pluggables.splice(idx, idx + 1);
+			return;
+		}
+	}
+
+	/**
+	 * stop sending events
+	 */
+	public disable() {
+		this._disabled = true;
+	}
+
+	/**
+	 * start sending events
+	 */
+	public enable() {
+		this._disabled = false;
+	}
+
+	/**
+	 * Record Session start
+	 * @param [provider] - name of the provider.
+	 * @return - A promise which resolves if buffer doesn&#x27;t overflow
+	 */
+	public async startSession(provider?: string) {
+		const params = { event: { name: &#x27;_session.start&#x27; }, provider };
+		return this._sendEvent(params);
+	}
+
+	/**
+	 * Record Session stop
+	 * @param [provider] - name of the provider.
+	 * @return - A promise which resolves if buffer doesn&#x27;t overflow
+	 */
+	public async stopSession(provider?: string) {
+		const params = { event: { name: &#x27;_session.stop&#x27; }, provider };
+		return this._sendEvent(params);
+	}
+
+	/**
+	 * Record one analytic event and send it to Pinpoint
+	 * @param event - An object with the name of the event, attributes of the event and event metrics.
+	 * @param [provider] - name of the provider.
+	 */
+	public async record(
+		event: AnalyticsEvent | PersonalizeAnalyticsEvent | KinesisAnalyticsEvent,
+		provider?: string
+	);
+	/**
+	 * Record one analytic event and send it to Pinpoint
+	 * @deprecated Use the new syntax and pass in the event as an object instead.
+	 * @param eventName - The name of the event
+	 * @param [attributes] - Attributes of the event
+	 * @param [metrics] - Event metrics
+	 * @return - A promise which resolves if buffer doesn&#x27;t overflow
+	 */
+	public async record(
+		eventName: string,
+		attributes?: EventAttributes,
+		metrics?: EventMetrics
+	);
+	public async record(
+		event:
+			| string
+			| AnalyticsEvent
+			| PersonalizeAnalyticsEvent
+			| KinesisAnalyticsEvent,
+		providerOrAttributes?: string | EventAttributes,
+		metrics?: EventMetrics
+	) {
+		let params = null;
+		// this is just for compatibility, going to be deprecated
+		if (typeof event === &#x27;string&#x27;) {
+			params = {
+				event: {
+					name: event,
+					attributes: providerOrAttributes,
+					metrics,
+				},
+				provider: &#x27;AWSPinpoint&#x27;,
+			};
+		} else {
+			params = { event, provider: providerOrAttributes };
+		}
+		return this._sendEvent(params);
+	}
+
+	public async updateEndpoint(
+		attrs: { [key: string]: any },
+		provider?: string
+	) {
+		const event = { ...attrs, name: &#x27;_update_endpoint&#x27; };
+
+		return this.record(event, provider);
+	}
+
+	private _sendEvent(params: {
+		event: AnalyticsEvent | PersonalizeAnalyticsEvent | KinesisAnalyticsEvent;
+		provider?: string;
+	}) {
+		if (this._disabled) {
+			logger.debug(&#x27;Analytics has been disabled&#x27;);
+			return Promise.resolve();
+		}
+
+		const provider = params.provider ? params.provider : &#x27;AWSPinpoint&#x27;;
+
+		return new Promise((resolve, reject) =&gt; {
+			this._pluggables.forEach(pluggable =&gt; {
+				if (pluggable.getProviderName() === provider) {
+					pluggable.record(params, { resolve, reject });
+				}
+			});
+		});
+	}
+
+	/**
+	 * Enable or disable auto tracking
+	 * @param trackerType - The type of tracker to activate.
+	 * @param [opts] - Auto tracking options.
+	 */
+	public autoTrack(trackerType: &#x27;session&#x27;, opts: AutoTrackSessionOpts);
+	public autoTrack(trackerType: &#x27;pageView&#x27;, opts: AutoTrackPageViewOpts);
+	public autoTrack(trackerType: &#x27;event&#x27;, opts: AutoTrackEventOpts);
+	// ensures backwards compatibility for non-pinpoint provider users
+	public autoTrack(
+		trackerType: TrackerTypes,
+		opts: { provider: string; [key: string]: any }
+	);
+	public autoTrack(trackerType: TrackerTypes, opts: { [key: string]: any }) {
+		if (!trackers[trackerType]) {
+			logger.debug(&#x27;invalid tracker type&#x27;);
+			return;
+		}
+
+		// to sync up two different configuration ways of auto session tracking
+		if (trackerType === &#x27;session&#x27;) {
+			this._config[&#x27;autoSessionRecord&#x27;] = opts[&#x27;enable&#x27;];
+		}
+
+		const tracker = this._trackers[trackerType];
+		if (!tracker) {
+			this._trackers[trackerType] = new trackers[trackerType](
+				this.record,
+				opts
+			);
+		} else {
+			tracker.configure(opts);
+		}
+	}
+}
+
+let endpointUpdated = false;
+let authConfigured = false;
+let analyticsConfigured = false;
+const listener = capsule =&gt; {
+	const { channel, payload } = capsule;
+	logger.debug(&#x27;on hub capsule &#x27; + channel, payload);
+
+	switch (channel) {
+		case &#x27;auth&#x27;:
+			authEvent(payload);
+			break;
+		case &#x27;storage&#x27;:
+			storageEvent(payload);
+			break;
+		case &#x27;analytics&#x27;:
+			analyticsEvent(payload);
+			break;
+		default:
+			break;
+	}
+};
+
+const storageEvent = payload =&gt; {
+	const {
+		data: { attrs, metrics },
+	} = payload;
+	if (!attrs) return;
+
+	if (analyticsConfigured) {
+		_instance
+			.record({
+				name: &#x27;Storage&#x27;,
+				attributes: attrs,
+				metrics,
+			})
+			.catch(e =&gt; {
+				logger.debug(&#x27;Failed to send the storage event automatically&#x27;, e);
+			});
+	}
+};
+
+const authEvent = payload =&gt; {
+	const { event } = payload;
+	if (!event) {
+		return;
+	}
+
+	const recordAuthEvent = async eventName =&gt; {
+		if (authConfigured &amp;&amp; analyticsConfigured) {
+			try {
+				return await _instance.record({ name: `_userauth.${eventName}` });
+			} catch (err) {
+				logger.debug(
+					`Failed to send the ${eventName} event automatically`,
+					err
+				);
+			}
+		}
+	};
+
+	switch (event) {
+		case &#x27;signIn&#x27;:
+			return recordAuthEvent(&#x27;sign_in&#x27;);
+		case &#x27;signUp&#x27;:
+			return recordAuthEvent(&#x27;sign_up&#x27;);
+		case &#x27;signOut&#x27;:
+			return recordAuthEvent(&#x27;sign_out&#x27;);
+		case &#x27;signIn_failure&#x27;:
+			return recordAuthEvent(&#x27;auth_fail&#x27;);
+		case &#x27;configured&#x27;:
+			authConfigured = true;
+			if (authConfigured &amp;&amp; analyticsConfigured) {
+				sendEvents();
+			}
+			break;
+	}
+};
+
+const analyticsEvent = payload =&gt; {
+	const { event } = payload;
+	if (!event) return;
+
+	switch (event) {
+		case &#x27;pinpointProvider_configured&#x27;:
+			analyticsConfigured = true;
+			if (authConfigured &amp;&amp; analyticsConfigured) {
+				sendEvents();
+			}
+			break;
+	}
+};
+
+const sendEvents = () =&gt; {
+	const config = _instance.configure();
+	if (!endpointUpdated &amp;&amp; config[&#x27;autoSessionRecord&#x27;]) {
+		_instance.updateEndpoint({ immediate: true }).catch(e =&gt; {
+			logger.debug(&#x27;Failed to update the endpoint&#x27;, e);
+		});
+		endpointUpdated = true;
+	}
+	_instance.autoTrack(&#x27;session&#x27;, {
+		enable: config[&#x27;autoSessionRecord&#x27;],
+	});
+};
+
+export const Analytics = new AnalyticsClass();
+Amplify.register(Analytics);
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:42,&quot;character&quot;:47,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:45,&quot;character&quot;:11,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:4,&quot;text&quot;:&quot;_instance&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:65,&quot;character&quot;:9,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:75,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:79,&quot;character&quot;:2,&quot;text&quot;:&quot;_instance&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:94,&quot;character&quot;:18,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:95,&quot;character&quot;:7,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:95,&quot;character&quot;:27,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:96,&quot;character&quot;:38,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:97,&quot;character&quot;:52,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:98,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:100,&quot;character&quot;:8,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:102,&quot;character&quot;:3,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:105,&quot;character&quot;:11,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:110,&quot;character&quot;:11,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:111,&quot;character&quot;:8,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:9,&quot;text&quot;:&quot;providerConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:118,&quot;character&quot;:10,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:119,&quot;character&quot;:12,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:120,&quot;character&quot;:12,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:123,&quot;character&quot;:4,&quot;text&quot;:&quot;disabled&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:123,&quot;character&quot;:19,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:124,&quot;character&quot;:4,&quot;text&quot;:&quot;autoSessionRecord&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:124,&quot;character&quot;:28,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:138,&quot;character&quot;:45,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:139,&quot;character&quot;:14,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:150,&quot;character&quot;:9,&quot;text&quot;:&quot;providerConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:152,&quot;character&quot;:10,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:153,&quot;character&quot;:12,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:154,&quot;character&quot;:12,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:155,&quot;character&quot;:9,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:155,&quot;character&quot;:20,&quot;text&quot;:&quot;disabled&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:155,&quot;character&quot;:35,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:155,&quot;character&quot;:59,&quot;text&quot;:&quot;providerConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:157,&quot;character&quot;:10,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:264,&quot;character&quot;:6,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:267,&quot;character&quot;:3,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:276,&quot;character&quot;:3,&quot;text&quot;:&quot;params&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:331,&quot;character&quot;:8,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:349,&quot;character&quot;:17,&quot;text&quot;:&quot;capsule&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:350,&quot;character&quot;:9,&quot;text&quot;:&quot;channel&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:350,&quot;character&quot;:18,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:351,&quot;character&quot;:34,&quot;text&quot;:&quot;channel&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:351,&quot;character&quot;:43,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:353,&quot;character&quot;:9,&quot;text&quot;:&quot;channel&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:355,&quot;character&quot;:13,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:358,&quot;character&quot;:16,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:361,&quot;character&quot;:18,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:368,&quot;character&quot;:21,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:370,&quot;character&quot;:10,&quot;text&quot;:&quot;attrs&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:370,&quot;character&quot;:17,&quot;text&quot;:&quot;metrics&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:372,&quot;character&quot;:6,&quot;text&quot;:&quot;attrs&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:375,&quot;character&quot;:2,&quot;text&quot;:&quot;_instance&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:376,&quot;character&quot;:4,&quot;text&quot;:&quot;record&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:378,&quot;character&quot;:4,&quot;text&quot;:&quot;attributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:378,&quot;character&quot;:16,&quot;text&quot;:&quot;attrs&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:379,&quot;character&quot;:4,&quot;text&quot;:&quot;metrics&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:381,&quot;character&quot;:4,&quot;text&quot;:&quot;catch&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:381,&quot;character&quot;:10,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:382,&quot;character&quot;:67,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:387,&quot;character&quot;:18,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:388,&quot;character&quot;:9,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:389,&quot;character&quot;:6,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:393,&quot;character&quot;:31,&quot;text&quot;:&quot;eventName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:396,&quot;character&quot;:17,&quot;text&quot;:&quot;_instance&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:396,&quot;character&quot;:27,&quot;text&quot;:&quot;record&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:396,&quot;character&quot;:55,&quot;text&quot;:&quot;eventName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:399,&quot;character&quot;:27,&quot;text&quot;:&quot;eventName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:400,&quot;character&quot;:5,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:397,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:406,&quot;character&quot;:9,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:424,&quot;character&quot;:23,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:425,&quot;character&quot;:9,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:426,&quot;character&quot;:6,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:428,&quot;character&quot;:9,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:439,&quot;character&quot;:7,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:439,&quot;character&quot;:16,&quot;text&quot;:&quot;_instance&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:439,&quot;character&quot;:26,&quot;text&quot;:&quot;configure&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:440,&quot;character&quot;:25,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:441,&quot;character&quot;:2,&quot;text&quot;:&quot;_instance&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:441,&quot;character&quot;:12,&quot;text&quot;:&quot;updateEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:441,&quot;character&quot;:48,&quot;text&quot;:&quot;catch&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:441,&quot;character&quot;:54,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:442,&quot;character&quot;:49,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:446,&quot;character&quot;:1,&quot;text&quot;:&quot;_instance&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:446,&quot;character&quot;:11,&quot;text&quot;:&quot;autoTrack&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:447,&quot;character&quot;:2,&quot;text&quot;:&quot;enable&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Analytics.ts&quot;,&quot;line&quot;:447,&quot;character&quot;:10,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:24 GMT</p>
+    </body>
+  </html>
+  

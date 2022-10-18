@@ -1,0 +1,147 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>index.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/I18n/index.ts</td><td class="">51.28%</td><td class="">0%</td><td class="">78</td><td class="">40</td><td class="">38</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import { I18n as I18nClass } from &#x27;./I18n&#x27;;
+
+import { ConsoleLogger as Logger } from &#x27;../Logger&#x27;;
+import { Amplify } from &#x27;../Amplify&#x27;;
+
+const logger = new Logger(&#x27;I18n&#x27;);
+
+let _config = null;
+let _i18n = null;
+
+/**
+ * Export I18n APIs
+ */
+export class I18n {
+	/**
+	 * @static
+	 * @method
+	 * Configure I18n part
+	 * @param {Object} config - Configuration of the I18n
+	 */
+	static configure(config) {
+		logger.debug(&#x27;configure I18n&#x27;);
+		if (!config) {
+			return _config;
+		}
+
+		_config = Object.assign({}, _config, config.I18n || config);
+
+		I18n.createInstance();
+
+		return _config;
+	}
+
+	static getModuleName() {
+		return &#x27;I18n&#x27;;
+	}
+
+	/**
+	 * @static
+	 * @method
+	 * Create an instance of I18n for the library
+	 */
+	static createInstance() {
+		logger.debug(&#x27;create I18n instance&#x27;);
+		if (_i18n) {
+			return;
+		}
+		_i18n = new I18nClass(_config);
+	}
+
+	/**
+	 * @static @method
+	 * Explicitly setting language
+	 * @param {String} lang
+	 */
+	static setLanguage(lang) {
+		I18n.checkConfig();
+
+		return _i18n.setLanguage(lang);
+	}
+
+	/**
+	 * @static @method
+	 * Get value
+	 * @param {String} key
+	 * @param {String} defVal - Default value
+	 */
+	static get(key, defVal?) {
+		if (!I18n.checkConfig()) {
+			return typeof defVal === &#x27;undefined&#x27; ? key : defVal;
+		}
+
+		return _i18n.get(key, defVal);
+	}
+
+	/**
+	 * @static
+	 * @method
+	 * Add vocabularies for one language
+	 * @param {String} langurage - Language of the dictionary
+	 * @param {Object} vocabularies - Object that has key-value as dictionary entry
+	 */
+	static putVocabulariesForLanguage(language, vocabularies) {
+		I18n.checkConfig();
+
+		return _i18n.putVocabulariesForLanguage(language, vocabularies);
+	}
+
+	/**
+	 * @static
+	 * @method
+	 * Add vocabularies for one language
+	 * @param {Object} vocabularies - Object that has language as key,
+	 *                                vocabularies of each language as value
+	 */
+	static putVocabularies(vocabularies) {
+		I18n.checkConfig();
+
+		return _i18n.putVocabularies(vocabularies);
+	}
+
+	public static checkConfig() {
+		if (!_i18n) {
+			_i18n = new I18nClass(_config);
+		}
+
+		return true;
+	}
+}
+
+Amplify.register(I18n);
+
+/**
+ * @deprecated use named import
+ */
+export default I18n;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:20,&quot;character&quot;:4,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:21,&quot;character&quot;:4,&quot;text&quot;:&quot;_i18n&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:33,&quot;character&quot;:18,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:35,&quot;character&quot;:7,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:36,&quot;character&quot;:10,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:39,&quot;character&quot;:2,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:39,&quot;character&quot;:30,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:39,&quot;character&quot;:39,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:39,&quot;character&quot;:46,&quot;text&quot;:&quot;I18n&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:39,&quot;character&quot;:54,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:9,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:57,&quot;character&quot;:6,&quot;text&quot;:&quot;_i18n&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:2,&quot;text&quot;:&quot;_i18n&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:68,&quot;character&quot;:20,&quot;text&quot;:&quot;lang&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:9,&quot;text&quot;:&quot;_i18n&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:15,&quot;text&quot;:&quot;setLanguage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:27,&quot;text&quot;:&quot;lang&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:80,&quot;character&quot;:12,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:80,&quot;character&quot;:17,&quot;text&quot;:&quot;defVal&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:82,&quot;character&quot;:17,&quot;text&quot;:&quot;defVal&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:82,&quot;character&quot;:42,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:82,&quot;character&quot;:48,&quot;text&quot;:&quot;defVal&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:85,&quot;character&quot;:9,&quot;text&quot;:&quot;_i18n&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:85,&quot;character&quot;:15,&quot;text&quot;:&quot;get&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:85,&quot;character&quot;:19,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:85,&quot;character&quot;:24,&quot;text&quot;:&quot;defVal&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:95,&quot;character&quot;:35,&quot;text&quot;:&quot;language&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:95,&quot;character&quot;:45,&quot;text&quot;:&quot;vocabularies&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:98,&quot;character&quot;:9,&quot;text&quot;:&quot;_i18n&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:98,&quot;character&quot;:15,&quot;text&quot;:&quot;putVocabulariesForLanguage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:98,&quot;character&quot;:42,&quot;text&quot;:&quot;language&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:98,&quot;character&quot;:52,&quot;text&quot;:&quot;vocabularies&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:108,&quot;character&quot;:24,&quot;text&quot;:&quot;vocabularies&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:111,&quot;character&quot;:9,&quot;text&quot;:&quot;_i18n&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:111,&quot;character&quot;:15,&quot;text&quot;:&quot;putVocabularies&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:111,&quot;character&quot;:31,&quot;text&quot;:&quot;vocabularies&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:115,&quot;character&quot;:7,&quot;text&quot;:&quot;_i18n&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/I18n/index.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:3,&quot;text&quot;:&quot;_i18n&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:20 GMT</p>
+    </body>
+  </html>
+  

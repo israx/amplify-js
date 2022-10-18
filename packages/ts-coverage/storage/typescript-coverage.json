@@ -1,0 +1,3187 @@
+{
+  "fileCounts": {},
+  "anys": [
+    {
+      "file": "lib-esm/providers/AWSS3Provider.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3Provider.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3Provider.d.ts",
+      "line": 28,
+      "character": 14,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3Provider.d.ts",
+      "line": 29,
+      "character": 12,
+      "text": "startResumableUpload",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3Provider.d.ts",
+      "line": 66,
+      "character": 12,
+      "text": "_list",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3Provider.d.ts",
+      "line": 75,
+      "character": 12,
+      "text": "_ensureCredentials",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3Provider.d.ts",
+      "line": 76,
+      "character": 12,
+      "text": "_isWithCredentials",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3Provider.d.ts",
+      "line": 77,
+      "character": 12,
+      "text": "_prefix",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3Provider.d.ts",
+      "line": 81,
+      "character": 12,
+      "text": "_createNewS3Client",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Storage.d.ts",
+      "line": 5,
+      "character": 66,
+      "text": "h",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Storage.d.ts",
+      "line": 7,
+      "character": 41,
+      "text": "args",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Provider.d.ts",
+      "line": 3,
+      "character": 64,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Provider.d.ts",
+      "line": 5,
+      "character": 21,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Provider.d.ts",
+      "line": 6,
+      "character": 21,
+      "text": "object",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Provider.d.ts",
+      "line": 6,
+      "character": 34,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Provider.d.ts",
+      "line": 7,
+      "character": 24,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Provider.d.ts",
+      "line": 8,
+      "character": 9,
+      "text": "path",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Provider.d.ts",
+      "line": 8,
+      "character": 20,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Provider.d.ts",
+      "line": 19,
+      "character": 63,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 54,
+      "character": 21,
+      "text": "emitter",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 55,
+      "character": 21,
+      "text": "file",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 56,
+      "character": 21,
+      "text": "partSize",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 57,
+      "character": 21,
+      "text": "queueSize",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 58,
+      "character": 21,
+      "text": "s3client",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 59,
+      "character": 21,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 60,
+      "character": 21,
+      "text": "storageSync",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 61,
+      "character": 21,
+      "text": "fileId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 62,
+      "character": 21,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 63,
+      "character": 21,
+      "text": "prefixPromise",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 64,
+      "character": 12,
+      "text": "inProgress",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 65,
+      "character": 12,
+      "text": "completedParts",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 66,
+      "character": 12,
+      "text": "queued",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 67,
+      "character": 12,
+      "text": "bytesUploaded",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 68,
+      "character": 12,
+      "text": "totalBytes",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 69,
+      "character": 12,
+      "text": "uploadId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 74,
+      "character": 12,
+      "text": "_listSingleFile",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 75,
+      "character": 12,
+      "text": "_getFileId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 76,
+      "character": 12,
+      "text": "_findCachedUploadParts",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 77,
+      "character": 12,
+      "text": "_emitEvent",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 78,
+      "character": 12,
+      "text": "_validateParams",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 79,
+      "character": 12,
+      "text": "_listCachedUploadTasks",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 80,
+      "character": 12,
+      "text": "_cache",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 81,
+      "character": 12,
+      "text": "_isCached",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 82,
+      "character": 12,
+      "text": "_removeFromCache",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 83,
+      "character": 12,
+      "text": "_onPartUploadCompletion",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 84,
+      "character": 12,
+      "text": "_completeUpload",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 85,
+      "character": 12,
+      "text": "_makeUploadPartRequest",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 86,
+      "character": 12,
+      "text": "_startNextPart",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 93,
+      "character": 12,
+      "text": "_verifyFileSize",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 94,
+      "character": 12,
+      "text": "_isDone",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 95,
+      "character": 12,
+      "text": "_createParts",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 96,
+      "character": 12,
+      "text": "_initCachedUploadParts",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 97,
+      "character": 12,
+      "text": "_initMultipartUpload",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 98,
+      "character": 12,
+      "text": "_initializeUploadTask",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3UploadTask.d.ts",
+      "line": 100,
+      "character": 12,
+      "text": "_startUpload",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/AWSS3Provider.d.ts",
+      "line": 20,
+      "character": 24,
+      "text": "progress",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/AWSS3Provider.d.ts",
+      "line": 34,
+      "character": 24,
+      "text": "progress",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/AWSS3Provider.d.ts",
+      "line": 58,
+      "character": 21,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Storage.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Storage.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "_pluggables",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Storage.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "_cancelTokenSourceMap",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Storage.d.ts",
+      "line": 47,
+      "character": 14,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Storage.d.ts",
+      "line": 48,
+      "character": 12,
+      "text": "getCancellableTokenSource",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Storage.d.ts",
+      "line": 49,
+      "character": 12,
+      "text": "updateRequestToBeCancellable",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Storage.d.ts",
+      "line": 50,
+      "character": 12,
+      "text": "isUploadTask",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Storage.d.ts",
+      "line": 78,
+      "character": 18,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Storage.d.ts",
+      "line": 87,
+      "character": 52,
+      "text": "object",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3Provider.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3Provider.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "_storage",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3Provider.d.ts",
+      "line": 28,
+      "character": 14,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3Provider.d.ts",
+      "line": 29,
+      "character": 12,
+      "text": "startResumableUpload",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3Provider.d.ts",
+      "line": 66,
+      "character": 12,
+      "text": "_list",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3Provider.d.ts",
+      "line": 75,
+      "character": 12,
+      "text": "_ensureCredentials",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3Provider.d.ts",
+      "line": 76,
+      "character": 12,
+      "text": "_isWithCredentials",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3Provider.d.ts",
+      "line": 77,
+      "character": 12,
+      "text": "_prefix",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3Provider.d.ts",
+      "line": 81,
+      "character": 12,
+      "text": "_createNewS3Client",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Storage.d.ts",
+      "line": 5,
+      "character": 66,
+      "text": "h",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Storage.d.ts",
+      "line": 7,
+      "character": 41,
+      "text": "args",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Provider.d.ts",
+      "line": 3,
+      "character": 64,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Provider.d.ts",
+      "line": 5,
+      "character": 21,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Provider.d.ts",
+      "line": 6,
+      "character": 21,
+      "text": "object",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Provider.d.ts",
+      "line": 6,
+      "character": 34,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Provider.d.ts",
+      "line": 7,
+      "character": 24,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Provider.d.ts",
+      "line": 8,
+      "character": 9,
+      "text": "path",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Provider.d.ts",
+      "line": 8,
+      "character": 20,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Provider.d.ts",
+      "line": 19,
+      "character": 63,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 54,
+      "character": 21,
+      "text": "emitter",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 55,
+      "character": 21,
+      "text": "file",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 56,
+      "character": 21,
+      "text": "partSize",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 57,
+      "character": 21,
+      "text": "queueSize",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 58,
+      "character": 21,
+      "text": "s3client",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 59,
+      "character": 21,
+      "text": "storage",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 60,
+      "character": 21,
+      "text": "storageSync",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 61,
+      "character": 21,
+      "text": "fileId",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 62,
+      "character": 21,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 63,
+      "character": 21,
+      "text": "prefixPromise",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 64,
+      "character": 12,
+      "text": "inProgress",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 65,
+      "character": 12,
+      "text": "completedParts",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 66,
+      "character": 12,
+      "text": "queued",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 67,
+      "character": 12,
+      "text": "bytesUploaded",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 68,
+      "character": 12,
+      "text": "totalBytes",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 69,
+      "character": 12,
+      "text": "uploadId",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 74,
+      "character": 12,
+      "text": "_listSingleFile",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 75,
+      "character": 12,
+      "text": "_getFileId",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 76,
+      "character": 12,
+      "text": "_findCachedUploadParts",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 77,
+      "character": 12,
+      "text": "_emitEvent",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 78,
+      "character": 12,
+      "text": "_validateParams",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 79,
+      "character": 12,
+      "text": "_listCachedUploadTasks",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 80,
+      "character": 12,
+      "text": "_cache",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 81,
+      "character": 12,
+      "text": "_isCached",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 82,
+      "character": 12,
+      "text": "_removeFromCache",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 83,
+      "character": 12,
+      "text": "_onPartUploadCompletion",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 84,
+      "character": 12,
+      "text": "_completeUpload",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 85,
+      "character": 12,
+      "text": "_makeUploadPartRequest",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 86,
+      "character": 12,
+      "text": "_startNextPart",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 93,
+      "character": 12,
+      "text": "_verifyFileSize",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 94,
+      "character": 12,
+      "text": "_isDone",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 95,
+      "character": 12,
+      "text": "_createParts",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 96,
+      "character": 12,
+      "text": "_initCachedUploadParts",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 97,
+      "character": 12,
+      "text": "_initMultipartUpload",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 98,
+      "character": 12,
+      "text": "_initializeUploadTask",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3UploadTask.d.ts",
+      "line": 100,
+      "character": 12,
+      "text": "_startUpload",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/AWSS3Provider.d.ts",
+      "line": 20,
+      "character": 24,
+      "text": "progress",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/AWSS3Provider.d.ts",
+      "line": 34,
+      "character": 24,
+      "text": "progress",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/AWSS3Provider.d.ts",
+      "line": 58,
+      "character": 21,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "lib/Storage.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib/Storage.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "_pluggables",
+      "kind": 1
+    },
+    {
+      "file": "lib/Storage.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "_cancelTokenSourceMap",
+      "kind": 1
+    },
+    {
+      "file": "lib/Storage.d.ts",
+      "line": 47,
+      "character": 14,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib/Storage.d.ts",
+      "line": 48,
+      "character": 12,
+      "text": "getCancellableTokenSource",
+      "kind": 1
+    },
+    {
+      "file": "lib/Storage.d.ts",
+      "line": 49,
+      "character": 12,
+      "text": "updateRequestToBeCancellable",
+      "kind": 1
+    },
+    {
+      "file": "lib/Storage.d.ts",
+      "line": 50,
+      "character": 12,
+      "text": "isUploadTask",
+      "kind": 1
+    },
+    {
+      "file": "lib/Storage.d.ts",
+      "line": 78,
+      "character": 18,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "lib/Storage.d.ts",
+      "line": 87,
+      "character": 52,
+      "text": "object",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/common/S3ClientUtils.d.ts",
+      "line": 18,
+      "character": 4,
+      "text": "accessKeyId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/common/S3ClientUtils.d.ts",
+      "line": 19,
+      "character": 4,
+      "text": "sessionToken",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/common/S3ClientUtils.d.ts",
+      "line": 20,
+      "character": 4,
+      "text": "secretAccessKey",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/common/S3ClientUtils.d.ts",
+      "line": 21,
+      "character": 4,
+      "text": "identityId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/common/S3ClientUtils.d.ts",
+      "line": 22,
+      "character": 4,
+      "text": "authenticated",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/common/StorageUtils.d.ts",
+      "line": 1,
+      "character": 75,
+      "text": "attrs",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/common/StorageUtils.d.ts",
+      "line": 1,
+      "character": 87,
+      "text": "metrics",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 4,
+      "character": 4,
+      "text": "bodyPart",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "queueSize",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 15,
+      "character": 12,
+      "text": "opts",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "completedParts",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "s3client",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 18,
+      "character": 12,
+      "text": "uploadId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 19,
+      "character": 12,
+      "text": "bytesUploaded",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 20,
+      "character": 12,
+      "text": "totalBytesToUpload",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 21,
+      "character": 12,
+      "text": "emitter",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 22,
+      "character": 42,
+      "text": "opts",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "createParts",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "createMultiPartUpload",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 31,
+      "character": 12,
+      "text": "finishMultiPartUpload",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 32,
+      "character": 12,
+      "text": "cleanup",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 33,
+      "character": 12,
+      "text": "removeEventListener",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 34,
+      "character": 12,
+      "text": "setupEventListener",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 35,
+      "character": 12,
+      "text": "progressChanged",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 36,
+      "character": 12,
+      "text": "byteLength",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 37,
+      "character": 12,
+      "text": "validateAndSanitizeBody",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 38,
+      "character": 12,
+      "text": "isGenericObject",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 39,
+      "character": 33,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/axios-http-handler.d.ts",
+      "line": 13,
+      "character": 5,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/axios-http-handler.d.ts",
+      "line": 30,
+      "character": 21,
+      "text": "httpOptions",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/axios-http-handler.d.ts",
+      "line": 31,
+      "character": 21,
+      "text": "emitter",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/providers/axios-http-handler.d.ts",
+      "line": 32,
+      "character": 21,
+      "text": "cancelTokenSource",
+      "kind": 1
+    },
+    {
+      "file": "lib/common/S3ClientUtils.d.ts",
+      "line": 18,
+      "character": 4,
+      "text": "accessKeyId",
+      "kind": 1
+    },
+    {
+      "file": "lib/common/S3ClientUtils.d.ts",
+      "line": 19,
+      "character": 4,
+      "text": "sessionToken",
+      "kind": 1
+    },
+    {
+      "file": "lib/common/S3ClientUtils.d.ts",
+      "line": 20,
+      "character": 4,
+      "text": "secretAccessKey",
+      "kind": 1
+    },
+    {
+      "file": "lib/common/S3ClientUtils.d.ts",
+      "line": 21,
+      "character": 4,
+      "text": "identityId",
+      "kind": 1
+    },
+    {
+      "file": "lib/common/S3ClientUtils.d.ts",
+      "line": 22,
+      "character": 4,
+      "text": "authenticated",
+      "kind": 1
+    },
+    {
+      "file": "lib/common/StorageUtils.d.ts",
+      "line": 1,
+      "character": 75,
+      "text": "attrs",
+      "kind": 1
+    },
+    {
+      "file": "lib/common/StorageUtils.d.ts",
+      "line": 1,
+      "character": 87,
+      "text": "metrics",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 4,
+      "character": 4,
+      "text": "bodyPart",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "queueSize",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "params",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 15,
+      "character": 12,
+      "text": "opts",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "completedParts",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "s3client",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 18,
+      "character": 12,
+      "text": "uploadId",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 19,
+      "character": 12,
+      "text": "bytesUploaded",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 20,
+      "character": 12,
+      "text": "totalBytesToUpload",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 21,
+      "character": 12,
+      "text": "emitter",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 22,
+      "character": 42,
+      "text": "opts",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "createParts",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "createMultiPartUpload",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 31,
+      "character": 12,
+      "text": "finishMultiPartUpload",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 32,
+      "character": 12,
+      "text": "cleanup",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 33,
+      "character": 12,
+      "text": "removeEventListener",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 34,
+      "character": 12,
+      "text": "setupEventListener",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 35,
+      "character": 12,
+      "text": "progressChanged",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 36,
+      "character": 12,
+      "text": "byteLength",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 37,
+      "character": 12,
+      "text": "validateAndSanitizeBody",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 38,
+      "character": 12,
+      "text": "isGenericObject",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/AWSS3ProviderManagedUpload.d.ts",
+      "line": 39,
+      "character": 33,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/axios-http-handler.d.ts",
+      "line": 13,
+      "character": 5,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/axios-http-handler.d.ts",
+      "line": 30,
+      "character": 21,
+      "text": "httpOptions",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/axios-http-handler.d.ts",
+      "line": 31,
+      "character": 21,
+      "text": "emitter",
+      "kind": 1
+    },
+    {
+      "file": "lib/providers/axios-http-handler.d.ts",
+      "line": 32,
+      "character": 21,
+      "text": "cancelTokenSource",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 35,
+      "character": 2,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 46,
+      "character": 16,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 47,
+      "character": 39,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 50,
+      "character": 26,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 52,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 53,
+      "character": 39,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 54,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 54,
+      "character": 15,
+      "text": "response",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 55,
+      "character": 39,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 55,
+      "character": 45,
+      "text": "response",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 56,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 56,
+      "character": 15,
+      "text": "response",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 56,
+      "character": 24,
+      "text": "status",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 76,
+      "character": 2,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 77,
+      "character": 13,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 83,
+      "character": 55,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 142,
+      "character": 14,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 143,
+      "character": 16,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 143,
+      "character": 31,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 160,
+      "character": 17,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 165,
+      "character": 44,
+      "text": "event",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 166,
+      "character": 45,
+      "text": "event",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 167,
+      "character": 17,
+      "text": "event",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 170,
+      "character": 46,
+      "text": "event",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 171,
+      "character": 47,
+      "text": "event",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 172,
+      "character": 17,
+      "text": "event",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 202,
+      "character": 7,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 202,
+      "character": 22,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 206,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 209,
+      "character": 6,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 209,
+      "character": 12,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 212,
+      "character": 19,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 212,
+      "character": 25,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 220,
+      "character": 24,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 220,
+      "character": 52,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 221,
+      "character": 12,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 228,
+      "character": 7,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 228,
+      "character": 29,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/axios-http-handler.ts",
+      "line": 229,
+      "character": 32,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/index.ts",
+      "line": 30,
+      "character": 23,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/index.ts",
+      "line": 32,
+      "character": 8,
+      "text": "vaultConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/index.ts",
+      "line": 32,
+      "character": 57,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/index.ts",
+      "line": 36,
+      "character": 14,
+      "text": "vaultConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/index.ts",
+      "line": 37,
+      "character": 4,
+      "text": "vaultConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/index.ts",
+      "line": 38,
+      "character": 8,
+      "text": "vaultConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/index.ts",
+      "line": 44,
+      "character": 28,
+      "text": "vaultConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Storage.ts",
+      "line": 30,
+      "character": 1,
+      "text": "h",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Storage.ts",
+      "line": 39,
+      "character": 33,
+      "text": "args",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Provider.ts",
+      "line": 23,
+      "character": 2,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Provider.ts",
+      "line": 30,
+      "character": 18,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Provider.ts",
+      "line": 33,
+      "character": 18,
+      "text": "object",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Provider.ts",
+      "line": 33,
+      "character": 26,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Provider.ts",
+      "line": 36,
+      "character": 21,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Provider.ts",
+      "line": 39,
+      "character": 6,
+      "text": "path",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Provider.ts",
+      "line": 39,
+      "character": 12,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Provider.ts",
+      "line": 60,
+      "character": 2,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/common/StorageUtils.ts",
+      "line": 18,
+      "character": 1,
+      "text": "attrs",
+      "kind": 1
+    },
+    {
+      "file": "src/common/StorageUtils.ts",
+      "line": 19,
+      "character": 1,
+      "text": "metrics",
+      "kind": 1
+    },
+    {
+      "file": "src/common/StorageUtils.ts",
+      "line": 23,
+      "character": 17,
+      "text": "attrs",
+      "kind": 1
+    },
+    {
+      "file": "src/common/StorageUtils.ts",
+      "line": 24,
+      "character": 6,
+      "text": "metrics",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3UploadTask.ts",
+      "line": 311,
+      "character": 43,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3UploadTask.ts",
+      "line": 312,
+      "character": 37,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3UploadTask.ts",
+      "line": 310,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3UploadTask.ts",
+      "line": 335,
+      "character": 57,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3UploadTask.ts",
+      "line": 340,
+      "character": 20,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3UploadTask.ts",
+      "line": 341,
+      "character": 4,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3UploadTask.ts",
+      "line": 341,
+      "character": 8,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3UploadTask.ts",
+      "line": 343,
+      "character": 38,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3UploadTask.ts",
+      "line": 329,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3UploadTask.ts",
+      "line": 457,
+      "character": 23,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3UploadTask.ts",
+      "line": 458,
+      "character": 55,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3UploadTask.ts",
+      "line": 456,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3UploadTask.ts",
+      "line": 510,
+      "character": 49,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3UploadTask.ts",
+      "line": 509,
+      "character": 12,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/types/AWSS3Provider.ts",
+      "line": 41,
+      "character": 21,
+      "text": "progress",
+      "kind": 1
+    },
+    {
+      "file": "src/types/AWSS3Provider.ts",
+      "line": 57,
+      "character": 21,
+      "text": "progress",
+      "kind": 1
+    },
+    {
+      "file": "src/types/AWSS3Provider.ts",
+      "line": 82,
+      "character": 18,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 68,
+      "character": 7,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 69,
+      "character": 32,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 71,
+      "character": 7,
+      "text": "clonedInput",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 71,
+      "character": 44,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 72,
+      "character": 47,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 73,
+      "character": 2,
+      "text": "clonedInput",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 73,
+      "character": 14,
+      "text": "Key",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 74,
+      "character": 7,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 74,
+      "character": 15,
+      "text": "clonedInput",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 75,
+      "character": 54,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 76,
+      "character": 2,
+      "text": "clonedInput",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 76,
+      "character": 14,
+      "text": "Prefix",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 77,
+      "character": 7,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 77,
+      "character": 15,
+      "text": "clonedInput",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 83,
+      "character": 27,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 84,
+      "character": 1,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 84,
+      "character": 5,
+      "text": "ServerTime",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 85,
+      "character": 8,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 85,
+      "character": 12,
+      "text": "Code",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 86,
+      "character": 1,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 86,
+      "character": 5,
+      "text": "Code",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 98,
+      "character": 24,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 99,
+      "character": 31,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 99,
+      "character": 35,
+      "text": "ServerTime",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 102,
+      "character": 8,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 97,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 118,
+      "character": 8,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 119,
+      "character": 7,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 120,
+      "character": 33,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 124,
+      "character": 44,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/common/S3ClientUtils.ts",
+      "line": 123,
+      "character": 10,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 43,
+      "character": 1,
+      "text": "bodyPart",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 56,
+      "character": 9,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 58,
+      "character": 9,
+      "text": "opts",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 61,
+      "character": 9,
+      "text": "uploadId",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 68,
+      "character": 39,
+      "text": "opts",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 70,
+      "character": 7,
+      "text": "opts",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 70,
+      "character": 14,
+      "text": "opts",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 72,
+      "character": 42,
+      "text": "opts",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 77,
+      "character": 8,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 78,
+      "character": 50,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 81,
+      "character": 28,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 86,
+      "character": 9,
+      "text": "uploadId",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 102,
+      "character": 11,
+      "text": "uploadId",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 112,
+      "character": 49,
+      "text": "uploadId",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 116,
+      "character": 27,
+      "text": "uploadId",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 118,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 114,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 131,
+      "character": 5,
+      "text": "bodyPart",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 131,
+      "character": 20,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 131,
+      "character": 25,
+      "text": "slice",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 140,
+      "character": 16,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 141,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 139,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 154,
+      "character": 16,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 155,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 153,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 179,
+      "character": 18,
+      "text": "bodyPart",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 203,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 199,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 220,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 218,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 226,
+      "character": 7,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 253,
+      "character": 46,
+      "text": "progress",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 256,
+      "character": 4,
+      "text": "progress",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 256,
+      "character": 13,
+      "text": "loaded",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 258,
+      "character": 29,
+      "text": "progress",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 258,
+      "character": 38,
+      "text": "loaded",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 272,
+      "character": 20,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 273,
+      "character": 6,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 273,
+      "character": 24,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 274,
+      "character": 13,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 274,
+      "character": 19,
+      "text": "byteLength",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 275,
+      "character": 10,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 275,
+      "character": 16,
+      "text": "byteLength",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 276,
+      "character": 20,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 276,
+      "character": 26,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 277,
+      "character": 10,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 277,
+      "character": 16,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 278,
+      "character": 20,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 278,
+      "character": 26,
+      "text": "size",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 279,
+      "character": 10,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 279,
+      "character": 16,
+      "text": "size",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 280,
+      "character": 20,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 280,
+      "character": 26,
+      "text": "path",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 285,
+      "character": 51,
+      "text": "input",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 289,
+      "character": 39,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 290,
+      "character": 27,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 292,
+      "character": 25,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 295,
+      "character": 10,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 306,
+      "character": 25,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 307,
+      "character": 6,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 307,
+      "character": 30,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 309,
+      "character": 29,
+      "text": "body",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 310,
+      "character": 12,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 319,
+      "character": 30,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3ProviderManagedUpload.ts",
+      "line": 322,
+      "character": 31,
+      "text": "opts",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 137,
+      "character": 18,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 138,
+      "character": 36,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 139,
+      "character": 7,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 140,
+      "character": 52,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 163,
+      "character": 41,
+      "text": "event",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 166,
+      "character": 22,
+      "text": "event",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 176,
+      "character": 41,
+      "text": "event",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 189,
+      "character": 31,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 192,
+      "character": 19,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 203,
+      "character": 59,
+      "text": "then",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 204,
+      "character": 4,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 205,
+      "character": 35,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 350,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 339,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 423,
+      "character": 47,
+      "text": "progress",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 424,
+      "character": 24,
+      "text": "progress",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 454,
+      "character": 29,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 454,
+      "character": 35,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 456,
+      "character": 10,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 445,
+      "character": 12,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 478,
+      "character": 39,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 486,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 477,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 598,
+      "character": 44,
+      "text": "progress",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 599,
+      "character": 23,
+      "text": "progress",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 621,
+      "character": 34,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 629,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 620,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 678,
+      "character": 38,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 680,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 672,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 767,
+      "character": 29,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 773,
+      "character": 29,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 773,
+      "character": 35,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 775,
+      "character": 9,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 766,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 781,
+      "character": 9,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 782,
+      "character": 8,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 783,
+      "character": 34,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 789,
+      "character": 43,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/providers/AWSS3Provider.ts",
+      "line": 788,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 46,
+      "character": 9,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 67,
+      "character": 7,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 70,
+      "character": 39,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 91,
+      "character": 37,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 127,
+      "character": 11,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 129,
+      "character": 7,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 129,
+      "character": 27,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 131,
+      "character": 52,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 161,
+      "character": 51,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 162,
+      "character": 43,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 171,
+      "character": 9,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 172,
+      "character": 13,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 179,
+      "character": 28,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 186,
+      "character": 14,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 251,
+      "character": 8,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 251,
+      "character": 27,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 253,
+      "character": 48,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 256,
+      "character": 53,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 290,
+      "character": 8,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 290,
+      "character": 27,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 292,
+      "character": 48,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 295,
+      "character": 53,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 309,
+      "character": 22,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 310,
+      "character": 24,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 323,
+      "character": 2,
+      "text": "object",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 331,
+      "character": 8,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 331,
+      "character": 27,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 333,
+      "character": 48,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 336,
+      "character": 53,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 366,
+      "character": 8,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 366,
+      "character": 27,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 368,
+      "character": 48,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 371,
+      "character": 53,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 393,
+      "character": 8,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 393,
+      "character": 27,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 395,
+      "character": 48,
+      "text": "provider",
+      "kind": 1
+    },
+    {
+      "file": "src/Storage.ts",
+      "line": 398,
+      "character": 53,
+      "text": "provider",
+      "kind": 1
+    }
+  ],
+  "percentage": 92.30899542605455,
+  "total": 5903,
+  "covered": 5449,
+  "uncovered": 454
+}

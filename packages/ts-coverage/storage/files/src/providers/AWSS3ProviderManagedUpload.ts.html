@@ -1,0 +1,350 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>AWSS3ProviderManagedUpload.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/providers/AWSS3ProviderManagedUpload.ts</td><td class="">85.96%</td><td class="">0%</td><td class="">470</td><td class="">404</td><td class="">66</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import { ConsoleLogger as Logger } from &#x27;@aws-amplify/core&#x27;;
+import {
+	PutObjectCommand,
+	PutObjectRequest,
+	CreateMultipartUploadCommand,
+	UploadPartCommand,
+	CompleteMultipartUploadCommand,
+	CompleteMultipartUploadCommandInput,
+	ListPartsCommand,
+	AbortMultipartUploadCommand,
+	CompletedPart,
+	S3Client,
+} from &#x27;@aws-sdk/client-s3&#x27;;
+import {
+	SEND_UPLOAD_PROGRESS_EVENT,
+	SEND_DOWNLOAD_PROGRESS_EVENT,
+	AxiosHttpHandlerOptions,
+} from &#x27;./axios-http-handler&#x27;;
+import * as events from &#x27;events&#x27;;
+import {
+	createPrefixMiddleware,
+	prefixMiddlewareOptions,
+	autoAdjustClockskewMiddleware,
+	autoAdjustClockskewMiddlewareOptions,
+	createS3Client,
+} from &#x27;../common/S3ClientUtils&#x27;;
+
+const logger = new Logger(&#x27;AWSS3ProviderManagedUpload&#x27;);
+
+export declare interface Part {
+	bodyPart: any;
+	partNumber: number;
+	emitter: events.EventEmitter;
+	etag?: string;
+	_lastUploadedBytes: number;
+}
+
+export class AWSS3ProviderManagedUpload {
+	// Defaults
+	protected minPartSize = 5 * 1024 * 1024; // in MB
+	private queueSize = 4;
+
+	// Data for current upload
+	private body = null;
+	private params: PutObjectRequest = null;
+	private opts = null;
+	private completedParts: CompletedPart[] = [];
+	private s3client: S3Client;
+	private uploadId = null;
+
+	// Progress reporting
+	private bytesUploaded = 0;
+	private totalBytesToUpload = 0;
+	private emitter: events.EventEmitter = null;
+
+	constructor(params: PutObjectRequest, opts, emitter: events.EventEmitter) {
+		this.params = params;
+		this.opts = opts;
+		this.emitter = emitter;
+		this.s3client = this._createNewS3Client(opts, emitter);
+	}
+
+	public async upload() {
+		try {
+			this.body = await this.validateAndSanitizeBody(this.params.Body);
+			this.totalBytesToUpload = this.byteLength(this.body);
+			if (this.totalBytesToUpload &lt;= this.minPartSize) {
+				// Multipart upload is not required. Upload the sanitized body as is
+				this.params.Body = this.body;
+				const putObjectCommand = new PutObjectCommand(this.params);
+				return this.s3client.send(putObjectCommand);
+			} else {
+				// Step 1: Initiate the multi part upload
+				this.uploadId = await this.createMultiPartUpload();
+
+				// Step 2: Upload chunks in parallel as requested
+				const numberOfPartsToUpload = Math.ceil(
+					this.totalBytesToUpload / this.minPartSize
+				);
+
+				const parts: Part[] = this.createParts();
+				for (
+					let start = 0;
+					start &lt; numberOfPartsToUpload;
+					start += this.queueSize
+				) {
+
+					// Upload as many as `queueSize` parts simultaneously
+					await this.uploadParts(
+						this.uploadId,
+						parts.slice(start, start + this.queueSize)
+					);
+				}
+
+				parts.map(part =&gt; {
+					this.removeEventListener(part);
+				});
+
+				// Step 3: Finalize the upload such that S3 can recreate the file
+				return await this.finishMultiPartUpload(this.uploadId);
+			}
+		} catch (error) {
+			// if any error is thrown, call cleanup
+			await this.cleanup(this.uploadId);
+			logger.error(&#x27;Error. Cancelling the multipart upload.&#x27;);
+			throw error;
+		}
+	}
+
+	private createParts(): Part[] {
+		try {
+			const parts: Part[] = [];
+			for (let bodyStart = 0; bodyStart &lt; this.totalBytesToUpload; ) {
+				const bodyEnd = Math.min(
+					bodyStart + this.minPartSize,
+					this.totalBytesToUpload
+				);
+				parts.push({
+					bodyPart: this.body.slice(bodyStart, bodyEnd),
+					partNumber: parts.length + 1,
+					emitter: new events.EventEmitter(),
+					_lastUploadedBytes: 0,
+				});
+				bodyStart += this.minPartSize;
+			}
+			return parts;
+		} catch (error) {
+			logger.error(error);
+			throw error;
+		}
+	}
+
+	private async createMultiPartUpload() {
+		try {
+			const createMultiPartUploadCommand = new CreateMultipartUploadCommand(
+				this.params
+			);
+			const response = await this.s3client.send(createMultiPartUploadCommand);
+			logger.debug(response.UploadId);
+			return response.UploadId;
+		} catch (error) {
+			logger.error(error);
+			throw error;
+		}
+	}
+
+	/**
+	 * @private Not to be extended outside of tests
+	 * @VisibleFotTesting
+	 */
+	protected async uploadParts(uploadId: string, parts: Part[]) {
+		try {
+			const allResults = await Promise.all(
+				parts.map(async part =&gt; {
+					this.setupEventListener(part);
+					const options: AxiosHttpHandlerOptions = { emitter: part.emitter };
+					const {
+						Key,
+						Bucket,
+						SSECustomerAlgorithm,
+						SSECustomerKey,
+						SSECustomerKeyMD5,
+					} = this.params;
+					const res = await this.s3client.send(
+						new UploadPartCommand({
+							PartNumber: part.partNumber,
+							Body: part.bodyPart,
+							UploadId: uploadId,
+							Key,
+							Bucket,
+							...(SSECustomerAlgorithm &amp;&amp; { SSECustomerAlgorithm }),
+							...(SSECustomerKey &amp;&amp; { SSECustomerKey }),
+							...(SSECustomerKeyMD5 &amp;&amp; { SSECustomerKeyMD5 }),
+						}),
+						options
+					);
+					return res;
+				})
+			);
+			// The order of resolved promises is the same as input promise order.
+			for (let i = 0; i &lt; allResults.length; i++) {
+				this.completedParts.push({
+					PartNumber: parts[i].partNumber,
+					ETag: allResults[i].ETag,
+				});
+			}
+		} catch (error) {
+			logger.error(
+				&#x27;Error happened while uploading a part. Cancelling the multipart upload&#x27;
+			);
+			throw error;
+		}
+	}
+
+	private async finishMultiPartUpload(uploadId: string) {
+		const input: CompleteMultipartUploadCommandInput = {
+			Bucket: this.params.Bucket,
+			Key: this.params.Key,
+			UploadId: uploadId,
+			MultipartUpload: { Parts: this.completedParts },
+		};
+		const completeUploadCommand = new CompleteMultipartUploadCommand(input);
+		try {
+			const data = await this.s3client.send(completeUploadCommand);
+			return data.Key;
+		} catch (error) {
+			logger.error(&#x27;Error happened while finishing the upload.&#x27;);
+			throw error;
+		}
+	}
+
+	private async cleanup(uploadId: string) {
+		// Reset this&#x27;s state
+		this.body = null;
+		this.completedParts = [];
+		this.bytesUploaded = 0;
+		this.totalBytesToUpload = 0;
+
+		const input = {
+			Bucket: this.params.Bucket,
+			Key: this.params.Key,
+			UploadId: uploadId,
+		};
+
+		await this.s3client.send(new AbortMultipartUploadCommand(input));
+
+		// verify that all parts are removed.
+		const data = await this.s3client.send(new ListPartsCommand(input));
+
+		if (data &amp;&amp; data.Parts &amp;&amp; data.Parts.length &gt; 0) {
+			throw new Error(&#x27;Multipart upload clean up failed.&#x27;);
+		}
+	}
+
+	private removeEventListener(part: Part) {
+		part.emitter.removeAllListeners(SEND_UPLOAD_PROGRESS_EVENT);
+		part.emitter.removeAllListeners(SEND_DOWNLOAD_PROGRESS_EVENT);
+	}
+
+	private setupEventListener(part: Part) {
+		part.emitter.on(SEND_UPLOAD_PROGRESS_EVENT, progress =&gt; {
+			this.progressChanged(
+				part.partNumber,
+				progress.loaded - part._lastUploadedBytes
+			);
+			part._lastUploadedBytes = progress.loaded;
+		});
+	}
+
+	private progressChanged(partNumber: number, incrementalUpdate: number) {
+		this.bytesUploaded += incrementalUpdate;
+		this.emitter.emit(SEND_UPLOAD_PROGRESS_EVENT, {
+			loaded: this.bytesUploaded,
+			total: this.totalBytesToUpload,
+			part: partNumber,
+			key: this.params.Key,
+		});
+	}
+
+	private byteLength(input: any) {
+		if (input === null || input === undefined) return 0;
+		if (typeof input.byteLength === &#x27;number&#x27;) {
+			return input.byteLength;
+		} else if (typeof input.length === &#x27;number&#x27;) {
+			return input.length;
+		} else if (typeof input.size === &#x27;number&#x27;) {
+			return input.size;
+		} else if (typeof input.path === &#x27;string&#x27;) {
+			/* NodeJs Support
+			return require(&#x27;fs&#x27;).lstatSync(input.path).size;
+			*/
+		} else {
+			throw new Error(&#x27;Cannot determine length of &#x27; + input);
+		}
+	}
+
+	private async validateAndSanitizeBody(body: any): Promise&lt;any&gt; {
+		if (this.isGenericObject(body)) {
+			// Any javascript object
+			return JSON.stringify(body);
+		} else {
+			// Files, arrayBuffer etc
+			return body;
+		}
+		/* TODO: streams and files for nodejs 
+		if (
+			typeof body.path === &#x27;string&#x27; &amp;&amp;
+			require(&#x27;fs&#x27;).lstatSync(body.path).size &gt; 0
+		) {
+			return body;
+		} */
+	}
+
+	private isGenericObject(body: any): body is Object {
+		if (body !== null &amp;&amp; typeof body === &#x27;object&#x27;) {
+			try {
+				return !(this.byteLength(body) &gt;= 0);
+			} catch (error) {
+				// If we cannot determine the length of the body, consider it
+				// as a generic object and upload a stringified version of it
+				return true;
+			}
+		}
+		return false;
+	}
+
+	protected _createNewS3Client(config, emitter?: events.EventEmitter) {
+		const s3client = createS3Client(config, emitter);
+		s3client.middlewareStack.add(
+			createPrefixMiddleware(this.opts, this.params.Key),
+			prefixMiddlewareOptions
+		);
+		s3client.middlewareStack.add(
+			autoAdjustClockskewMiddleware(s3client.config),
+			autoAdjustClockskewMiddlewareOptions
+		);
+		return s3client;
+	}
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:1,&quot;text&quot;:&quot;bodyPart&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:56,&quot;character&quot;:9,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:58,&quot;character&quot;:9,&quot;text&quot;:&quot;opts&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:61,&quot;character&quot;:9,&quot;text&quot;:&quot;uploadId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:68,&quot;character&quot;:39,&quot;text&quot;:&quot;opts&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:70,&quot;character&quot;:7,&quot;text&quot;:&quot;opts&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:70,&quot;character&quot;:14,&quot;text&quot;:&quot;opts&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:72,&quot;character&quot;:42,&quot;text&quot;:&quot;opts&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:77,&quot;character&quot;:8,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:78,&quot;character&quot;:50,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:81,&quot;character&quot;:28,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:86,&quot;character&quot;:9,&quot;text&quot;:&quot;uploadId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:102,&quot;character&quot;:11,&quot;text&quot;:&quot;uploadId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:112,&quot;character&quot;:49,&quot;text&quot;:&quot;uploadId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:27,&quot;text&quot;:&quot;uploadId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:118,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:114,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:5,&quot;text&quot;:&quot;bodyPart&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:20,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:25,&quot;text&quot;:&quot;slice&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:140,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:141,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:139,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:154,&quot;character&quot;:16,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:155,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:153,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:179,&quot;character&quot;:18,&quot;text&quot;:&quot;bodyPart&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:203,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:199,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:220,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:218,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:226,&quot;character&quot;:7,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:253,&quot;character&quot;:46,&quot;text&quot;:&quot;progress&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:256,&quot;character&quot;:4,&quot;text&quot;:&quot;progress&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:256,&quot;character&quot;:13,&quot;text&quot;:&quot;loaded&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:258,&quot;character&quot;:29,&quot;text&quot;:&quot;progress&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:258,&quot;character&quot;:38,&quot;text&quot;:&quot;loaded&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:272,&quot;character&quot;:20,&quot;text&quot;:&quot;input&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:6,&quot;text&quot;:&quot;input&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:24,&quot;text&quot;:&quot;input&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:274,&quot;character&quot;:13,&quot;text&quot;:&quot;input&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:274,&quot;character&quot;:19,&quot;text&quot;:&quot;byteLength&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:275,&quot;character&quot;:10,&quot;text&quot;:&quot;input&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:275,&quot;character&quot;:16,&quot;text&quot;:&quot;byteLength&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:276,&quot;character&quot;:20,&quot;text&quot;:&quot;input&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:276,&quot;character&quot;:26,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:277,&quot;character&quot;:10,&quot;text&quot;:&quot;input&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:277,&quot;character&quot;:16,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:278,&quot;character&quot;:20,&quot;text&quot;:&quot;input&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:278,&quot;character&quot;:26,&quot;text&quot;:&quot;size&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:279,&quot;character&quot;:10,&quot;text&quot;:&quot;input&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:279,&quot;character&quot;:16,&quot;text&quot;:&quot;size&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:280,&quot;character&quot;:20,&quot;text&quot;:&quot;input&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:280,&quot;character&quot;:26,&quot;text&quot;:&quot;path&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:285,&quot;character&quot;:51,&quot;text&quot;:&quot;input&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:289,&quot;character&quot;:39,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:290,&quot;character&quot;:27,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:292,&quot;character&quot;:25,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:295,&quot;character&quot;:10,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:306,&quot;character&quot;:25,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:307,&quot;character&quot;:6,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:307,&quot;character&quot;:30,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:309,&quot;character&quot;:29,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:310,&quot;character&quot;:12,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:319,&quot;character&quot;:30,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/providers/AWSS3ProviderManagedUpload.ts&quot;,&quot;line&quot;:322,&quot;character&quot;:31,&quot;text&quot;:&quot;opts&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:23 GMT</p>
+    </body>
+  </html>
+  

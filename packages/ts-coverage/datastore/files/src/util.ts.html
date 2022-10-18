@@ -1,0 +1,1070 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>util.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/util.ts</td><td class="">89.24%</td><td class="">0%</td><td class="">1171</td><td class="">1045</td><td class="">126</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import { Buffer } from &#x27;buffer&#x27;;
+import { monotonicFactory, ULID } from &#x27;ulid&#x27;;
+import { v4 as uuid } from &#x27;uuid&#x27;;
+import { produce, applyPatches, Patch } from &#x27;immer&#x27;;
+import { ModelInstanceCreator } from &#x27;./datastore/datastore&#x27;;
+import {
+	AllOperators,
+	isPredicateGroup,
+	isPredicateObj,
+	ModelInstanceMetadata,
+	PersistentModel,
+	PersistentModelConstructor,
+	PredicateGroups,
+	PredicateObject,
+	PredicatesGroup,
+	RelationshipType,
+	RelationType,
+	ModelKeys,
+	ModelAttributes,
+	SchemaNamespace,
+	SortPredicatesGroup,
+	SortDirection,
+	isModelAttributeKey,
+	isModelAttributePrimaryKey,
+	isModelAttributeCompositeKey,
+	NonModelTypeConstructor,
+	DeferredCallbackResolverOptions,
+	LimitTimerRaceResolvedValues,
+	SchemaModel,
+	ModelAttribute,
+	IndexesType,
+	ModelAssociation,
+} from &#x27;./types&#x27;;
+import { WordArray } from &#x27;amazon-cognito-identity-js&#x27;;
+
+export const ID = &#x27;id&#x27;;
+
+/**
+ * Used by the Async Storage Adapter to concatenate key values
+ * for a record. For instance, if a model has the following keys:
+ * `customId: ID! @primaryKey(sortKeyFields: [&quot;createdAt&quot;])`,
+ * we concatenate the `customId` and `createdAt` as: 
+ * `12-234-5#2022-09-28T00:00:00.000Z`
+ */
+export const DEFAULT_PRIMARY_KEY_VALUE_SEPARATOR = &#x27;#&#x27;;
+
+/**
+ * Used for generating spinal-cased index name from an array of 
+ * key field names.
+ * E.g. for keys `[id, title]` =&gt; &#x27;id-title&#x27;
+ */
+export const IDENTIFIER_KEY_SEPARATOR = &#x27;-&#x27;;
+
+export const errorMessages = {
+	idEmptyString: &#x27;An index field cannot contain an empty string value&#x27;,
+	queryByPkWithCompositeKeyPresent:
+		&#x27;Models with composite primary keys cannot be queried by a single key value. Use object literal syntax for composite keys instead: https://docs.amplify.aws/lib/datastore/advanced-workflows/q/platform/js/#querying-records-with-custom-primary-keys&#x27;,
+	deleteByPkWithCompositeKeyPresent:
+		&#x27;Models with composite primary keys cannot be deleted by a single key value, unless using a predicate. Use object literal syntax for composite keys instead: https://docs.amplify.aws/lib/datastore/advanced-workflows/q/platform/js/#querying-records-with-custom-primary-keys&#x27;,
+	observeWithObjectLiteral:
+		&#x27;Object literal syntax cannot be used with observe. Use a predicate instead: https://docs.amplify.aws/lib/datastore/data-access/q/platform/js/#predicates&#x27;,
+};
+
+export enum NAMESPACES {
+	DATASTORE = &#x27;datastore&#x27;,
+	USER = &#x27;user&#x27;,
+	SYNC = &#x27;sync&#x27;,
+	STORAGE = &#x27;storage&#x27;,
+}
+
+const DATASTORE = NAMESPACES.DATASTORE;
+const USER = NAMESPACES.USER;
+const SYNC = NAMESPACES.SYNC;
+const STORAGE = NAMESPACES.STORAGE;
+
+export { USER, SYNC, STORAGE, DATASTORE };
+export const USER_AGENT_SUFFIX_DATASTORE = &#x27;/DataStore&#x27;;
+
+export const exhaustiveCheck = (obj: never, throwOnError: boolean = true) =&gt; {
+	if (throwOnError) {
+		throw new Error(`Invalid ${obj}`);
+	}
+};
+
+export const isNullOrUndefined = (val: any): boolean =&gt; {
+	return typeof val === &#x27;undefined&#x27; || val === undefined || val === null;
+};
+
+export const validatePredicate = &lt;T extends PersistentModel&gt;(
+	model: T,
+	groupType: keyof PredicateGroups&lt;T&gt;,
+	predicatesOrGroups: (PredicateObject&lt;T&gt; | PredicatesGroup&lt;T&gt;)[]
+) =&gt; {
+	let filterType: keyof Pick&lt;any[], &#x27;every&#x27; | &#x27;some&#x27;&gt;;
+	let isNegation = false;
+
+	if (predicatesOrGroups.length === 0) {
+		return true;
+	}
+
+	switch (groupType) {
+		case &#x27;not&#x27;:
+			filterType = &#x27;every&#x27;;
+			isNegation = true;
+			break;
+		case &#x27;and&#x27;:
+			filterType = &#x27;every&#x27;;
+			break;
+		case &#x27;or&#x27;:
+			filterType = &#x27;some&#x27;;
+			break;
+		default:
+			exhaustiveCheck(groupType);
+	}
+
+	const result: boolean = predicatesOrGroups[filterType](predicateOrGroup =&gt; {
+		if (isPredicateObj(predicateOrGroup)) {
+			const { field, operator, operand } = predicateOrGroup;
+			const value = model[field];
+
+			return validatePredicateField(value, operator, operand);
+		}
+
+		if (isPredicateGroup(predicateOrGroup)) {
+			const { type, predicates } = predicateOrGroup;
+			return validatePredicate(model, type, predicates);
+		}
+
+		throw new Error(&#x27;Not a predicate or group&#x27;);
+	});
+
+	return isNegation ? !result : result;
+};
+
+export const validatePredicateField = &lt;T&gt;(
+	value: T,
+	operator: keyof AllOperators,
+	operand: T | [T, T]
+) =&gt; {
+	switch (operator) {
+		case &#x27;ne&#x27;:
+			return value !== operand;
+		case &#x27;eq&#x27;:
+			return value === operand;
+		case &#x27;le&#x27;:
+			return value &lt;= operand;
+		case &#x27;lt&#x27;:
+			return value &lt; operand;
+		case &#x27;ge&#x27;:
+			return value &gt;= operand;
+		case &#x27;gt&#x27;:
+			return value &gt; operand;
+		case &#x27;between&#x27;:
+			const [min, max] = &lt;[T, T]&gt;operand;
+			return value &gt;= min &amp;&amp; value &lt;= max;
+		case &#x27;beginsWith&#x27;:
+			return (
+				!isNullOrUndefined(value) &amp;&amp;
+				(&lt;string&gt;(&lt;unknown&gt;value)).startsWith(&lt;string&gt;(&lt;unknown&gt;operand))
+			);
+		case &#x27;contains&#x27;:
+			return (
+				!isNullOrUndefined(value) &amp;&amp;
+				(&lt;string&gt;(&lt;unknown&gt;value)).indexOf(&lt;string&gt;(&lt;unknown&gt;operand)) &gt; -1
+			);
+		case &#x27;notContains&#x27;:
+			return (
+				isNullOrUndefined(value) ||
+				(&lt;string&gt;(&lt;unknown&gt;value)).indexOf(&lt;string&gt;(&lt;unknown&gt;operand)) === -1
+			);
+		default:
+			exhaustiveCheck(operator, false);
+			return false;
+	}
+};
+
+export const isModelConstructor = &lt;T extends PersistentModel&gt;(
+	obj: any
+): obj is PersistentModelConstructor&lt;T&gt; =&gt; {
+	return (
+		obj &amp;&amp; typeof (&lt;PersistentModelConstructor&lt;T&gt;&gt;obj).copyOf === &#x27;function&#x27;
+	);
+};
+
+const nonModelClasses = new WeakSet&lt;NonModelTypeConstructor&lt;any&gt;&gt;();
+
+export function registerNonModelClass(clazz: NonModelTypeConstructor&lt;any&gt;) {
+	nonModelClasses.add(clazz);
+}
+
+export const isNonModelConstructor = (
+	obj: any
+): obj is NonModelTypeConstructor&lt;any&gt; =&gt; {
+	return nonModelClasses.has(obj);
+};
+
+const topologicallySortedModels = new WeakMap&lt;SchemaNamespace, string[]&gt;();
+
+export const traverseModel = &lt;T extends PersistentModel&gt;(
+	srcModelName: string,
+	instance: T,
+	namespace: SchemaNamespace,
+	modelInstanceCreator: ModelInstanceCreator,
+	getModelConstructorByModelName: (
+		namsespaceName: string,
+		modelName: string
+	) =&gt; PersistentModelConstructor&lt;any&gt;
+) =&gt; {
+	const relationships = namespace.relationships;
+
+	const modelConstructor = getModelConstructorByModelName(
+		namespace.name,
+		srcModelName
+	);
+
+	const relation = relationships[srcModelName];
+
+	const result: {
+		modelName: string;
+		item: T;
+		instance: T;
+	}[] = [];
+
+	const newInstance = modelConstructor.copyOf(instance, draftInstance =&gt; {
+		relation.relationTypes.forEach((rItem: RelationType) =&gt; {
+			const modelConstructor = getModelConstructorByModelName(
+				namespace.name,
+				rItem.modelName
+			);
+
+			switch (rItem.relationType) {
+				case &#x27;HAS_ONE&#x27;:
+					if (instance[rItem.fieldName]) {
+						let modelInstance: T;
+						try {
+							modelInstance = modelInstanceCreator(
+								modelConstructor,
+								instance[rItem.fieldName]
+							);
+						} catch (error) {
+							// Do nothing
+							console.log(error);
+						}
+
+						result.push({
+							modelName: rItem.modelName,
+							item: instance[rItem.fieldName],
+							instance: modelInstance,
+						});
+
+						const targetNames: string[] | undefined =
+							extractTargetNamesFromSrc(rItem);
+
+						// `targetName` will be defined for Has One if feature flag
+						// https://docs.amplify.aws/cli/reference/feature-flags/#useAppsyncModelgenPlugin
+						// is true (default as of 5/7/21)
+						// Making this conditional for backward-compatibility
+						if (targetNames) {
+							targetNames.forEach((targetName, idx) =&gt; {
+								// Get the connected record
+								const relatedRecordInProxy = &lt;PersistentModel&gt;(
+									draftInstance[rItem.fieldName]
+								);
+
+								// Previously, we used the hardcoded &#x27;id&#x27; as they key,
+								// now we need the value of the key to get the PK (and SK)
+								// values from the related record
+
+								const { primaryKey } = namespace.keys[modelConstructor.name];
+								const keyField = primaryKey &amp;&amp; primaryKey[idx];
+
+								// Get the value
+								const relatedRecordInProxyPkValue =
+									relatedRecordInProxy[keyField];
+
+								// Set the targetName value
+								(&lt;any&gt;draftInstance)[targetName] = relatedRecordInProxyPkValue;
+							});
+							// Delete the instance from the proxy
+							delete (&lt;any&gt;draftInstance)[rItem.fieldName];
+						} else {
+							(&lt;any&gt;draftInstance)[rItem.fieldName] = (&lt;PersistentModel&gt;(
+								draftInstance[rItem.fieldName]
+							)).id;
+						}
+					}
+
+					break;
+				case &#x27;BELONGS_TO&#x27;:
+					if (instance[rItem.fieldName]) {
+						let modelInstance: T;
+						try {
+							modelInstance = modelInstanceCreator(
+								modelConstructor,
+								instance[rItem.fieldName]
+							);
+						} catch (error) {
+							// Do nothing
+						}
+
+						const isDeleted = (&lt;ModelInstanceMetadata&gt;(
+							draftInstance[rItem.fieldName]
+						))._deleted;
+
+						if (!isDeleted) {
+							result.push({
+								modelName: rItem.modelName,
+								item: instance[rItem.fieldName],
+								instance: modelInstance,
+							});
+						}
+					}
+
+					if (draftInstance[rItem.fieldName]) {
+						const targetNames: string[] | undefined =
+							extractTargetNamesFromSrc(rItem);
+
+						if (targetNames) {
+							targetNames.forEach((targetName, idx) =&gt; {
+								// Get the connected record
+								const relatedRecordInProxy = &lt;PersistentModel&gt;(
+									draftInstance[rItem.fieldName]
+								);
+								// Previously, we used the hardcoded `id` for the key.
+								// Now, we need the value of the key to get the PK (and SK)
+								// values from the related record
+								const { primaryKey } = namespace.keys[modelConstructor.name];
+
+								// fall back to ID if
+								const keyField = primaryKey &amp;&amp; primaryKey[idx];
+
+								// Get the value
+								const relatedRecordInProxyPkValue =
+									relatedRecordInProxy[keyField];
+
+								// Set the targetName value
+								(&lt;any&gt;draftInstance)[targetName] = relatedRecordInProxyPkValue;
+							});
+							// Delete the instance from the proxy
+							delete (&lt;any&gt;draftInstance)[rItem.fieldName];
+						}
+					}
+
+					break;
+				case &#x27;HAS_MANY&#x27;:
+					// Intentionally blank
+					break;
+				default:
+					exhaustiveCheck(rItem.relationType);
+					break;
+			}
+		});
+	});
+
+	result.unshift({
+		modelName: srcModelName,
+		item: newInstance,
+		instance: newInstance,
+	});
+
+	if (!topologicallySortedModels.has(namespace)) {
+		topologicallySortedModels.set(
+			namespace,
+			Array.from(namespace.modelTopologicalOrdering.keys())
+		);
+	}
+
+	const sortedModels = topologicallySortedModels.get(namespace);
+
+	result.sort((a, b) =&gt; {
+		return (
+			sortedModels.indexOf(a.modelName) - sortedModels.indexOf(b.modelName)
+		);
+	});
+
+	return result;
+};
+
+let privateModeCheckResult;
+
+export const isPrivateMode = () =&gt; {
+	return new Promise(resolve =&gt; {
+		const dbname = uuid();
+		let db;
+
+		const isPrivate = () =&gt; {
+			privateModeCheckResult = false;
+
+			resolve(true);
+		};
+
+		const isNotPrivate = async () =&gt; {
+			if (db &amp;&amp; db.result &amp;&amp; typeof db.result.close === &#x27;function&#x27;) {
+				await db.result.close();
+			}
+
+			await indexedDB.deleteDatabase(dbname);
+
+			privateModeCheckResult = true;
+
+			return resolve(false);
+		};
+
+		if (privateModeCheckResult === true) {
+			return isNotPrivate();
+		}
+
+		if (privateModeCheckResult === false) {
+			return isPrivate();
+		}
+
+		if (indexedDB === null) return isPrivate();
+
+		db = indexedDB.open(dbname);
+		db.onerror = isPrivate;
+		db.onsuccess = isNotPrivate;
+	});
+};
+
+const randomBytes = (nBytes: number): Buffer =&gt; {
+	return Buffer.from(new WordArray().random(nBytes).toString(), &#x27;hex&#x27;);
+};
+const prng = () =&gt; randomBytes(1).readUInt8(0) / 0xff;
+export function monotonicUlidFactory(seed?: number): ULID {
+	const ulid = monotonicFactory(prng);
+
+	return () =&gt; {
+		return ulid(seed);
+	};
+}
+
+/**
+ * Uses performance.now() if available, otherwise, uses Date.now() (e.g. react native without a polyfill)
+ *
+ * The values returned by performance.now() always increase at a constant rate,
+ * independent of the system clock (which might be adjusted manually or skewed
+ * by software like NTP).
+ *
+ * Otherwise, performance.timing.navigationStart + performance.now() will be
+ * approximately equal to Date.now()
+ *
+ * See: https://developer.mozilla.org/en-US/docs/Web/API/Performance/now#Example
+ */
+export function getNow() {
+	if (
+		typeof performance !== &#x27;undefined&#x27; &amp;&amp;
+		performance &amp;&amp;
+		typeof performance.now === &#x27;function&#x27;
+	) {
+		return performance.now() | 0; // convert to integer
+	} else {
+		return Date.now();
+	}
+}
+
+export function sortCompareFunction&lt;T extends PersistentModel&gt;(
+	sortPredicates: SortPredicatesGroup&lt;T&gt;
+) {
+	return function compareFunction(a, b) {
+		// enable multi-field sort by iterating over predicates until
+		// a comparison returns -1 or 1
+		for (const predicate of sortPredicates) {
+			const { field, sortDirection } = predicate;
+
+			// reverse result when direction is descending
+			const sortMultiplier = sortDirection === SortDirection.ASCENDING ? 1 : -1;
+
+			if (a[field] &lt; b[field]) {
+				return -1 * sortMultiplier;
+			}
+
+			if (a[field] &gt; b[field]) {
+				return 1 * sortMultiplier;
+			}
+		}
+
+		return 0;
+	};
+}
+
+// deep compare any 2 values
+// primitives or object types (including arrays, Sets, and Maps)
+// returns true if equal by value
+// if nullish is true, treat undefined and null values as equal
+// to normalize for GQL response values for undefined fields
+export function valuesEqual(
+	valA: any,
+	valB: any,
+	nullish: boolean = false
+): boolean {
+	let a = valA;
+	let b = valB;
+
+	const nullishCompare = (_a, _b) =&gt; {
+		return (
+			(_a === undefined || _a === null) &amp;&amp; (_b === undefined || _b === null)
+		);
+	};
+
+	// if one of the values is a primitive and the other is an object
+	if (
+		(a instanceof Object &amp;&amp; !(b instanceof Object)) ||
+		(!(a instanceof Object) &amp;&amp; b instanceof Object)
+	) {
+		return false;
+	}
+
+	// compare primitive types
+	if (!(a instanceof Object)) {
+		if (nullish &amp;&amp; nullishCompare(a, b)) {
+			return true;
+		}
+
+		return a === b;
+	}
+
+	// make sure object types match
+	if (
+		(Array.isArray(a) &amp;&amp; !Array.isArray(b)) ||
+		(Array.isArray(b) &amp;&amp; !Array.isArray(a))
+	) {
+		return false;
+	}
+
+	if (a instanceof Set &amp;&amp; b instanceof Set) {
+		a = [...a];
+		b = [...b];
+	}
+
+	if (a instanceof Map &amp;&amp; b instanceof Map) {
+		a = Object.fromEntries(a);
+		b = Object.fromEntries(b);
+	}
+
+	const aKeys = Object.keys(a);
+	const bKeys = Object.keys(b);
+
+	// last condition is to ensure that [] !== [null] even if nullish. However [undefined] === [null] when nullish
+	if (aKeys.length !== bKeys.length &amp;&amp; (!nullish || Array.isArray(a))) {
+		return false;
+	}
+
+	// iterate through the longer set of keys
+	// e.g., for a nullish comparison of a={ a: 1 } and b={ a: 1, b: null }
+	// we want to iterate through bKeys
+	const keys = aKeys.length &gt;= bKeys.length ? aKeys : bKeys;
+
+	for (const key of keys) {
+		const aVal = a[key];
+		const bVal = b[key];
+
+		if (!valuesEqual(aVal, bVal, nullish)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+export const isAWSDate = (val: string): boolean =&gt; {
+	return !!/^\d{4}-\d{2}-\d{2}(Z|[+-]\d{2}:\d{2}($|:\d{2}))?$/.exec(val);
+};
+
+export const isAWSTime = (val: string): boolean =&gt; {
+	return !!/^\d{2}:\d{2}(:\d{2}(.\d+)?)?(Z|[+-]\d{2}:\d{2}($|:\d{2}))?$/.exec(
+		val
+	);
+};
+
+export const isAWSDateTime = (val: string): boolean =&gt; {
+	return !!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(.\d+)?)?(Z|[+-]\d{2}:\d{2}($|:\d{2}))?$/.exec(
+		val
+	);
+};
+
+export const isAWSTimestamp = (val: number): boolean =&gt; {
+	return !!/^\d+$/.exec(String(val));
+};
+
+export const isAWSEmail = (val: string): boolean =&gt; {
+	return !!/^[a-zA-Z0-9.!#$%&amp;&#x27;*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.exec(
+		val
+	);
+};
+
+export const isAWSJSON = (val: string): boolean =&gt; {
+	try {
+		JSON.parse(val);
+		return true;
+	} catch {
+		return false;
+	}
+};
+
+export const isAWSURL = (val: string): boolean =&gt; {
+	try {
+		return !!new URL(val);
+	} catch {
+		return false;
+	}
+};
+
+export const isAWSPhone = (val: string): boolean =&gt; {
+	return !!/^\+?\d[\d\s-]+$/.exec(val);
+};
+
+export const isAWSIPAddress = (val: string): boolean =&gt; {
+	return !!/((^((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))$)|(^((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?$))$/.exec(
+		val
+	);
+};
+
+export class DeferredPromise {
+	public promise: Promise&lt;string&gt;;
+	public resolve: (value: string | PromiseLike&lt;string&gt;) =&gt; void;
+	public reject: () =&gt; void;
+	constructor() {
+		const self = this;
+		this.promise = new Promise(
+			(resolve: (value: string | PromiseLike&lt;string&gt;) =&gt; void, reject) =&gt; {
+				self.resolve = resolve;
+				self.reject = reject;
+			}
+		);
+	}
+}
+
+export class DeferredCallbackResolver {
+	private limitPromise = new DeferredPromise();
+	private timerPromise: Promise&lt;string&gt;;
+	private maxInterval: number;
+	private timer: ReturnType&lt;typeof setTimeout&gt;;
+	private raceInFlight = false;
+	private callback = () =&gt; {};
+	private errorHandler: (error: string) =&gt; void;
+	private defaultErrorHandler = (
+		msg = &#x27;DeferredCallbackResolver error&#x27;
+	): void =&gt; {
+		throw new Error(msg);
+	};
+
+	constructor(options: DeferredCallbackResolverOptions) {
+		this.callback = options.callback;
+		this.errorHandler = options.errorHandler || this.defaultErrorHandler;
+		this.maxInterval = options.maxInterval || 2000;
+	}
+
+	private startTimer(): void {
+		this.timerPromise = new Promise((resolve, reject) =&gt; {
+			this.timer = setTimeout(() =&gt; {
+				resolve(LimitTimerRaceResolvedValues.TIMER);
+			}, this.maxInterval);
+		});
+	}
+
+	private async racePromises(): Promise&lt;string&gt; {
+		let winner: string;
+		try {
+			this.raceInFlight = true;
+			this.startTimer();
+			winner = await Promise.race([
+				this.timerPromise,
+				this.limitPromise.promise,
+			]);
+			this.callback();
+		} catch (err) {
+			this.errorHandler(err);
+		} finally {
+			// reset for the next race
+			this.clear();
+			this.raceInFlight = false;
+			this.limitPromise = new DeferredPromise();
+
+			return winner;
+		}
+	}
+
+	public start(): void {
+		if (!this.raceInFlight) this.racePromises();
+	}
+
+	public clear(): void {
+		clearTimeout(this.timer);
+	}
+
+	public resolve(): void {
+		this.limitPromise.resolve(LimitTimerRaceResolvedValues.LIMIT);
+	}
+}
+
+/**
+ * merge two sets of patches created by immer produce.
+ * newPatches take precedent over oldPatches for patches modifying the same path.
+ * In the case many consecutive pathces are merged the original model should
+ * always be the root model.
+ *
+ * Example:
+ * A -&gt; B, patches1
+ * B -&gt; C, patches2
+ *
+ * mergePatches(A, patches1, patches2) to get patches for A -&gt; C
+ *
+ * @param originalSource the original Model the patches should be applied to
+ * @param oldPatches immer produce patch list
+ * @param newPatches immer produce patch list (will take precedence)
+ * @return merged patches
+ */
+export function mergePatches&lt;T&gt;(
+	originalSource: T,
+	oldPatches: Patch[],
+	newPatches: Patch[]
+): Patch[] {
+	const patchesToMerge = oldPatches.concat(newPatches);
+	let patches: Patch[];
+	produce(
+		originalSource,
+		draft =&gt; {
+			applyPatches(draft, patchesToMerge);
+		},
+		p =&gt; {
+			patches = p;
+		}
+	);
+	return patches;
+}
+
+export const getStorename = (namespace: string, modelName: string) =&gt; {
+	const storeName = `${namespace}_${modelName}`;
+
+	return storeName;
+};
+
+//#region Key Utils
+
+/*
+  When we have GSI(s) with composite sort keys defined on a model
+	There are some very particular rules regarding which fields must be included in the update mutation input
+	The field selection becomes more complex as the number of GSIs with composite sort keys grows
+
+	To summarize: any time we update a field that is part of the composite sort key of a GSI, we must include:
+	 1. all of the other fields in that composite sort key
+	 2. all of the fields from any other composite sort key that intersect with the fields from 1.
+
+	 E.g.,
+	 Model @model
+		@key(name: &#x27;key1&#x27; fields: [&#x27;hk&#x27;, &#x27;a&#x27;, &#x27;b&#x27;, &#x27;c&#x27;])
+		@key(name: &#x27;key2&#x27; fields: [&#x27;hk&#x27;, &#x27;a&#x27;, &#x27;b&#x27;, &#x27;d&#x27;])
+		@key(name: &#x27;key3&#x27; fields: [&#x27;hk&#x27;, &#x27;x&#x27;, &#x27;y&#x27;, &#x27;z&#x27;])
+
+	Model.a is updated =&gt; include [&#x27;a&#x27;, &#x27;b&#x27;, &#x27;c&#x27;, &#x27;d&#x27;]
+	Model.c is updated =&gt; include [&#x27;a&#x27;, &#x27;b&#x27;, &#x27;c&#x27;, &#x27;d&#x27;]
+	Model.d is updated =&gt; include [&#x27;a&#x27;, &#x27;b&#x27;, &#x27;c&#x27;, &#x27;d&#x27;]
+	Model.x is updated =&gt; include [&#x27;x&#x27;, &#x27;y&#x27;, &#x27;z&#x27;]
+
+	This function accepts a model&#x27;s attributes and returns grouped sets of composite key fields
+	Using our example Model above, the function will return:
+	[
+		Set(&#x27;a&#x27;, &#x27;b&#x27;, &#x27;c&#x27;, &#x27;d&#x27;),
+		Set(&#x27;x&#x27;, &#x27;y&#x27;, &#x27;z&#x27;),
+	]
+
+	This gives us the opportunity to correctly include the required fields for composite keys
+	When crafting the mutation input in Storage.getUpdateMutationInput
+
+	See &#x27;processCompositeKeys&#x27; test in util.test.ts for more examples
+*/
+export const processCompositeKeys = (
+	attributes: ModelAttributes
+): Set&lt;string&gt;[] =&gt; {
+	const extractCompositeSortKey = ({
+		properties: {
+			// ignore the HK (fields[0]) we only need to include the composite sort key fields[1...n]
+			fields: [, ...sortKeyFields],
+		},
+	}) =&gt; sortKeyFields;
+
+	const compositeKeyFields = attributes
+		.filter(isModelAttributeCompositeKey)
+		.map(extractCompositeSortKey);
+
+	/*
+		if 2 sets of fields have any intersecting fields =&gt; combine them into 1 union set
+		e.g., [&#x27;a&#x27;, &#x27;b&#x27;, &#x27;c&#x27;] and [&#x27;a&#x27;, &#x27;b&#x27;, &#x27;d&#x27;] =&gt; [&#x27;a&#x27;, &#x27;b&#x27;, &#x27;c&#x27;, &#x27;d&#x27;]
+	*/
+	const combineIntersecting = (fields): Set&lt;string&gt;[] =&gt;
+		fields.reduce((combined, sortKeyFields) =&gt; {
+			const sortKeyFieldsSet = new Set(sortKeyFields);
+
+			if (combined.length === 0) {
+				combined.push(sortKeyFieldsSet);
+				return combined;
+			}
+
+			// does the current set share values with another set we&#x27;ve already added to `combined`?
+			const intersectingSetIdx = combined.findIndex(existingSet =&gt; {
+				return [...existingSet].some(f =&gt; sortKeyFieldsSet.has(f));
+			});
+
+			if (intersectingSetIdx &gt; -1) {
+				const union = new Set([
+					...combined[intersectingSetIdx],
+					...sortKeyFieldsSet,
+				]);
+				// combine the current set with the intersecting set we found above
+				combined[intersectingSetIdx] = union;
+			} else {
+				// none of the sets in `combined` have intersecting values with the current set
+				combined.push(sortKeyFieldsSet);
+			}
+
+			return combined;
+		}, []);
+
+	const initial = combineIntersecting(compositeKeyFields);
+	// a single pass pay not be enough to correctly combine all the fields
+	// call the function once more to get a final merged list of sets
+	const combined = combineIntersecting(initial);
+
+	return combined;
+};
+
+export const extractKeyIfExists = (
+	modelDefinition: SchemaModel
+): ModelAttribute | undefined =&gt; {
+	const keyAttribute = modelDefinition?.attributes?.find(isModelAttributeKey);
+
+	return keyAttribute;
+};
+
+export const extractPrimaryKeyFieldNames = (
+	modelDefinition: SchemaModel
+): string[] =&gt; {
+	const keyAttribute = extractKeyIfExists(modelDefinition);
+	if (keyAttribute &amp;&amp; isModelAttributePrimaryKey(keyAttribute)) {
+		return keyAttribute.properties.fields;
+	}
+
+	return [ID];
+};
+
+export const extractPrimaryKeyValues = &lt;T extends PersistentModel&gt;(
+	model: T,
+	keyFields: string[]
+): string[] =&gt; {
+	return keyFields.map(key =&gt; model[key]);
+};
+
+export const extractPrimaryKeysAndValues = &lt;T extends PersistentModel&gt;(
+	model: T,
+	keyFields: string[]
+): any =&gt; {
+	const primaryKeysAndValues = {};
+	keyFields.forEach(key =&gt; (primaryKeysAndValues[key] = model[key]));
+	return primaryKeysAndValues;
+};
+
+// IdentifierFields&lt;ManagedIdentifier&gt;
+// Default behavior without explicit @primaryKey defined
+export const isIdManaged = (modelDefinition: SchemaModel): boolean =&gt; {
+	const keyAttribute = extractKeyIfExists(modelDefinition);
+
+	if (keyAttribute &amp;&amp; isModelAttributePrimaryKey(keyAttribute)) {
+		return false;
+	}
+
+	return true;
+};
+
+// IdentifierFields&lt;OptionallyManagedIdentifier&gt;
+// @primaryKey with explicit `id` in the PK. Single key or composite
+export const isIdOptionallyManaged = (
+	modelDefinition: SchemaModel
+): boolean =&gt; {
+	const keyAttribute = extractKeyIfExists(modelDefinition);
+
+	if (keyAttribute &amp;&amp; isModelAttributePrimaryKey(keyAttribute)) {
+		return keyAttribute.properties.fields[0] === ID;
+	}
+
+	return false;
+};
+
+export const establishRelationAndKeys = (
+	namespace: SchemaNamespace
+): [RelationshipType, ModelKeys] =&gt; {
+	const relationship: RelationshipType = {};
+	const keys: ModelKeys = {};
+
+	Object.keys(namespace.models).forEach((mKey: string) =&gt; {
+		relationship[mKey] = { indexes: [], relationTypes: [] };
+		keys[mKey] = {};
+
+		const model = namespace.models[mKey];
+		Object.keys(model.fields).forEach((attr: string) =&gt; {
+			const fieldAttribute = model.fields[attr];
+			if (
+				typeof fieldAttribute.type === &#x27;object&#x27; &amp;&amp;
+				&#x27;model&#x27; in fieldAttribute.type
+			) {
+				const connectionType = fieldAttribute.association.connectionType;
+				relationship[mKey].relationTypes.push({
+					fieldName: fieldAttribute.name,
+					modelName: fieldAttribute.type.model,
+					relationType: connectionType,
+					targetName: fieldAttribute.association[&#x27;targetName&#x27;],
+					targetNames: fieldAttribute.association[&#x27;targetNames&#x27;],
+					associatedWith: fieldAttribute.association[&#x27;associatedWith&#x27;],
+				});
+
+				if (connectionType === &#x27;BELONGS_TO&#x27;) {
+					const targetNames = extractTargetNamesFromSrc(
+						fieldAttribute.association
+					);
+
+					if (targetNames) {
+						const idxName = indexNameFromKeys(targetNames);
+						relationship[mKey].indexes.push([idxName, targetNames]);
+					}
+				}
+			}
+		});
+
+		if (model.attributes) {
+			keys[mKey].compositeKeys = processCompositeKeys(model.attributes);
+
+			for (const attribute of model.attributes) {
+				if (!isModelAttributeKey(attribute)) {
+					continue;
+				}
+
+				const { fields } = attribute.properties;
+
+				if (isModelAttributePrimaryKey(attribute)) {
+					keys[mKey].primaryKey = fields;
+					continue;
+				}
+
+				// create indexes for all other keys
+				const idxName = indexNameFromKeys(fields);
+				const idxExists = relationship[mKey].indexes.find(
+					([index]) =&gt; index === idxName
+				);
+
+				if (!idxExists) {
+					relationship[mKey].indexes.push([idxName, fields]);
+				}
+			}
+		}
+
+		// set &#x27;id&#x27; as the PK for models without a custom PK explicitly defined
+		if (!keys[mKey].primaryKey) {
+			keys[mKey].primaryKey = [ID];
+		}
+
+		// create primary index
+		relationship[mKey].indexes.push([
+			&#x27;byPk&#x27;,
+			keys[mKey].primaryKey as string[],
+			{ unique: true },
+		]);
+	});
+
+	return [relationship, keys];
+};
+
+export const getIndex = (
+	rel: RelationType[],
+	src: string
+): string | undefined =&gt; {
+	let indexName;
+	rel.some((relItem: RelationType) =&gt; {
+		if (relItem.modelName === src) {
+			const targetNames = extractTargetNamesFromSrc(relItem);
+			indexName = targetNames &amp;&amp; indexNameFromKeys(targetNames);
+			return true;
+		}
+	});
+	return indexName;
+};
+
+export const getIndexFromAssociation = (
+	indexes: IndexesType,
+	src: string | string[]
+): string | undefined =&gt; {
+	let indexName: string;
+
+	if (Array.isArray(src)) {
+		indexName = indexNameFromKeys(src);
+	} else {
+		indexName = src;
+	}
+
+	const associationIndex = indexes.find(([idxName]) =&gt; idxName === indexName);
+	return associationIndex &amp;&amp; associationIndex[0];
+};
+
+/**
+ * Backwards-compatability for schema generated prior to custom primary key support:
+the single field `targetName` has been replaced with an array of `targetNames`.
+`targetName` and `targetNames` are exclusive (will never exist on the same schema)
+ * @param src {RelationType | ModelAssociation | undefined}
+ * @returns array of targetNames, or `undefined`
+ */
+export const extractTargetNamesFromSrc = (
+	src: RelationType | ModelAssociation | undefined
+): string[] | undefined =&gt; {
+	const targetName = src?.targetName;
+	const targetNames = src?.targetNames;
+
+	if (Array.isArray(targetNames)) {
+		return targetNames;
+	} else if (typeof targetName === &#x27;string&#x27;) {
+		return [targetName];
+	} else {
+		return undefined;
+	}
+};
+
+// Generates spinal-cased index name from an array of key field names
+// E.g. for keys `[id, title]` =&gt; &#x27;id-title&#x27;
+export const indexNameFromKeys = (keys: string[]): string =&gt; {
+	return keys.reduce((prev: string, cur: string, idx: number) =&gt; {
+		if (idx === 0) {
+			return cur;
+		}
+		return `${prev}${IDENTIFIER_KEY_SEPARATOR}${cur}`;
+	}, &#x27;&#x27;);
+};
+
+export const keysEqual = (keysA, keysB): boolean =&gt; {
+	if (keysA.length !== keysB.length) {
+		return false;
+	}
+
+	return keysA.every((key, idx) =&gt; key === keysB[idx]);
+};
+
+// Returns primary keys for a model
+export const getIndexKeys = (
+	namespace: SchemaNamespace,
+	modelName: string
+): string[] =&gt; {
+	const keyPath = namespace?.keys[modelName]?.primaryKey;
+
+	if (keyPath) {
+		return keyPath;
+	}
+
+	return [ID];
+};
+
+//#endregion
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:84,&quot;character&quot;:34,&quot;text&quot;:&quot;val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:85,&quot;character&quot;:15,&quot;text&quot;:&quot;val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:85,&quot;character&quot;:38,&quot;text&quot;:&quot;val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:85,&quot;character&quot;:59,&quot;text&quot;:&quot;val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:117,&quot;character&quot;:28,&quot;text&quot;:&quot;operand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:118,&quot;character&quot;:9,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:120,&quot;character&quot;:33,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:120,&quot;character&quot;:50,&quot;text&quot;:&quot;operand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:177,&quot;character&quot;:1,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:180,&quot;character&quot;:2,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:191,&quot;character&quot;:1,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:223,&quot;character&quot;:7,&quot;text&quot;:&quot;newInstance&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:241,&quot;character&quot;:19,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:239,&quot;character&quot;:15,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:272,&quot;character&quot;:14,&quot;text&quot;:&quot;relatedRecordInProxyPkValue&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:276,&quot;character&quot;:43,&quot;text&quot;:&quot;relatedRecordInProxyPkValue&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:10,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:296,&quot;character&quot;:15,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:332,&quot;character&quot;:14,&quot;text&quot;:&quot;relatedRecordInProxyPkValue&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:336,&quot;character&quot;:43,&quot;text&quot;:&quot;relatedRecordInProxyPkValue&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:378,&quot;character&quot;:4,&quot;text&quot;:&quot;privateModeCheckResult&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:383,&quot;character&quot;:6,&quot;text&quot;:&quot;db&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:386,&quot;character&quot;:3,&quot;text&quot;:&quot;privateModeCheckResult&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:392,&quot;character&quot;:7,&quot;text&quot;:&quot;db&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:392,&quot;character&quot;:13,&quot;text&quot;:&quot;db&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:392,&quot;character&quot;:16,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:392,&quot;character&quot;:33,&quot;text&quot;:&quot;db&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:392,&quot;character&quot;:36,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:392,&quot;character&quot;:43,&quot;text&quot;:&quot;close&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:393,&quot;character&quot;:10,&quot;text&quot;:&quot;db&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:393,&quot;character&quot;:13,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:393,&quot;character&quot;:20,&quot;text&quot;:&quot;close&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:398,&quot;character&quot;:3,&quot;text&quot;:&quot;privateModeCheckResult&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:403,&quot;character&quot;:6,&quot;text&quot;:&quot;privateModeCheckResult&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:407,&quot;character&quot;:6,&quot;text&quot;:&quot;privateModeCheckResult&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:413,&quot;character&quot;:2,&quot;text&quot;:&quot;db&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:414,&quot;character&quot;:2,&quot;text&quot;:&quot;db&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:414,&quot;character&quot;:5,&quot;text&quot;:&quot;onerror&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:415,&quot;character&quot;:2,&quot;text&quot;:&quot;db&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:415,&quot;character&quot;:5,&quot;text&quot;:&quot;onsuccess&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:458,&quot;character&quot;:33,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:458,&quot;character&quot;:36,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:467,&quot;character&quot;:7,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:467,&quot;character&quot;:18,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:471,&quot;character&quot;:7,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:471,&quot;character&quot;:18,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:486,&quot;character&quot;:1,&quot;text&quot;:&quot;valA&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:487,&quot;character&quot;:1,&quot;text&quot;:&quot;valB&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:490,&quot;character&quot;:5,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:490,&quot;character&quot;:9,&quot;text&quot;:&quot;valA&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:491,&quot;character&quot;:5,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:491,&quot;character&quot;:9,&quot;text&quot;:&quot;valB&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:493,&quot;character&quot;:25,&quot;text&quot;:&quot;_a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:493,&quot;character&quot;:29,&quot;text&quot;:&quot;_b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:495,&quot;character&quot;:4,&quot;text&quot;:&quot;_a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:495,&quot;character&quot;:24,&quot;text&quot;:&quot;_a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:495,&quot;character&quot;:41,&quot;text&quot;:&quot;_b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:495,&quot;character&quot;:61,&quot;text&quot;:&quot;_b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:501,&quot;character&quot;:3,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:501,&quot;character&quot;:28,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:502,&quot;character&quot;:5,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:502,&quot;character&quot;:29,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:508,&quot;character&quot;:7,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:509,&quot;character&quot;:32,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:509,&quot;character&quot;:35,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:513,&quot;character&quot;:9,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:513,&quot;character&quot;:15,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:518,&quot;character&quot;:17,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:518,&quot;character&quot;:38,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:519,&quot;character&quot;:17,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:519,&quot;character&quot;:38,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:524,&quot;character&quot;:5,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:524,&quot;character&quot;:25,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:525,&quot;character&quot;:2,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:526,&quot;character&quot;:2,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:529,&quot;character&quot;:5,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:529,&quot;character&quot;:25,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:530,&quot;character&quot;:2,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:531,&quot;character&quot;:2,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:538,&quot;character&quot;:65,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:548,&quot;character&quot;:8,&quot;text&quot;:&quot;aVal&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:548,&quot;character&quot;:15,&quot;text&quot;:&quot;a&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:549,&quot;character&quot;:8,&quot;text&quot;:&quot;bVal&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:549,&quot;character&quot;:15,&quot;text&quot;:&quot;b&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:551,&quot;character&quot;:19,&quot;text&quot;:&quot;aVal&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:551,&quot;character&quot;:25,&quot;text&quot;:&quot;bVal&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:665,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:784,&quot;character&quot;:30,&quot;text&quot;:&quot;fields&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:785,&quot;character&quot;:2,&quot;text&quot;:&quot;fields&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:785,&quot;character&quot;:9,&quot;text&quot;:&quot;reduce&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:785,&quot;character&quot;:17,&quot;text&quot;:&quot;combined&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:785,&quot;character&quot;:27,&quot;text&quot;:&quot;sortKeyFields&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:788,&quot;character&quot;:7,&quot;text&quot;:&quot;combined&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:788,&quot;character&quot;:16,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:789,&quot;character&quot;:4,&quot;text&quot;:&quot;combined&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:789,&quot;character&quot;:13,&quot;text&quot;:&quot;push&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:790,&quot;character&quot;:11,&quot;text&quot;:&quot;combined&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:794,&quot;character&quot;:9,&quot;text&quot;:&quot;intersectingSetIdx&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:794,&quot;character&quot;:30,&quot;text&quot;:&quot;combined&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:794,&quot;character&quot;:39,&quot;text&quot;:&quot;findIndex&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:794,&quot;character&quot;:49,&quot;text&quot;:&quot;existingSet&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:795,&quot;character&quot;:15,&quot;text&quot;:&quot;existingSet&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:795,&quot;character&quot;:33,&quot;text&quot;:&quot;f&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:798,&quot;character&quot;:7,&quot;text&quot;:&quot;intersectingSetIdx&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:800,&quot;character&quot;:8,&quot;text&quot;:&quot;combined&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:800,&quot;character&quot;:17,&quot;text&quot;:&quot;intersectingSetIdx&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:804,&quot;character&quot;:4,&quot;text&quot;:&quot;combined&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:804,&quot;character&quot;:13,&quot;text&quot;:&quot;intersectingSetIdx&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:807,&quot;character&quot;:4,&quot;text&quot;:&quot;combined&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:807,&quot;character&quot;:13,&quot;text&quot;:&quot;push&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:810,&quot;character&quot;:10,&quot;text&quot;:&quot;combined&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:969,&quot;character&quot;:5,&quot;text&quot;:&quot;indexName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:973,&quot;character&quot;:3,&quot;text&quot;:&quot;indexName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:1029,&quot;character&quot;:26,&quot;text&quot;:&quot;keysA&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:1029,&quot;character&quot;:33,&quot;text&quot;:&quot;keysB&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:1030,&quot;character&quot;:5,&quot;text&quot;:&quot;keysA&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:1030,&quot;character&quot;:11,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:1030,&quot;character&quot;:22,&quot;text&quot;:&quot;keysB&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:1030,&quot;character&quot;:28,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:1034,&quot;character&quot;:8,&quot;text&quot;:&quot;keysA&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:1034,&quot;character&quot;:14,&quot;text&quot;:&quot;every&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:1034,&quot;character&quot;:21,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:1034,&quot;character&quot;:26,&quot;text&quot;:&quot;idx&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:1034,&quot;character&quot;:34,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:1034,&quot;character&quot;:42,&quot;text&quot;:&quot;keysB&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/util.ts&quot;,&quot;line&quot;:1034,&quot;character&quot;:48,&quot;text&quot;:&quot;idx&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:29 GMT</p>
+    </body>
+  </html>
+  

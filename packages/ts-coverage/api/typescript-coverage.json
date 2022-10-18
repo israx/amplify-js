@@ -1,0 +1,226 @@
+{
+  "fileCounts": {},
+  "anys": [
+    {
+      "file": "lib/API.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "lib/API.d.ts",
+      "line": 15,
+      "character": 12,
+      "text": "_restApi",
+      "kind": 1
+    },
+    {
+      "file": "lib/API.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "_graphqlApi",
+      "kind": 1
+    },
+    {
+      "file": "lib/API.d.ts",
+      "line": 24,
+      "character": 16,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib/API.d.ts",
+      "line": 31,
+      "character": 14,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib/API.d.ts",
+      "line": 97,
+      "character": 13,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/API.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/API.d.ts",
+      "line": 15,
+      "character": 12,
+      "text": "_restApi",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/API.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "_graphqlApi",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/API.d.ts",
+      "line": 24,
+      "character": 16,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/API.d.ts",
+      "line": 31,
+      "character": 14,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/API.d.ts",
+      "line": 97,
+      "character": 13,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 42,
+      "character": 9,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 54,
+      "character": 13,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 55,
+      "character": 7,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 55,
+      "character": 18,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 56,
+      "character": 35,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 57,
+      "character": 41,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 58,
+      "character": 35,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 70,
+      "character": 11,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 71,
+      "character": 7,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 71,
+      "character": 41,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 71,
+      "character": 51,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 80,
+      "character": 8,
+      "text": "restAPIConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 80,
+      "character": 53,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 81,
+      "character": 8,
+      "text": "graphQLAPIConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 81,
+      "character": 59,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 83,
+      "character": 14,
+      "text": "restAPIConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 83,
+      "character": 32,
+      "text": "graphQLAPIConfig",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 181,
+      "character": 10,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/API.ts",
+      "line": 182,
+      "character": 32,
+      "text": "error",
+      "kind": 1
+    }
+  ],
+  "percentage": 93.9334637964775,
+  "total": 511,
+  "covered": 480,
+  "uncovered": 31
+}

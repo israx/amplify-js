@@ -1,0 +1,216 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>PubSub.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/PubSub.ts</td><td class="">93.97%</td><td class="">0%</td><td class="">232</td><td class="">218</td><td class="">14</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+// import &#x27;../Common/Polyfills&#x27;;
+import Observable from &#x27;zen-observable-ts&#x27;;
+
+import {
+	Amplify,
+	browserOrNode,
+	ConsoleLogger as Logger,
+	INTERNAL_AWS_APPSYNC_PUBSUB_PROVIDER,
+	INTERNAL_AWS_APPSYNC_REALTIME_PUBSUB_PROVIDER,
+} from &#x27;@aws-amplify/core&#x27;;
+import { PubSubProvider, PubSubOptions, ProviderOptions } from &#x27;./types&#x27;;
+import { AWSAppSyncProvider, AWSAppSyncRealTimeProvider } from &#x27;./Providers&#x27;;
+
+const { isNode } = browserOrNode();
+const logger = new Logger(&#x27;PubSub&#x27;);
+
+export class PubSubClass {
+	private _options: PubSubOptions;
+
+	private _pluggables: PubSubProvider[];
+
+	/**
+	 * Internal instance of AWSAppSyncProvider used by the API category to subscribe to AppSync
+	 */
+	private _awsAppSyncProvider?: AWSAppSyncProvider;
+
+	/**
+	 * Internal instance of AWSAppSyncRealTimeProvider used by the API category to subscribe to AppSync
+	 */
+	private _awsAppSyncRealTimeProvider?: AWSAppSyncRealTimeProvider;
+
+	/**
+	 * Lazy instantiate AWSAppSyncProvider when it is required by the API category
+	 */
+	private get awsAppSyncProvider() {
+		if (!this._awsAppSyncProvider) {
+			this._awsAppSyncProvider = new AWSAppSyncProvider(this._options);
+		}
+		return this._awsAppSyncProvider;
+	}
+
+	/**
+	 * Lazy instantiate AWSAppSyncRealTimeProvider when it is required by the API category
+	 */
+	private get awsAppSyncRealTimeProvider() {
+		if (!this._awsAppSyncRealTimeProvider) {
+			this._awsAppSyncRealTimeProvider = new AWSAppSyncRealTimeProvider(
+				this._options
+			);
+		}
+		return this._awsAppSyncRealTimeProvider;
+	}
+
+	/**
+	 * Initialize PubSub with AWS configurations
+	 *
+	 * @param {PubSubOptions} options - Configuration object for PubSub
+	 */
+	constructor(options?: PubSubOptions) {
+		this._options = options ?? {};
+		logger.debug(&#x27;PubSub Options&#x27;, this._options);
+		this._pluggables = [];
+		this.subscribe = this.subscribe.bind(this);
+	}
+
+	public getModuleName() {
+		return &#x27;PubSub&#x27;;
+	}
+
+	/**
+	 * Configure PubSub part with configurations
+	 *
+	 * @param {PubSubOptions} config - Configuration for PubSub
+	 * @return {Object} - The current configuration
+	 */
+	configure(options: PubSubOptions) {
+		const opt = options ? options.PubSub || options : {};
+		logger.debug(&#x27;configure PubSub&#x27;, { opt });
+
+		this._options = Object.assign({}, this._options, opt);
+
+		this._pluggables.map(pluggable =&gt; pluggable.configure(this._options));
+
+		return this._options;
+	}
+
+	/**
+	 * add plugin into Analytics category
+	 * @param {Object} pluggable - an instance of the plugin
+	 */
+	public async addPluggable(pluggable: PubSubProvider) {
+		if (pluggable &amp;&amp; pluggable.getCategory() === &#x27;PubSub&#x27;) {
+			this._pluggables.push(pluggable);
+
+			const config = pluggable.configure(this._options);
+
+			return config;
+		}
+	}
+
+	/**
+	 * remove plugin from PubSub category
+	 * @param providerName - the name of the plugin
+	 */
+	removePluggable(providerName: string): void {
+		this._pluggables = this._pluggables.filter(
+			pluggable =&gt; pluggable.getProviderName() !== providerName
+		);
+	}
+
+	private getProviderByName(providerName: string | symbol) {
+		if (providerName === INTERNAL_AWS_APPSYNC_PUBSUB_PROVIDER) {
+			return this.awsAppSyncProvider;
+		}
+		if (providerName === INTERNAL_AWS_APPSYNC_REALTIME_PUBSUB_PROVIDER) {
+			return this.awsAppSyncRealTimeProvider;
+		}
+
+		return this._pluggables.find(
+			pluggable =&gt; pluggable.getProviderName() === providerName
+		);
+	}
+
+	private getProviders(options: ProviderOptions = {}) {
+		const { provider: providerName } = options;
+		if (!providerName) {
+			return this._pluggables;
+		}
+
+		const provider = this.getProviderByName(providerName);
+		if (!provider) {
+			throw new Error(`Could not find provider named ${providerName}`);
+		}
+
+		return [provider];
+	}
+
+	async publish(
+		topics: string[] | string,
+		msg: any,
+		options?: ProviderOptions
+	) {
+		return Promise.all(
+			this.getProviders(options).map(provider =&gt;
+				provider.publish(topics, msg, options)
+			)
+		);
+	}
+
+	subscribe(
+		topics: string[] | string,
+		options?: ProviderOptions
+	): Observable&lt;any&gt; {
+		if (isNode &amp;&amp; this._options &amp;&amp; this._options.ssr) {
+			throw new Error(
+				&#x27;Subscriptions are not supported for Server-Side Rendering (SSR)&#x27;
+			);
+		}
+
+		logger.debug(&#x27;subscribe options&#x27;, options);
+
+		const providers = this.getProviders(options);
+
+		return new Observable(observer =&gt; {
+			const observables = providers.map(provider =&gt; ({
+				provider,
+				observable: provider.subscribe(topics, options),
+			}));
+
+			const subscriptions = observables.map(({ provider, observable }) =&gt;
+				observable.subscribe({
+					start: console.error,
+					next: value =&gt; observer.next({ provider, value }),
+					error: error =&gt; observer.error({ provider, error }),
+					// complete: observer.complete, // TODO: when all completed, complete the outer one
+				})
+			);
+
+			return () =&gt;
+				subscriptions.forEach(subscription =&gt; subscription.unsubscribe());
+		});
+	}
+}
+
+export const PubSub = new PubSubClass();
+Amplify.register(PubSub);
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/PubSub.ts&quot;,&quot;line&quot;:88,&quot;character&quot;:8,&quot;text&quot;:&quot;opt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/PubSub.ts&quot;,&quot;line&quot;:88,&quot;character&quot;:32,&quot;text&quot;:&quot;PubSub&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/PubSub.ts&quot;,&quot;line&quot;:89,&quot;character&quot;:37,&quot;text&quot;:&quot;opt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/PubSub.ts&quot;,&quot;line&quot;:91,&quot;character&quot;:51,&quot;text&quot;:&quot;opt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/PubSub.ts&quot;,&quot;line&quot;:136,&quot;character&quot;:20,&quot;text&quot;:&quot;providerName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/PubSub.ts&quot;,&quot;line&quot;:137,&quot;character&quot;:7,&quot;text&quot;:&quot;providerName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/PubSub.ts&quot;,&quot;line&quot;:143,&quot;character&quot;:52,&quot;text&quot;:&quot;providerName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/PubSub.ts&quot;,&quot;line&quot;:151,&quot;character&quot;:2,&quot;text&quot;:&quot;msg&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/PubSub.ts&quot;,&quot;line&quot;:156,&quot;character&quot;:29,&quot;text&quot;:&quot;msg&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/PubSub.ts&quot;,&quot;line&quot;:165,&quot;character&quot;:47,&quot;text&quot;:&quot;ssr&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/PubSub.ts&quot;,&quot;line&quot;:184,&quot;character&quot;:11,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/PubSub.ts&quot;,&quot;line&quot;:184,&quot;character&quot;:46,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/PubSub.ts&quot;,&quot;line&quot;:185,&quot;character&quot;:12,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/PubSub.ts&quot;,&quot;line&quot;:185,&quot;character&quot;:48,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:25 GMT</p>
+    </body>
+  </html>
+  

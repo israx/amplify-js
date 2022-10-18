@@ -1,0 +1,1938 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>datastore.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/datastore/datastore.ts</td><td class="">94.71%</td><td class="">0%</td><td class="">2664</td><td class="">2523</td><td class="">141</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import API from &#x27;@aws-amplify/api&#x27;;
+import { Amplify, ConsoleLogger as Logger, Hub, JS } from &#x27;@aws-amplify/core&#x27;;
+import { Auth } from &#x27;@aws-amplify/auth&#x27;;
+import Cache from &#x27;@aws-amplify/cache&#x27;;
+import {
+	Draft,
+	immerable,
+	produce,
+	setAutoFreeze,
+	enablePatches,
+	Patch,
+} from &#x27;immer&#x27;;
+import { v4 as uuid4 } from &#x27;uuid&#x27;;
+import Observable, { ZenObservable } from &#x27;zen-observable-ts&#x27;;
+import { defaultAuthStrategy, multiAuthStrategy } from &#x27;../authModeStrategies&#x27;;
+import {
+	isPredicatesAll,
+	ModelPredicateCreator,
+	ModelSortPredicateCreator,
+	PredicateAll,
+} from &#x27;../predicates&#x27;;
+import { Adapter } from &#x27;../storage/adapter&#x27;;
+import { ExclusiveStorage as Storage } from &#x27;../storage/storage&#x27;;
+import { ControlMessage, SyncEngine } from &#x27;../sync&#x27;;
+import {
+	AuthModeStrategy,
+	ConflictHandler,
+	DataStoreConfig,
+	GraphQLScalarType,
+	InternalSchema,
+	isGraphQLScalarType,
+	isSchemaModelWithAttributes,
+	ModelFieldType,
+	ModelInit,
+	ModelInstanceMetadata,
+	ModelPredicate,
+	SortPredicate,
+	MutableModel,
+	NamespaceResolver,
+	NonModelTypeConstructor,
+	ProducerPaginationInput,
+	PaginationInput,
+	PersistentModel,
+	PersistentModelConstructor,
+	ProducerModelPredicate,
+	Schema,
+	SchemaModel,
+	SchemaNamespace,
+	SchemaNonModel,
+	SubscriptionMessage,
+	DataStoreSnapshot,
+	SyncConflict,
+	SyncError,
+	TypeConstructorMap,
+	ErrorHandler,
+	SyncExpression,
+	AuthModeStrategyType,
+	isNonModelFieldType,
+	isModelFieldType,
+	ObserveQueryOptions,
+	ManagedIdentifier,
+	PersistentModelMetaData,
+	IdentifierFieldOrIdentifierObject,
+	isIdentifierObject,
+	AmplifyContext,
+} from &#x27;../types&#x27;;
+// tslint:disable:no-duplicate-imports
+import type { __modelMeta__ } from &#x27;../types&#x27;;
+
+import {
+	DATASTORE,
+	errorMessages,
+	establishRelationAndKeys,
+	exhaustiveCheck,
+	isModelConstructor,
+	monotonicUlidFactory,
+	NAMESPACES,
+	STORAGE,
+	SYNC,
+	USER,
+	isNullOrUndefined,
+	registerNonModelClass,
+	sortCompareFunction,
+	DeferredCallbackResolver,
+	extractPrimaryKeyFieldNames,
+	extractPrimaryKeysAndValues,
+	isIdManaged,
+	isIdOptionallyManaged,
+	validatePredicate,
+	mergePatches,
+} from &#x27;../util&#x27;;
+import { getIdentifierValue } from &#x27;../sync/utils&#x27;;
+
+setAutoFreeze(true);
+enablePatches();
+
+const logger = new Logger(&#x27;DataStore&#x27;);
+
+const ulid = monotonicUlidFactory(Date.now());
+const { isNode } = JS.browserOrNode();
+
+type SettingMetaData = {
+	identifier: ManagedIdentifier&lt;Setting, &#x27;id&#x27;&gt;;
+	readOnlyFields: never;
+};
+declare class Setting {
+	public readonly [__modelMeta__]: SettingMetaData;
+	constructor(init: ModelInit&lt;Setting, SettingMetaData&gt;);
+	static copyOf(
+		src: Setting,
+		mutator: (draft: MutableModel&lt;Setting, SettingMetaData&gt;) =&gt; void | Setting
+	): Setting;
+	public readonly id: string;
+	public readonly key: string;
+	public readonly value: string;
+}
+
+const SETTING_SCHEMA_VERSION = &#x27;schemaVersion&#x27;;
+
+let schema: InternalSchema;
+const modelNamespaceMap = new WeakMap&lt;
+	PersistentModelConstructor&lt;any&gt;,
+	string
+&gt;();
+// stores data for crafting the correct update mutation input for a model
+// Patch[] - array of changed fields and metadata
+// PersistentModel - the source model, used for diffing object-type fields
+const modelPatchesMap = new WeakMap&lt;
+	PersistentModel,
+	[Patch[], PersistentModel]
+&gt;();
+
+const getModelDefinition = (
+	modelConstructor: PersistentModelConstructor&lt;any&gt;
+) =&gt; {
+	const namespace = modelNamespaceMap.get(modelConstructor);
+
+	return schema.namespaces[namespace].models[modelConstructor.name];
+};
+
+const isValidModelConstructor = &lt;T extends PersistentModel&gt;(
+	obj: any
+): obj is PersistentModelConstructor&lt;T&gt; =&gt; {
+	return isModelConstructor(obj) &amp;&amp; modelNamespaceMap.has(obj);
+};
+
+const namespaceResolver: NamespaceResolver = modelConstructor =&gt;
+	modelNamespaceMap.get(modelConstructor);
+
+// exporting syncClasses for testing outbox.test.ts
+export let syncClasses: TypeConstructorMap;
+let userClasses: TypeConstructorMap;
+let dataStoreClasses: TypeConstructorMap;
+let storageClasses: TypeConstructorMap;
+
+const initSchema = (userSchema: Schema) =&gt; {
+	if (schema !== undefined) {
+		console.warn(&#x27;The schema has already been initialized&#x27;);
+
+		return userClasses;
+	}
+
+	logger.log(&#x27;validating schema&#x27;, { schema: userSchema });
+
+	const internalUserNamespace: SchemaNamespace = {
+		name: USER,
+		...userSchema,
+	};
+
+	logger.log(&#x27;DataStore&#x27;, &#x27;Init models&#x27;);
+	userClasses = createTypeClasses(internalUserNamespace);
+	logger.log(&#x27;DataStore&#x27;, &#x27;Models initialized&#x27;);
+
+	const dataStoreNamespace = getNamespace();
+	const storageNamespace = Storage.getNamespace();
+	const syncNamespace = SyncEngine.getNamespace();
+
+	dataStoreClasses = createTypeClasses(dataStoreNamespace);
+	storageClasses = createTypeClasses(storageNamespace);
+	syncClasses = createTypeClasses(syncNamespace);
+
+	schema = {
+		namespaces: {
+			[dataStoreNamespace.name]: dataStoreNamespace,
+			[internalUserNamespace.name]: internalUserNamespace,
+			[storageNamespace.name]: storageNamespace,
+			[syncNamespace.name]: syncNamespace,
+		},
+		version: userSchema.version,
+	};
+
+	Object.keys(schema.namespaces).forEach(namespace =&gt; {
+		const [relations, keys] = establishRelationAndKeys(
+			schema.namespaces[namespace]
+		);
+
+		schema.namespaces[namespace].relationships = relations;
+		schema.namespaces[namespace].keys = keys;
+
+		const modelAssociations = new Map&lt;string, string[]&gt;();
+
+		Object.values(schema.namespaces[namespace].models).forEach(model =&gt; {
+			const connectedModels: string[] = [];
+
+			Object.values(model.fields)
+				.filter(
+					field =&gt;
+						field.association &amp;&amp;
+						field.association.connectionType === &#x27;BELONGS_TO&#x27; &amp;&amp;
+						(&lt;ModelFieldType&gt;field.type).model !== model.name
+				)
+				.forEach(field =&gt;
+					connectedModels.push((&lt;ModelFieldType&gt;field.type).model)
+				);
+
+			modelAssociations.set(model.name, connectedModels);
+		});
+
+		const result = new Map&lt;string, string[]&gt;();
+
+		let count = 1000;
+		while (true &amp;&amp; count &gt; 0) {
+			if (modelAssociations.size === 0) {
+				break;
+			}
+			count--;
+			if (count === 0) {
+				throw new Error(
+					&#x27;Models are not topologically sortable. Please verify your schema.&#x27;
+				);
+			}
+
+			for (const modelName of Array.from(modelAssociations.keys())) {
+				const parents = modelAssociations.get(modelName);
+
+				if (parents.every(x =&gt; result.has(x))) {
+					result.set(modelName, parents);
+				}
+			}
+
+			Array.from(result.keys()).forEach(x =&gt; modelAssociations.delete(x));
+		}
+
+		schema.namespaces[namespace].modelTopologicalOrdering = result;
+	});
+
+	return userClasses;
+};
+
+/* Checks if the schema has been initialized by initSchema().
+ *
+ * Call this function before accessing schema.
+ * Currently this only needs to be called in start() and clear() because all other functions will call start first.
+ */
+const checkSchemaInitialized = () =&gt; {
+	if (schema === undefined) {
+		const message =
+			&#x27;Schema is not initialized. DataStore will not function as expected. This could happen if you have multiple versions of DataStore installed. Please see https://docs.amplify.aws/lib/troubleshooting/upgrading/q/platform/js/#check-for-duplicate-versions&#x27;;
+		logger.error(message);
+		throw new Error(message);
+	}
+};
+
+const createTypeClasses: (
+	namespace: SchemaNamespace
+) =&gt; TypeConstructorMap = namespace =&gt; {
+	const classes: TypeConstructorMap = {};
+
+	Object.entries(namespace.models).forEach(([modelName, modelDefinition]) =&gt; {
+		const clazz = createModelClass(modelDefinition);
+		classes[modelName] = clazz;
+
+		modelNamespaceMap.set(clazz, namespace.name);
+	});
+
+	Object.entries(namespace.nonModels || {}).forEach(
+		([typeName, typeDefinition]) =&gt; {
+			const clazz = createNonModelClass(typeDefinition);
+			classes[typeName] = clazz;
+		}
+	);
+
+	return classes;
+};
+
+export declare type ModelInstanceCreator = typeof modelInstanceCreator;
+
+const instancesMetadata = new WeakSet&lt;ModelInit&lt;unknown, unknown&gt;&gt;();
+
+function modelInstanceCreator&lt;T extends PersistentModel&gt;(
+	modelConstructor: PersistentModelConstructor&lt;T&gt;,
+	init: Partial&lt;T&gt;
+): T {
+	instancesMetadata.add(init);
+
+	return new modelConstructor(&lt;ModelInit&lt;T, PersistentModelMetaData&lt;T&gt;&gt;&gt;init);
+}
+
+const validateModelFields =
+	(modelDefinition: SchemaModel | SchemaNonModel) =&gt; (k: string, v: any) =&gt; {
+		const fieldDefinition = modelDefinition.fields[k];
+
+		if (fieldDefinition !== undefined) {
+			const { type, isRequired, isArrayNullable, name, isArray } =
+				fieldDefinition;
+
+			if (
+				((!isArray &amp;&amp; isRequired) || (isArray &amp;&amp; !isArrayNullable)) &amp;&amp;
+				(v === null || v === undefined)
+			) {
+				throw new Error(`Field ${name} is required`);
+			}
+
+			if (
+				isSchemaModelWithAttributes(modelDefinition) &amp;&amp;
+				!isIdManaged(modelDefinition)
+			) {
+				const keys = extractPrimaryKeyFieldNames(modelDefinition);
+				if (keys.includes(k) &amp;&amp; v === &#x27;&#x27;) {
+					logger.error(errorMessages.idEmptyString, { k, value: v });
+					throw new Error(errorMessages.idEmptyString);
+				}
+			}
+
+			if (isGraphQLScalarType(type)) {
+				const jsType = GraphQLScalarType.getJSType(type);
+				const validateScalar = GraphQLScalarType.getValidationFunction(type);
+
+				if (type === &#x27;AWSJSON&#x27;) {
+					if (typeof v === jsType) {
+						return;
+					}
+					if (typeof v === &#x27;string&#x27;) {
+						try {
+							JSON.parse(v);
+							return;
+						} catch (error) {
+							throw new Error(`Field ${name} is an invalid JSON object. ${v}`);
+						}
+					}
+				}
+
+				if (isArray) {
+					let errorTypeText: string = jsType;
+					if (!isRequired) {
+						errorTypeText = `${jsType} | null | undefined`;
+					}
+
+					if (!Array.isArray(v) &amp;&amp; !isArrayNullable) {
+						throw new Error(
+							`Field ${name} should be of type [${errorTypeText}], ${typeof v} received. ${v}`
+						);
+					}
+
+					if (
+						!isNullOrUndefined(v) &amp;&amp;
+						(&lt;[]&gt;v).some(e =&gt;
+							isNullOrUndefined(e) ? isRequired : typeof e !== jsType
+						)
+					) {
+						const elemTypes = (&lt;[]&gt;v)
+							.map(e =&gt; (e === null ? &#x27;null&#x27; : typeof e))
+							.join(&#x27;,&#x27;);
+
+						throw new Error(
+							`All elements in the ${name} array should be of type ${errorTypeText}, [${elemTypes}] received. ${v}`
+						);
+					}
+
+					if (validateScalar &amp;&amp; !isNullOrUndefined(v)) {
+						const validationStatus = (&lt;[]&gt;v).map(e =&gt; {
+							if (!isNullOrUndefined(e)) {
+								return validateScalar(e);
+							} else if (isNullOrUndefined(e) &amp;&amp; !isRequired) {
+								return true;
+							} else {
+								return false;
+							}
+						});
+
+						if (!validationStatus.every(s =&gt; s)) {
+							throw new Error(
+								`All elements in the ${name} array should be of type ${type}, validation failed for one or more elements. ${v}`
+							);
+						}
+					}
+				} else if (!isRequired &amp;&amp; v === undefined) {
+					return;
+				} else if (typeof v !== jsType &amp;&amp; v !== null) {
+					throw new Error(
+						`Field ${name} should be of type ${jsType}, ${typeof v} received. ${v}`
+					);
+				} else if (
+					!isNullOrUndefined(v) &amp;&amp;
+					validateScalar &amp;&amp;
+					!validateScalar(v)
+				) {
+					throw new Error(
+						`Field ${name} should be of type ${type}, validation failed. ${v}`
+					);
+				}
+			} else if (isNonModelFieldType(type)) {
+				// do not check non model fields if undefined or null
+				if (!isNullOrUndefined(v)) {
+					const subNonModelDefinition =
+						schema.namespaces.user.nonModels[type.nonModel];
+					const modelValidator = validateModelFields(subNonModelDefinition);
+
+					if (isArray) {
+						let errorTypeText: string = type.nonModel;
+						if (!isRequired) {
+							errorTypeText = `${type.nonModel} | null | undefined`;
+						}
+						if (!Array.isArray(v)) {
+							throw new Error(
+								`Field ${name} should be of type [${errorTypeText}], ${typeof v} received. ${v}`
+							);
+						}
+
+						v.forEach(item =&gt; {
+							if (
+								(isNullOrUndefined(item) &amp;&amp; isRequired) ||
+								(typeof item !== &#x27;object&#x27; &amp;&amp; typeof item !== &#x27;undefined&#x27;)
+							) {
+								throw new Error(
+									`All elements in the ${name} array should be of type ${
+										type.nonModel
+									}, [${typeof item}] received. ${item}`
+								);
+							}
+
+							if (!isNullOrUndefined(item)) {
+								Object.keys(subNonModelDefinition.fields).forEach(subKey =&gt; {
+									modelValidator(subKey, item[subKey]);
+								});
+							}
+						});
+					} else {
+						if (typeof v !== &#x27;object&#x27;) {
+							throw new Error(
+								`Field ${name} should be of type ${
+									type.nonModel
+								}, ${typeof v} recieved. ${v}`
+							);
+						}
+
+						Object.keys(subNonModelDefinition.fields).forEach(subKey =&gt; {
+							modelValidator(subKey, v[subKey]);
+						});
+					}
+				}
+			}
+		}
+	};
+
+const castInstanceType = (
+	modelDefinition: SchemaModel | SchemaNonModel,
+	k: string,
+	v: any
+) =&gt; {
+	const { isArray, type } = modelDefinition.fields[k] || {};
+	// attempt to parse stringified JSON
+	if (
+		typeof v === &#x27;string&#x27; &amp;&amp;
+		(isArray ||
+			type === &#x27;AWSJSON&#x27; ||
+			isNonModelFieldType(type) ||
+			isModelFieldType(type))
+	) {
+		try {
+			return JSON.parse(v);
+		} catch {
+			// if JSON is invalid, don&#x27;t throw and let modelValidator handle it
+		}
+	}
+
+	// cast from numeric representation of boolean to JS boolean
+	if (typeof v === &#x27;number&#x27; &amp;&amp; type === &#x27;Boolean&#x27;) {
+		return Boolean(v);
+	}
+
+	return v;
+};
+
+const initializeInstance = &lt;T extends PersistentModel&gt;(
+	init: ModelInit&lt;T&gt;,
+	modelDefinition: SchemaModel | SchemaNonModel,
+	draft: Draft&lt;T &amp; ModelInstanceMetadata&gt;
+) =&gt; {
+	const modelValidator = validateModelFields(modelDefinition);
+	Object.entries(init).forEach(([k, v]) =&gt; {
+		const parsedValue = castInstanceType(modelDefinition, k, v);
+
+		modelValidator(k, parsedValue);
+		(&lt;any&gt;draft)[k] = parsedValue;
+	});
+};
+
+const createModelClass = &lt;T extends PersistentModel&gt;(
+	modelDefinition: SchemaModel
+) =&gt; {
+	const clazz = &lt;PersistentModelConstructor&lt;T&gt;&gt;(&lt;unknown&gt;class Model {
+		constructor(init: ModelInit&lt;T&gt;) {
+			const instance = produce(
+				this,
+				(draft: Draft&lt;T &amp; ModelInstanceMetadata&gt;) =&gt; {
+					initializeInstance(init, modelDefinition, draft);
+
+					// model is initialized inside a DataStore component (e.g. by Sync Engine, Storage Engine, etc.)
+					const isInternallyInitialized = instancesMetadata.has(init);
+
+					const modelInstanceMetadata: ModelInstanceMetadata =
+						isInternallyInitialized
+							? &lt;ModelInstanceMetadata&gt;(&lt;unknown&gt;init)
+							: &lt;ModelInstanceMetadata&gt;{};
+
+					type ModelWithIDIdentifier = { id: string };
+
+					const { id: _id } =
+						modelInstanceMetadata as unknown as ModelWithIDIdentifier;
+
+					if (isIdManaged(modelDefinition)) {
+						const isInternalModel = _id !== null &amp;&amp; _id !== undefined;
+
+						const id = isInternalModel
+							? _id
+							: modelDefinition.syncable
+							? uuid4()
+							: ulid();
+
+						(&lt;ModelWithIDIdentifier&gt;(&lt;unknown&gt;draft)).id = id;
+					} else if (isIdOptionallyManaged(modelDefinition)) {
+						// only auto-populate if the id was not provided
+						(&lt;ModelWithIDIdentifier&gt;(&lt;unknown&gt;draft)).id = draft.id || uuid4();
+					}
+
+					if (!isInternallyInitialized) {
+						checkReadOnlyPropertyOnCreate(draft, modelDefinition);
+					}
+
+					const { _version, _lastChangedAt, _deleted } = modelInstanceMetadata;
+
+					if (modelDefinition.syncable) {
+						draft._version = _version;
+						draft._lastChangedAt = _lastChangedAt;
+						draft._deleted = _deleted;
+					}
+				}
+			);
+
+			return instance;
+		}
+
+		static copyOf(source: T, fn: (draft: MutableModel&lt;T&gt;) =&gt; T) {
+			const modelConstructor = Object.getPrototypeOf(source || {}).constructor;
+			if (!isValidModelConstructor(modelConstructor)) {
+				const msg = &#x27;The source object is not a valid model&#x27;;
+				logger.error(msg, { source });
+				throw new Error(msg);
+			}
+
+			let patches;
+			const model = produce(
+				source,
+				draft =&gt; {
+					fn(&lt;MutableModel&lt;T&gt;&gt;draft);
+
+					const keyNames = extractPrimaryKeyFieldNames(modelDefinition);
+					// Keys are immutable
+					keyNames.forEach(key =&gt; ((draft as Object)[key] = source[key]));
+
+					const modelValidator = validateModelFields(modelDefinition);
+					Object.entries(draft).forEach(([k, v]) =&gt; {
+						const parsedValue = castInstanceType(modelDefinition, k, v);
+
+						modelValidator(k, parsedValue);
+					});
+				},
+				p =&gt; (patches = p)
+			);
+
+			const hasExistingPatches = modelPatchesMap.has(source);
+
+			if (patches.length || hasExistingPatches) {
+				if (hasExistingPatches) {
+					const [existingPatches, existingSource] = modelPatchesMap.get(source);
+					const mergedPatches = mergePatches(
+						existingSource,
+						existingPatches,
+						patches
+					);
+					modelPatchesMap.set(model, [mergedPatches, existingSource]);
+					checkReadOnlyPropertyOnUpdate(mergedPatches, modelDefinition);
+				} else {
+					modelPatchesMap.set(model, [patches, source]);
+					checkReadOnlyPropertyOnUpdate(patches, modelDefinition);
+				}
+			}
+
+			return model;
+		}
+
+		// &quot;private&quot; method (that&#x27;s hidden via `Setting`) for `withSSRContext` to use
+		// to gain access to `modelInstanceCreator` and `clazz` for persisting IDs from server to client.
+		static fromJSON(json: T | T[]) {
+			if (Array.isArray(json)) {
+				return json.map(init =&gt; this.fromJSON(init));
+			}
+
+			const instance = modelInstanceCreator(clazz, json);
+
+			const modelValidator = validateModelFields(modelDefinition);
+
+			Object.entries(instance).forEach(([k, v]) =&gt; {
+				modelValidator(k, v);
+			});
+
+			return instance;
+		}
+	});
+
+	clazz[immerable] = true;
+
+	Object.defineProperty(clazz, &#x27;name&#x27;, { value: modelDefinition.name });
+
+	return clazz;
+};
+
+const checkReadOnlyPropertyOnCreate = &lt;T extends PersistentModel&gt;(
+	draft: T,
+	modelDefinition: SchemaModel
+) =&gt; {
+	const modelKeys = Object.keys(draft);
+	const { fields } = modelDefinition;
+
+	modelKeys.forEach(key =&gt; {
+		if (fields[key] &amp;&amp; fields[key].isReadOnly) {
+			throw new Error(`${key} is read-only.`);
+		}
+	});
+};
+
+const checkReadOnlyPropertyOnUpdate = (
+	patches: Patch[],
+	modelDefinition: SchemaModel
+) =&gt; {
+	const patchArray = patches.map(p =&gt; [p.path[0], p.value]);
+	const { fields } = modelDefinition;
+
+	patchArray.forEach(([key, val]) =&gt; {
+		if (!val || !fields[key]) return;
+
+		if (fields[key].isReadOnly) {
+			throw new Error(`${key} is read-only.`);
+		}
+	});
+};
+
+const createNonModelClass = &lt;T extends PersistentModel&gt;(
+	typeDefinition: SchemaNonModel
+) =&gt; {
+	const clazz = &lt;NonModelTypeConstructor&lt;T&gt;&gt;(&lt;unknown&gt;class Model {
+		constructor(init: ModelInit&lt;T&gt;) {
+			const instance = produce(
+				this,
+				(draft: Draft&lt;T &amp; ModelInstanceMetadata&gt;) =&gt; {
+					initializeInstance(init, typeDefinition, draft);
+				}
+			);
+
+			return instance;
+		}
+	});
+
+	clazz[immerable] = true;
+
+	Object.defineProperty(clazz, &#x27;name&#x27;, { value: typeDefinition.name });
+
+	registerNonModelClass(clazz);
+
+	return clazz;
+};
+
+function isQueryOne(obj: any): obj is string {
+	return typeof obj === &#x27;string&#x27;;
+}
+
+function defaultConflictHandler(conflictData: SyncConflict): PersistentModel {
+	const { localModel, modelConstructor, remoteModel } = conflictData;
+	const { _version } = remoteModel;
+	return modelInstanceCreator(modelConstructor, { ...localModel, _version });
+}
+
+function defaultErrorHandler(error: SyncError&lt;PersistentModel&gt;): void {
+	logger.warn(error);
+}
+
+function getModelConstructorByModelName(
+	namespaceName: NAMESPACES,
+	modelName: string
+): PersistentModelConstructor&lt;any&gt; {
+	let result: PersistentModelConstructor&lt;any&gt; | NonModelTypeConstructor&lt;any&gt;;
+
+	switch (namespaceName) {
+		case DATASTORE:
+			result = dataStoreClasses[modelName];
+			break;
+		case USER:
+			result = userClasses[modelName];
+			break;
+		case SYNC:
+			result = syncClasses[modelName];
+			break;
+		case STORAGE:
+			result = storageClasses[modelName];
+			break;
+		default:
+			exhaustiveCheck(namespaceName);
+			break;
+	}
+
+	if (isValidModelConstructor(result)) {
+		return result;
+	} else {
+		const msg = `Model name is not valid for namespace. modelName: ${modelName}, namespace: ${namespaceName}`;
+		logger.error(msg);
+
+		throw new Error(msg);
+	}
+}
+
+async function checkSchemaVersion(
+	storage: Storage,
+	version: string
+): Promise&lt;void&gt; {
+	const Setting =
+		dataStoreClasses.Setting as PersistentModelConstructor&lt;Setting&gt;;
+
+	const modelDefinition = schema.namespaces[DATASTORE].models.Setting;
+
+	await storage.runExclusive(async s =&gt; {
+		const [schemaVersionSetting] = await s.query(
+			Setting,
+			ModelPredicateCreator.createFromExisting(modelDefinition, c =&gt;
+				c.key(&#x27;eq&#x27;, SETTING_SCHEMA_VERSION)
+			),
+			{ page: 0, limit: 1 }
+		);
+
+		if (
+			schemaVersionSetting !== undefined &amp;&amp;
+			schemaVersionSetting.value !== undefined
+		) {
+			const storedValue = JSON.parse(schemaVersionSetting.value);
+
+			if (storedValue !== version) {
+				await s.clear(false);
+			}
+		} else {
+			await s.save(
+				modelInstanceCreator(Setting, {
+					key: SETTING_SCHEMA_VERSION,
+					value: JSON.stringify(version),
+				})
+			);
+		}
+	});
+}
+
+let syncSubscription: ZenObservable.Subscription;
+
+function getNamespace(): SchemaNamespace {
+	const namespace: SchemaNamespace = {
+		name: DATASTORE,
+		relationships: {},
+		enums: {},
+		nonModels: {},
+		models: {
+			Setting: {
+				name: &#x27;Setting&#x27;,
+				pluralName: &#x27;Settings&#x27;,
+				syncable: false,
+				fields: {
+					id: {
+						name: &#x27;id&#x27;,
+						type: &#x27;ID&#x27;,
+						isRequired: true,
+						isArray: false,
+					},
+					key: {
+						name: &#x27;key&#x27;,
+						type: &#x27;String&#x27;,
+						isRequired: true,
+						isArray: false,
+					},
+					value: {
+						name: &#x27;value&#x27;,
+						type: &#x27;String&#x27;,
+						isRequired: true,
+						isArray: false,
+					},
+				},
+			},
+		},
+	};
+
+	return namespace;
+}
+
+class DataStore {
+	// reference to configured category instances. Used for preserving SSR context
+	private Auth = Auth;
+	private API = API;
+	private Cache = Cache;
+
+	private amplifyConfig: Record&lt;string, any&gt; = {};
+	private authModeStrategy: AuthModeStrategy;
+	private conflictHandler: ConflictHandler;
+	private errorHandler: (error: SyncError&lt;PersistentModel&gt;) =&gt; void;
+	private fullSyncInterval: number;
+	private initialized?: Promise&lt;void&gt;;
+	private initReject: Function;
+	private initResolve: Function;
+	private maxRecordsToSync: number;
+	private storage?: Storage;
+	private sync?: SyncEngine;
+	private syncPageSize: number;
+	private syncExpressions: SyncExpression[];
+	private syncPredicates: WeakMap&lt;SchemaModel, ModelPredicate&lt;any&gt;&gt; =
+		new WeakMap&lt;SchemaModel, ModelPredicate&lt;any&gt;&gt;();
+	private sessionId: string;
+	private storageAdapter: Adapter;
+	// object that gets passed to descendent classes. Allows us to pass these down by reference
+	private amplifyContext: AmplifyContext = {
+		Auth: this.Auth,
+		API: this.API,
+		Cache: this.Cache,
+	};
+
+	getModuleName() {
+		return &#x27;DataStore&#x27;;
+	}
+
+	start = async (): Promise&lt;void&gt; =&gt; {
+		if (this.initialized === undefined) {
+			logger.debug(&#x27;Starting DataStore&#x27;);
+			this.initialized = new Promise((res, rej) =&gt; {
+				this.initResolve = res;
+				this.initReject = rej;
+			});
+		} else {
+			await this.initialized;
+
+			return;
+		}
+
+		this.storage = new Storage(
+			schema,
+			namespaceResolver,
+			getModelConstructorByModelName,
+			modelInstanceCreator,
+			this.storageAdapter,
+			this.sessionId
+		);
+
+		await this.storage.init();
+
+		checkSchemaInitialized();
+		await checkSchemaVersion(this.storage, schema.version);
+
+		const { aws_appsync_graphqlEndpoint } = this.amplifyConfig;
+
+		if (aws_appsync_graphqlEndpoint) {
+			logger.debug(&#x27;GraphQL endpoint available&#x27;, aws_appsync_graphqlEndpoint);
+
+			this.syncPredicates = await this.processSyncExpressions();
+
+			this.sync = new SyncEngine(
+				schema,
+				namespaceResolver,
+				syncClasses,
+				userClasses,
+				this.storage,
+				modelInstanceCreator,
+				this.conflictHandler,
+				this.errorHandler,
+				this.syncPredicates,
+				this.amplifyConfig,
+				this.authModeStrategy,
+				this.amplifyContext
+			);
+
+			// tslint:disable-next-line:max-line-length
+			const fullSyncIntervalInMilliseconds = this.fullSyncInterval * 1000 * 60; // fullSyncInterval from param is in minutes
+			syncSubscription = this.sync
+				.start({ fullSyncInterval: fullSyncIntervalInMilliseconds })
+				.subscribe({
+					next: ({ type, data }) =&gt; {
+						// In Node, we need to wait for queries to be synced to prevent returning empty arrays.
+						// In the Browser, we can begin returning data once subscriptions are in place.
+						const readyType = isNode
+							? ControlMessage.SYNC_ENGINE_SYNC_QUERIES_READY
+							: ControlMessage.SYNC_ENGINE_STORAGE_SUBSCRIBED;
+
+						if (type === readyType) {
+							this.initResolve();
+						}
+
+						Hub.dispatch(&#x27;datastore&#x27;, {
+							event: type,
+							data,
+						});
+					},
+					error: err =&gt; {
+						logger.warn(&#x27;Sync error&#x27;, err);
+						this.initReject();
+					},
+				});
+		} else {
+			logger.warn(
+				&quot;Data won&#x27;t be synchronized. No GraphQL endpoint configured. Did you forget `Amplify.configure(awsconfig)`?&quot;,
+				{
+					config: this.amplifyConfig,
+				}
+			);
+
+			this.initResolve();
+		}
+
+		await this.initialized;
+	};
+
+	query: {
+		&lt;T extends PersistentModel&gt;(
+			modelConstructor: PersistentModelConstructor&lt;T&gt;,
+			identifier: IdentifierFieldOrIdentifierObject&lt;
+				T,
+				PersistentModelMetaData&lt;T&gt;
+			&gt;
+		): Promise&lt;T | undefined&gt;;
+		&lt;T extends PersistentModel&gt;(
+			modelConstructor: PersistentModelConstructor&lt;T&gt;,
+			criteria?: ProducerModelPredicate&lt;T&gt; | typeof PredicateAll,
+			paginationProducer?: ProducerPaginationInput&lt;T&gt;
+		): Promise&lt;T[]&gt;;
+	} = async &lt;T extends PersistentModel&gt;(
+		modelConstructor: PersistentModelConstructor&lt;T&gt;,
+		identifierOrCriteria?:
+			| IdentifierFieldOrIdentifierObject&lt;T, PersistentModelMetaData&lt;T&gt;&gt;
+			| ProducerModelPredicate&lt;T&gt;
+			| typeof PredicateAll,
+		paginationProducer?: ProducerPaginationInput&lt;T&gt;
+	): Promise&lt;T | T[] | undefined&gt; =&gt; {
+		await this.start();
+
+		//#region Input validation
+
+		if (!isValidModelConstructor(modelConstructor)) {
+			const msg = &#x27;Constructor is not for a valid model&#x27;;
+			logger.error(msg, { modelConstructor });
+
+			throw new Error(msg);
+		}
+
+		if (typeof identifierOrCriteria === &#x27;string&#x27;) {
+			if (paginationProducer !== undefined) {
+				logger.warn(&#x27;Pagination is ignored when querying by id&#x27;);
+			}
+		}
+
+		const modelDefinition = getModelDefinition(modelConstructor);
+		const keyFields = extractPrimaryKeyFieldNames(modelDefinition);
+
+		let predicate: ModelPredicate&lt;T&gt;;
+
+		if (isQueryOne(identifierOrCriteria)) {
+			if (keyFields.length &gt; 1) {
+				const msg = errorMessages.queryByPkWithCompositeKeyPresent;
+				logger.error(msg, { keyFields });
+
+				throw new Error(msg);
+			}
+
+			predicate = ModelPredicateCreator.createForSingleField&lt;T&gt;(
+				modelDefinition,
+				keyFields[0],
+				identifierOrCriteria
+			);
+		} else {
+			// Object is being queried using object literal syntax
+			if (isIdentifierObject(&lt;T&gt;identifierOrCriteria, modelDefinition)) {
+				predicate = ModelPredicateCreator.createForPk&lt;T&gt;(
+					modelDefinition,
+					&lt;T&gt;identifierOrCriteria
+				);
+			} else if (isPredicatesAll(identifierOrCriteria)) {
+				// Predicates.ALL means &quot;all records&quot;, so no predicate (undefined)
+				predicate = undefined;
+			} else {
+				predicate = ModelPredicateCreator.createFromExisting(
+					modelDefinition,
+					&lt;any&gt;identifierOrCriteria
+				);
+			}
+		}
+
+		const pagination = this.processPagination(
+			modelDefinition,
+			paginationProducer
+		);
+
+		//#endregion
+
+		logger.debug(&#x27;params ready&#x27;, {
+			modelConstructor,
+			predicate: ModelPredicateCreator.getPredicates(predicate, false),
+			pagination: {
+				...pagination,
+				sort: ModelSortPredicateCreator.getPredicates(
+					pagination &amp;&amp; pagination.sort,
+					false
+				),
+			},
+		});
+
+		const result = await this.storage.query(
+			modelConstructor,
+			predicate,
+			pagination
+		);
+
+		const returnOne =
+			isQueryOne(identifierOrCriteria) ||
+			isIdentifierObject(identifierOrCriteria, modelDefinition);
+
+		return returnOne ? result[0] : result;
+	};
+
+	save = async &lt;T extends PersistentModel&gt;(
+		model: T,
+		condition?: ProducerModelPredicate&lt;T&gt;
+	): Promise&lt;T&gt; =&gt; {
+		await this.start();
+
+		// Immer patches for constructing a correct update mutation input
+		// Allows us to only include changed fields for updates
+		const patchesTuple = modelPatchesMap.get(model);
+
+		const modelConstructor: PersistentModelConstructor&lt;T&gt; | undefined = model
+			? &lt;PersistentModelConstructor&lt;T&gt;&gt;model.constructor
+			: undefined;
+
+		if (!isValidModelConstructor(modelConstructor)) {
+			const msg = &#x27;Object is not an instance of a valid model&#x27;;
+			logger.error(msg, { model });
+
+			throw new Error(msg);
+		}
+
+		const modelDefinition = getModelDefinition(modelConstructor);
+
+		const producedCondition = ModelPredicateCreator.createFromExisting(
+			modelDefinition,
+			condition!
+		);
+
+		const [savedModel] = await this.storage.runExclusive(async s =&gt; {
+			await s.save(model, producedCondition, undefined, patchesTuple);
+
+			return s.query&lt;T&gt;(
+				modelConstructor,
+				ModelPredicateCreator.createForPk(modelDefinition, model)
+			);
+		});
+
+		return savedModel;
+	};
+
+	setConflictHandler = (config: DataStoreConfig): ConflictHandler =&gt; {
+		const { DataStore: configDataStore } = config;
+
+		const conflictHandlerIsDefault: () =&gt; boolean = () =&gt;
+			this.conflictHandler === defaultConflictHandler;
+
+		if (configDataStore &amp;&amp; configDataStore.conflictHandler) {
+			return configDataStore.conflictHandler;
+		}
+		if (conflictHandlerIsDefault() &amp;&amp; config.conflictHandler) {
+			return config.conflictHandler;
+		}
+
+		return this.conflictHandler || defaultConflictHandler;
+	};
+
+	setErrorHandler = (config: DataStoreConfig): ErrorHandler =&gt; {
+		const { DataStore: configDataStore } = config;
+
+		const errorHandlerIsDefault: () =&gt; boolean = () =&gt;
+			this.errorHandler === defaultErrorHandler;
+
+		if (configDataStore &amp;&amp; configDataStore.errorHandler) {
+			return configDataStore.errorHandler;
+		}
+		if (errorHandlerIsDefault() &amp;&amp; config.errorHandler) {
+			return config.errorHandler;
+		}
+
+		return this.errorHandler || defaultErrorHandler;
+	};
+
+	delete: {
+		&lt;T extends PersistentModel&gt;(
+			modelConstructor: PersistentModelConstructor&lt;T&gt;,
+			identifier: IdentifierFieldOrIdentifierObject&lt;
+				T,
+				PersistentModelMetaData&lt;T&gt;
+			&gt;
+		): Promise&lt;T[]&gt;;
+		&lt;T extends PersistentModel&gt;(
+			modelConstructor: PersistentModelConstructor&lt;T&gt;,
+			condition: ProducerModelPredicate&lt;T&gt; | typeof PredicateAll
+		): Promise&lt;T[]&gt;;
+		&lt;T extends PersistentModel&gt;(
+			model: T,
+			condition?: ProducerModelPredicate&lt;T&gt;
+		): Promise&lt;T&gt;;
+	} = async &lt;T extends PersistentModel&gt;(
+		modelOrConstructor: T | PersistentModelConstructor&lt;T&gt;,
+		identifierOrCriteria?:
+			| IdentifierFieldOrIdentifierObject&lt;T, PersistentModelMetaData&lt;T&gt;&gt;
+			| ProducerModelPredicate&lt;T&gt;
+			| typeof PredicateAll
+	): Promise&lt;T | T[]&gt; =&gt; {
+		await this.start();
+
+		let condition: ModelPredicate&lt;T&gt;;
+
+		if (!modelOrConstructor) {
+			const msg = &#x27;Model or Model Constructor required&#x27;;
+			logger.error(msg, { modelOrConstructor });
+
+			throw new Error(msg);
+		}
+
+		if (isValidModelConstructor&lt;T&gt;(modelOrConstructor)) {
+			const modelConstructor = modelOrConstructor;
+
+			if (!identifierOrCriteria) {
+				const msg =
+					&#x27;Id to delete or criteria required. Do you want to delete all? Pass Predicates.ALL&#x27;;
+				logger.error(msg, { identifierOrCriteria });
+
+				throw new Error(msg);
+			}
+
+			const modelDefinition = getModelDefinition(modelConstructor);
+
+			if (typeof identifierOrCriteria === &#x27;string&#x27;) {
+				const keyFields = extractPrimaryKeyFieldNames(modelDefinition);
+
+				if (keyFields.length &gt; 1) {
+					const msg = errorMessages.deleteByPkWithCompositeKeyPresent;
+					logger.error(msg, { keyFields });
+
+					throw new Error(msg);
+				}
+
+				condition = ModelPredicateCreator.createForSingleField&lt;T&gt;(
+					getModelDefinition(modelConstructor),
+					keyFields[0],
+					identifierOrCriteria
+				);
+			} else {
+				if (isIdentifierObject(identifierOrCriteria, modelDefinition)) {
+					condition = ModelPredicateCreator.createForPk&lt;T&gt;(
+						modelDefinition,
+						&lt;T&gt;identifierOrCriteria
+					);
+				} else {
+					condition = ModelPredicateCreator.createFromExisting(
+						modelDefinition,
+						/**
+						 * idOrCriteria is always a ProducerModelPredicate&lt;T&gt;, never a symbol.
+						 * The symbol is used only for typing purposes. e.g. see Predicates.ALL
+						 */
+						identifierOrCriteria as ProducerModelPredicate&lt;T&gt;
+					);
+				}
+
+				if (!condition || !ModelPredicateCreator.isValidPredicate(condition)) {
+					const msg =
+						&#x27;Criteria required. Do you want to delete all? Pass Predicates.ALL&#x27;;
+					logger.error(msg, { condition });
+
+					throw new Error(msg);
+				}
+			}
+
+			const [deleted] = await this.storage.delete(modelConstructor, condition);
+
+			return deleted;
+		} else {
+			const model = modelOrConstructor;
+			const modelConstructor = Object.getPrototypeOf(model || {})
+				.constructor as PersistentModelConstructor&lt;T&gt;;
+
+			if (!isValidModelConstructor(modelConstructor)) {
+				const msg = &#x27;Object is not an instance of a valid model&#x27;;
+				logger.error(msg, { model });
+
+				throw new Error(msg);
+			}
+
+			const modelDefinition = getModelDefinition(modelConstructor);
+
+			const pkPredicate = ModelPredicateCreator.createForPk&lt;T&gt;(
+				modelDefinition,
+				model
+			);
+
+			if (identifierOrCriteria) {
+				if (typeof identifierOrCriteria !== &#x27;function&#x27;) {
+					const msg = &#x27;Invalid criteria&#x27;;
+					logger.error(msg, { identifierOrCriteria });
+
+					throw new Error(msg);
+				}
+
+				condition = (&lt;ProducerModelPredicate&lt;T&gt;&gt;identifierOrCriteria)(
+					pkPredicate
+				);
+			} else {
+				condition = pkPredicate;
+			}
+
+			const [[deleted]] = await this.storage.delete(model, condition);
+
+			return deleted;
+		}
+	};
+
+	observe: {
+		(): Observable&lt;SubscriptionMessage&lt;PersistentModel&gt;&gt;;
+
+		&lt;T extends PersistentModel&gt;(
+			modelConstructor: PersistentModelConstructor&lt;T&gt;,
+			identifier: string
+		): Observable&lt;SubscriptionMessage&lt;T&gt;&gt;;
+
+		&lt;T extends PersistentModel&gt;(
+			modelConstructor: PersistentModelConstructor&lt;T&gt;,
+			criteria?: ProducerModelPredicate&lt;T&gt; | typeof PredicateAll
+		): Observable&lt;SubscriptionMessage&lt;T&gt;&gt;;
+
+		&lt;T extends PersistentModel&gt;(model: T): Observable&lt;SubscriptionMessage&lt;T&gt;&gt;;
+	} = &lt;T extends PersistentModel&gt;(
+		modelOrConstructor?: T | PersistentModelConstructor&lt;T&gt;,
+		identifierOrCriteria?:
+			| string
+			| ProducerModelPredicate&lt;T&gt;
+			| typeof PredicateAll
+	): Observable&lt;SubscriptionMessage&lt;T&gt;&gt; =&gt; {
+		let predicate: ModelPredicate&lt;T&gt;;
+
+		const modelConstructor: PersistentModelConstructor&lt;T&gt; | undefined =
+			modelOrConstructor &amp;&amp; isValidModelConstructor&lt;T&gt;(modelOrConstructor)
+				? modelOrConstructor
+				: undefined;
+
+		if (modelOrConstructor &amp;&amp; modelConstructor === undefined) {
+			const model = &lt;T&gt;modelOrConstructor;
+			const modelConstructor =
+				model &amp;&amp; (&lt;Object&gt;Object.getPrototypeOf(model)).constructor;
+
+			if (isValidModelConstructor&lt;T&gt;(modelConstructor)) {
+				if (identifierOrCriteria) {
+					logger.warn(&#x27;idOrCriteria is ignored when using a model instance&#x27;, {
+						model,
+						identifierOrCriteria,
+					});
+				}
+
+				return this.observe(modelConstructor, model.id);
+			} else {
+				const msg =
+					&#x27;The model is not an instance of a PersistentModelConstructor&#x27;;
+				logger.error(msg, { model });
+
+				throw new Error(msg);
+			}
+		}
+
+		// observe should not accept object literal syntax
+		if (
+			identifierOrCriteria &amp;&amp;
+			modelConstructor &amp;&amp;
+			isIdentifierObject(
+				identifierOrCriteria,
+				getModelDefinition(modelConstructor)
+			)
+		) {
+			const msg = errorMessages.observeWithObjectLiteral;
+			logger.error(msg, { objectLiteral: identifierOrCriteria });
+
+			throw new Error(msg);
+		}
+
+		if (identifierOrCriteria !== undefined &amp;&amp; modelConstructor === undefined) {
+			const msg = &#x27;Cannot provide criteria without a modelConstructor&#x27;;
+			logger.error(msg, identifierOrCriteria);
+			throw new Error(msg);
+		}
+
+		if (modelConstructor &amp;&amp; !isValidModelConstructor(modelConstructor)) {
+			const msg = &#x27;Constructor is not for a valid model&#x27;;
+			logger.error(msg, { modelConstructor });
+
+			throw new Error(msg);
+		}
+
+		if (typeof identifierOrCriteria === &#x27;string&#x27;) {
+			const modelDefinition = getModelDefinition(modelConstructor);
+			const [keyField] = extractPrimaryKeyFieldNames(modelDefinition);
+
+			predicate = ModelPredicateCreator.createForSingleField&lt;T&gt;(
+				getModelDefinition(modelConstructor),
+				keyField,
+				identifierOrCriteria
+			);
+		} else {
+			if (isPredicatesAll(identifierOrCriteria)) {
+				predicate = undefined;
+			} else {
+				predicate =
+					modelConstructor &amp;&amp;
+					ModelPredicateCreator.createFromExisting&lt;T&gt;(
+						getModelDefinition(modelConstructor),
+						identifierOrCriteria
+					);
+			}
+		}
+
+		return new Observable&lt;SubscriptionMessage&lt;T&gt;&gt;(observer =&gt; {
+			let handle: ZenObservable.Subscription;
+
+			(async () =&gt; {
+				await this.start();
+
+				// Filter the events returned by Storage according to namespace,
+				// append original element data, and subscribe to the observable
+				handle = this.storage
+					.observe(modelConstructor, predicate)
+					.filter(({ model }) =&gt; namespaceResolver(model) === USER)
+					.subscribe({
+						next: async item =&gt; {
+							// the `element` doesn&#x27;t necessarily contain all item details or
+							// have related records attached consistently with that of a query()
+							// result item. for consistency, we attach them here.
+
+							let message = item;
+
+							// as long as we&#x27;re not dealing with a DELETE, we need to fetch a fresh
+							// item from storage to ensure it&#x27;s fully populated.
+							if (item.opType !== &#x27;DELETE&#x27;) {
+								const modelDefinition = getModelDefinition(item.model);
+								const keyFields = extractPrimaryKeyFieldNames(modelDefinition);
+								const primaryKeysAndValues = extractPrimaryKeysAndValues(
+									item.element,
+									keyFields
+								);
+								const freshElement = await this.query(
+									item.model,
+									primaryKeysAndValues
+								);
+								message = {
+									...message,
+									element: freshElement as T,
+								};
+							}
+
+							observer.next(message as SubscriptionMessage&lt;T&gt;);
+						},
+						error: err =&gt; observer.error(err),
+						complete: () =&gt; observer.complete(),
+					});
+			})();
+
+			return () =&gt; {
+				if (handle) {
+					handle.unsubscribe();
+				}
+			};
+		});
+	};
+
+	observeQuery: {
+		&lt;T extends PersistentModel&gt;(
+			modelConstructor: PersistentModelConstructor&lt;T&gt;,
+			criteria?: ProducerModelPredicate&lt;T&gt; | typeof PredicateAll,
+			paginationProducer?: ObserveQueryOptions&lt;T&gt;
+		): Observable&lt;DataStoreSnapshot&lt;T&gt;&gt;;
+	} = &lt;T extends PersistentModel&gt;(
+		model: PersistentModelConstructor&lt;T&gt;,
+		criteria?: ProducerModelPredicate&lt;T&gt; | typeof PredicateAll,
+		options?: ObserveQueryOptions&lt;T&gt;
+	): Observable&lt;DataStoreSnapshot&lt;T&gt;&gt; =&gt; {
+		return new Observable&lt;DataStoreSnapshot&lt;T&gt;&gt;(observer =&gt; {
+			const items = new Map&lt;string, T&gt;();
+			const itemsChanged = new Map&lt;string, T&gt;();
+			let deletedItemIds: string[] = [];
+			let handle: ZenObservable.Subscription;
+			let predicate: ModelPredicate&lt;T&gt;;
+
+			/**
+			 * As the name suggests, this geneates a snapshot in the form of
+			 * 	`{items: T[], isSynced: boolean}`
+			 * and sends it to the observer.
+			 *
+			 * SIDE EFFECT: The underlying generation and emission methods may touch:
+			 * `items`, `itemsChanged`, and `deletedItemIds`.
+			 *
+			 * Refer to `generateSnapshot` and `emitSnapshot` for more details.
+			 */
+			const generateAndEmitSnapshot = (): void =&gt; {
+				const snapshot = generateSnapshot();
+				emitSnapshot(snapshot);
+			};
+
+			// a mechanism to return data after X amount of seconds OR after the
+			// &quot;limit&quot; (itemsChanged &gt;= this.syncPageSize) has been reached, whichever comes first
+			const limitTimerRace = new DeferredCallbackResolver({
+				callback: generateAndEmitSnapshot,
+				errorHandler: observer.error,
+				maxInterval: 2000,
+			});
+
+			const { sort } = options || {};
+			const sortOptions = sort ? { sort } : undefined;
+
+			const modelDefinition = getModelDefinition(model);
+			const keyFields = extractPrimaryKeyFieldNames(modelDefinition);
+
+			if (isQueryOne(criteria)) {
+				predicate = ModelPredicateCreator.createForSingleField&lt;T&gt;(
+					modelDefinition,
+					keyFields[0],
+					criteria
+				);
+			} else {
+				if (isPredicatesAll(criteria)) {
+					// Predicates.ALL means &quot;all records&quot;, so no predicate (undefined)
+					predicate = undefined;
+				} else {
+					predicate = ModelPredicateCreator.createFromExisting(
+						modelDefinition,
+						criteria
+					);
+				}
+			}
+
+			const { predicates, type: predicateGroupType } =
+				ModelPredicateCreator.getPredicates(predicate, false) || {};
+			const hasPredicate = !!predicates;
+
+			(async () =&gt; {
+				try {
+					// first, query and return any locally-available records
+					(await this.query(model, criteria, sortOptions)).forEach(item =&gt; {
+						const itemModelDefinition = getModelDefinition(model);
+						const idOrPk = getIdentifierValue(itemModelDefinition, item);
+						items.set(idOrPk, item);
+					});
+
+					// Observe the model and send a stream of updates (debounced).
+					// We need to post-filter results instead of passing criteria through
+					// to have visibility into items that move from in-set to out-of-set.
+					// We need to explicitly remove those items from the existing snapshot.
+					handle = this.observe(model).subscribe(
+						({ element, model, opType }) =&gt; {
+							const itemModelDefinition = getModelDefinition(model);
+							const idOrPk = getIdentifierValue(itemModelDefinition, element);
+							if (
+								hasPredicate &amp;&amp;
+								!validatePredicate(element, predicateGroupType, predicates)
+							) {
+								if (
+									opType === &#x27;UPDATE&#x27; &amp;&amp;
+									(items.has(idOrPk) || itemsChanged.has(idOrPk))
+								) {
+									// tracking as a &quot;deleted item&quot; will include the item in
+									// page limit calculations and ensure it is removed from the
+									// final items collection, regardless of which collection(s)
+									// it is currently in. (I mean, it could be in both, right!?)
+									deletedItemIds.push(idOrPk);
+								} else {
+									// ignore updates for irrelevant/filtered items.
+									return;
+								}
+							}
+
+							// Flag items which have been recently deleted
+							// NOTE: Merging of separate operations to the same model instance is handled upstream
+							// in the `mergePage` method within src/sync/merger.ts. The final state of a model instance
+							// depends on the LATEST record (for a given id).
+							if (opType === &#x27;DELETE&#x27;) {
+								deletedItemIds.push(idOrPk);
+							} else {
+								itemsChanged.set(idOrPk, element);
+							}
+
+							const isSynced = this.sync?.getModelSyncedStatus(model) ?? false;
+
+							const limit =
+								itemsChanged.size - deletedItemIds.length &gt;= this.syncPageSize;
+
+							if (limit || isSynced) {
+								limitTimerRace.resolve();
+							}
+
+							// kicks off every subsequent race as results sync down
+							limitTimerRace.start();
+						}
+					);
+
+					// returns a set of initial/locally-available results
+					generateAndEmitSnapshot();
+				} catch (err) {
+					observer.error(err);
+				}
+			})();
+
+			/**
+			 * Combines the `items`, `itemsChanged`, and `deletedItemIds` collections into
+			 * a snapshot in the form of `{ items: T[], isSynced: boolean}`.
+			 *
+			 * SIDE EFFECT: The shared `items` collection is recreated.
+			 */
+			const generateSnapshot = (): DataStoreSnapshot&lt;T&gt; =&gt; {
+				const isSynced = this.sync?.getModelSyncedStatus(model) ?? false;
+				const itemsArray = [
+					...Array.from(items.values()),
+					...Array.from(itemsChanged.values()),
+				];
+
+				if (options?.sort) {
+					sortItems(itemsArray);
+				}
+
+				items.clear();
+				itemsArray.forEach(item =&gt; {
+					const itemModelDefinition = getModelDefinition(model);
+					const idOrPk = getIdentifierValue(itemModelDefinition, item);
+					items.set(idOrPk, item);
+				});
+
+				// remove deleted items from the final result set
+				deletedItemIds.forEach(idOrPk =&gt; items.delete(idOrPk));
+
+				return {
+					items: Array.from(items.values()),
+					isSynced,
+				};
+			};
+
+			/**
+			 * Emits the list of items to the observer.
+			 *
+			 * SIDE EFFECT: `itemsChanged` and `deletedItemIds` are cleared to prepare
+			 * for the next snapshot.
+			 *
+			 * @param snapshot The generated items data to emit.
+			 */
+			const emitSnapshot = (snapshot: DataStoreSnapshot&lt;T&gt;): void =&gt; {
+				// send the generated snapshot to the primary subscription
+				observer.next(snapshot);
+
+				// reset the changed items sets
+				itemsChanged.clear();
+				deletedItemIds = [];
+			};
+
+			/**
+			 * Sorts an `Array` of `T` according to the sort instructions given in the
+			 * original  `observeQuery()` call.
+			 *
+			 * @param itemsToSort A array of model type.
+			 */
+			const sortItems = (itemsToSort: T[]): void =&gt; {
+				const modelDefinition = getModelDefinition(model);
+				const pagination = this.processPagination(modelDefinition, options);
+
+				const sortPredicates = ModelSortPredicateCreator.getPredicates(
+					pagination.sort
+				);
+
+				if (sortPredicates.length) {
+					const compareFn = sortCompareFunction(sortPredicates);
+					itemsToSort.sort(compareFn);
+				}
+			};
+
+			/**
+			 * Force one last snapshot when the model is fully synced.
+			 *
+			 * This reduces latency for that last snapshot, which will otherwise
+			 * wait for the configured timeout.
+			 *
+			 * @param payload The payload from the Hub event.
+			 */
+			const hubCallback = ({ payload }): void =&gt; {
+				const { event, data } = payload;
+				if (
+					event === ControlMessage.SYNC_ENGINE_MODEL_SYNCED &amp;&amp;
+					data?.model?.name === model.name
+				) {
+					generateAndEmitSnapshot();
+					Hub.remove(&#x27;api&#x27;, hubCallback);
+				}
+			};
+			Hub.listen(&#x27;datastore&#x27;, hubCallback);
+
+			return () =&gt; {
+				if (handle) {
+					handle.unsubscribe();
+				}
+			};
+		});
+	};
+
+	configure = (config: DataStoreConfig = {}) =&gt; {
+		this.amplifyContext.Auth = this.Auth;
+		this.amplifyContext.API = this.API;
+		this.amplifyContext.Cache = this.Cache;
+
+		const {
+			DataStore: configDataStore,
+			authModeStrategyType: configAuthModeStrategyType,
+			conflictHandler: configConflictHandler,
+			errorHandler: configErrorHandler,
+			maxRecordsToSync: configMaxRecordsToSync,
+			syncPageSize: configSyncPageSize,
+			fullSyncInterval: configFullSyncInterval,
+			syncExpressions: configSyncExpressions,
+			authProviders: configAuthProviders,
+			storageAdapter: configStorageAdapter,
+			...configFromAmplify
+		} = config;
+
+		this.amplifyConfig = {
+			...configFromAmplify,
+			...this.amplifyConfig,
+		};
+
+		this.conflictHandler = this.setConflictHandler(config);
+		this.errorHandler = this.setErrorHandler(config);
+
+		const authModeStrategyType =
+			(configDataStore &amp;&amp; configDataStore.authModeStrategyType) ||
+			configAuthModeStrategyType ||
+			AuthModeStrategyType.DEFAULT;
+
+		switch (authModeStrategyType) {
+			case AuthModeStrategyType.MULTI_AUTH:
+				this.authModeStrategy = multiAuthStrategy(this.amplifyContext);
+				break;
+			case AuthModeStrategyType.DEFAULT:
+				this.authModeStrategy = defaultAuthStrategy;
+				break;
+			default:
+				this.authModeStrategy = defaultAuthStrategy;
+				break;
+		}
+
+		// store on config object, so that Sync, Subscription, and Mutation processors can have access
+		this.amplifyConfig.authProviders =
+			(configDataStore &amp;&amp; configDataStore.authProviders) || configAuthProviders;
+
+		this.syncExpressions =
+			(configDataStore &amp;&amp; configDataStore.syncExpressions) ||
+			configSyncExpressions ||
+			this.syncExpressions;
+
+		this.maxRecordsToSync =
+			(configDataStore &amp;&amp; configDataStore.maxRecordsToSync) ||
+			configMaxRecordsToSync ||
+			this.maxRecordsToSync ||
+			10000;
+
+		// store on config object, so that Sync, Subscription, and Mutation processors can have access
+		this.amplifyConfig.maxRecordsToSync = this.maxRecordsToSync;
+
+		this.syncPageSize =
+			(configDataStore &amp;&amp; configDataStore.syncPageSize) ||
+			configSyncPageSize ||
+			this.syncPageSize ||
+			1000;
+
+		// store on config object, so that Sync, Subscription, and Mutation processors can have access
+		this.amplifyConfig.syncPageSize = this.syncPageSize;
+
+		this.fullSyncInterval =
+			(configDataStore &amp;&amp; configDataStore.fullSyncInterval) ||
+			configFullSyncInterval ||
+			this.fullSyncInterval ||
+			24 * 60; // 1 day
+
+		this.storageAdapter =
+			(configDataStore &amp;&amp; configDataStore.storageAdapter) ||
+			configStorageAdapter ||
+			this.storageAdapter ||
+			undefined;
+
+		this.sessionId = this.retrieveSessionId()!;
+	};
+
+	clear = async function clear() {
+		checkSchemaInitialized();
+		if (this.storage === undefined) {
+			// connect to storage so that it can be cleared without fully starting DataStore
+			this.storage = new Storage(
+				schema,
+				namespaceResolver,
+				getModelConstructorByModelName,
+				modelInstanceCreator,
+				this.storageAdapter,
+				this.sessionId
+			);
+			await this.storage.init();
+		}
+
+		if (syncSubscription &amp;&amp; !syncSubscription.closed) {
+			syncSubscription.unsubscribe();
+		}
+
+		await this.storage.clear();
+
+		if (this.sync) {
+			this.sync.unsubscribeConnectivity();
+		}
+
+		this.initialized = undefined; // Should re-initialize when start() is called.
+		this.storage = undefined;
+		this.sync = undefined;
+		this.syncPredicates = new WeakMap&lt;SchemaModel, ModelPredicate&lt;any&gt;&gt;();
+	};
+
+	stop = async function stop(this: InstanceType&lt;typeof DataStore&gt;) {
+		if (this.initialized !== undefined) {
+			await this.start();
+		}
+
+		if (syncSubscription &amp;&amp; !syncSubscription.closed) {
+			syncSubscription.unsubscribe();
+		}
+
+		if (this.sync) {
+			this.sync.unsubscribeConnectivity();
+		}
+
+		this.initialized = undefined; // Should re-initialize when start() is called.
+		this.sync = undefined;
+	};
+
+	private processPagination&lt;T extends PersistentModel&gt;(
+		modelDefinition: SchemaModel,
+		paginationProducer: ProducerPaginationInput&lt;T&gt;
+	): PaginationInput&lt;T&gt; | undefined {
+		let sortPredicate: SortPredicate&lt;T&gt;;
+		const { limit, page, sort } = paginationProducer || {};
+
+		if (limit === undefined &amp;&amp; page === undefined &amp;&amp; sort === undefined) {
+			return undefined;
+		}
+
+		if (page !== undefined &amp;&amp; limit === undefined) {
+			throw new Error(&#x27;Limit is required when requesting a page&#x27;);
+		}
+
+		if (page !== undefined) {
+			if (typeof page !== &#x27;number&#x27;) {
+				throw new Error(&#x27;Page should be a number&#x27;);
+			}
+
+			if (page &lt; 0) {
+				throw new Error(&quot;Page can&#x27;t be negative&quot;);
+			}
+		}
+
+		if (limit !== undefined) {
+			if (typeof limit !== &#x27;number&#x27;) {
+				throw new Error(&#x27;Limit should be a number&#x27;);
+			}
+
+			if (limit &lt; 0) {
+				throw new Error(&quot;Limit can&#x27;t be negative&quot;);
+			}
+		}
+
+		if (sort) {
+			sortPredicate = ModelSortPredicateCreator.createFromExisting(
+				modelDefinition,
+				paginationProducer.sort
+			);
+		}
+
+		return {
+			limit,
+			page,
+			sort: sortPredicate,
+		};
+	}
+
+	private async processSyncExpressions(): Promise&lt;
+		WeakMap&lt;SchemaModel, ModelPredicate&lt;any&gt;&gt;
+	&gt; {
+		if (!this.syncExpressions || !this.syncExpressions.length) {
+			return new WeakMap&lt;SchemaModel, ModelPredicate&lt;any&gt;&gt;();
+		}
+
+		const syncPredicates = await Promise.all(
+			this.syncExpressions.map(
+				async (
+					syncExpression: SyncExpression
+				): Promise&lt;[SchemaModel, ModelPredicate&lt;any&gt;]&gt; =&gt; {
+					const { modelConstructor, conditionProducer } = await syncExpression;
+					const modelDefinition = getModelDefinition(modelConstructor);
+
+					// conditionProducer is either a predicate, e.g. (c) =&gt; c.field(&#x27;eq&#x27;, 1)
+					// OR a function/promise that returns a predicate
+					const condition = await this.unwrapPromise(conditionProducer);
+					if (isPredicatesAll(condition)) {
+						return [modelDefinition, null];
+					}
+
+					const predicate = this.createFromCondition(
+						modelDefinition,
+						condition
+					);
+
+					return [modelDefinition, predicate];
+				}
+			)
+		);
+
+		return this.weakMapFromEntries(syncPredicates);
+	}
+
+	private createFromCondition(
+		modelDefinition: SchemaModel,
+		condition: ProducerModelPredicate&lt;PersistentModel&gt;
+	) {
+		try {
+			return ModelPredicateCreator.createFromExisting(
+				modelDefinition,
+				condition
+			);
+		} catch (error) {
+			logger.error(&#x27;Error creating Sync Predicate&#x27;);
+			throw error;
+		}
+	}
+
+	private async unwrapPromise&lt;T extends PersistentModel&gt;(
+		conditionProducer
+	): Promise&lt;ProducerModelPredicate&lt;T&gt;&gt; {
+		try {
+			const condition = await conditionProducer();
+			return condition;
+		} catch (error) {
+			if (error instanceof TypeError) {
+				return conditionProducer;
+			}
+			throw error;
+		}
+	}
+
+	private weakMapFromEntries(
+		entries: [SchemaModel, ModelPredicate&lt;any&gt;][]
+	): WeakMap&lt;SchemaModel, ModelPredicate&lt;any&gt;&gt; {
+		return entries.reduce((map, [modelDefinition, predicate]) =&gt; {
+			if (map.has(modelDefinition)) {
+				const { name } = modelDefinition;
+				logger.warn(
+					`You can only utilize one Sync Expression per model.
+          Subsequent sync expressions for the ${name} model will be ignored.`
+				);
+				return map;
+			}
+
+			if (predicate) {
+				map.set(modelDefinition, predicate);
+			}
+
+			return map;
+		}, new WeakMap&lt;SchemaModel, ModelPredicate&lt;any&gt;&gt;());
+	}
+
+	// database separation for Amplify Console. Not a public API
+	private retrieveSessionId(): string | undefined {
+		try {
+			const sessionId = sessionStorage.getItem(&#x27;datastoreSessionId&#x27;);
+
+			if (sessionId) {
+				const { aws_appsync_graphqlEndpoint } = this.amplifyConfig;
+
+				const appSyncUrl = aws_appsync_graphqlEndpoint.split(&#x27;/&#x27;)[2];
+				const [appSyncId] = appSyncUrl.split(&#x27;.&#x27;);
+
+				return `${sessionId}-${appSyncId}`;
+			}
+		} catch {}
+
+		return undefined;
+	}
+}
+
+const instance = new DataStore();
+Amplify.register(instance);
+
+export { DataStore as DataStoreClass, initSchema, instance as DataStore };
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:141,&quot;character&quot;:1,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:143,&quot;character&quot;:27,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:299,&quot;character&quot;:64,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:308,&quot;character&quot;:5,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:308,&quot;character&quot;:19,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:318,&quot;character&quot;:28,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:319,&quot;character&quot;:52,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:319,&quot;character&quot;:59,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:329,&quot;character&quot;:16,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:332,&quot;character&quot;:16,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:336,&quot;character&quot;:15,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:348,&quot;character&quot;:24,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:350,&quot;character&quot;:69,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:350,&quot;character&quot;:84,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:355,&quot;character&quot;:25,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:365,&quot;character&quot;:105,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:369,&quot;character&quot;:46,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:382,&quot;character&quot;:116,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:386,&quot;character&quot;:30,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:388,&quot;character&quot;:22,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:388,&quot;character&quot;:38,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:390,&quot;character&quot;:59,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:390,&quot;character&quot;:74,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:393,&quot;character&quot;:24,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:398,&quot;character&quot;:69,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:403,&quot;character&quot;:27,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:413,&quot;character&quot;:25,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:415,&quot;character&quot;:70,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:415,&quot;character&quot;:85,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:419,&quot;character&quot;:16,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:421,&quot;character&quot;:27,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:422,&quot;character&quot;:16,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:422,&quot;character&quot;:44,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:427,&quot;character&quot;:22,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:427,&quot;character&quot;:41,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:431,&quot;character&quot;:30,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:433,&quot;character&quot;:32,&quot;text&quot;:&quot;item&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:438,&quot;character&quot;:17,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:442,&quot;character&quot;:20,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:442,&quot;character&quot;:35,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:447,&quot;character&quot;:30,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:458,&quot;character&quot;:1,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:463,&quot;character&quot;:9,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:477,&quot;character&quot;:12,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:481,&quot;character&quot;:8,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:491,&quot;character&quot;:8,&quot;text&quot;:&quot;parsedValue&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:493,&quot;character&quot;:20,&quot;text&quot;:&quot;parsedValue&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:494,&quot;character&quot;:20,&quot;text&quot;:&quot;parsedValue&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:533,&quot;character&quot;:59,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:554,&quot;character&quot;:9,&quot;text&quot;:&quot;modelConstructor&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:555,&quot;character&quot;:32,&quot;text&quot;:&quot;modelConstructor&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:561,&quot;character&quot;:7,&quot;text&quot;:&quot;patches&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:572,&quot;character&quot;:40,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:573,&quot;character&quot;:12,&quot;text&quot;:&quot;parsedValue&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:573,&quot;character&quot;:63,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:575,&quot;character&quot;:24,&quot;text&quot;:&quot;parsedValue&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:578,&quot;character&quot;:10,&quot;text&quot;:&quot;patches&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:583,&quot;character&quot;:7,&quot;text&quot;:&quot;patches&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:583,&quot;character&quot;:15,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:613,&quot;character&quot;:41,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:614,&quot;character&quot;:22,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:646,&quot;character&quot;:51,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:649,&quot;character&quot;:22,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:649,&quot;character&quot;:27,&quot;text&quot;:&quot;val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:650,&quot;character&quot;:7,&quot;text&quot;:&quot;val&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:650,&quot;character&quot;:22,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:652,&quot;character&quot;:13,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:653,&quot;character&quot;:22,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:683,&quot;character&quot;:20,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:684,&quot;character&quot;:15,&quot;text&quot;:&quot;obj&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:689,&quot;character&quot;:9,&quot;text&quot;:&quot;_version&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:690,&quot;character&quot;:64,&quot;text&quot;:&quot;_version&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:753,&quot;character&quot;:9,&quot;text&quot;:&quot;storedValue&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:755,&quot;character&quot;:7,&quot;text&quot;:&quot;storedValue&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:870,&quot;character&quot;:10,&quot;text&quot;:&quot;aws_appsync_graphqlEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:872,&quot;character&quot;:6,&quot;text&quot;:&quot;aws_appsync_graphqlEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:873,&quot;character&quot;:46,&quot;text&quot;:&quot;aws_appsync_graphqlEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:897,&quot;character&quot;:20,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:910,&quot;character&quot;:7,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:913,&quot;character&quot;:12,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:914,&quot;character&quot;:32,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1282,&quot;character&quot;:48,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1366,&quot;character&quot;:14,&quot;text&quot;:&quot;primaryKeysAndValues&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1382,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1382,&quot;character&quot;:35,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1527,&quot;character&quot;:20,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1526,&quot;character&quot;:13,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1609,&quot;character&quot;:26,&quot;text&quot;:&quot;payload&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1610,&quot;character&quot;:12,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1610,&quot;character&quot;:19,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1612,&quot;character&quot;:5,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1613,&quot;character&quot;:5,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1613,&quot;character&quot;:11,&quot;text&quot;:&quot;model&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1613,&quot;character&quot;:18,&quot;text&quot;:&quot;name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1674,&quot;character&quot;:21,&quot;text&quot;:&quot;authProviders&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1689,&quot;character&quot;:21,&quot;text&quot;:&quot;maxRecordsToSync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1698,&quot;character&quot;:21,&quot;text&quot;:&quot;syncPageSize&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1717,&quot;character&quot;:6,&quot;text&quot;:&quot;this&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1717,&quot;character&quot;:11,&quot;text&quot;:&quot;storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1719,&quot;character&quot;:3,&quot;text&quot;:&quot;this&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1719,&quot;character&quot;:8,&quot;text&quot;:&quot;storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1724,&quot;character&quot;:4,&quot;text&quot;:&quot;this&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1724,&quot;character&quot;:9,&quot;text&quot;:&quot;storageAdapter&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1725,&quot;character&quot;:4,&quot;text&quot;:&quot;this&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1725,&quot;character&quot;:9,&quot;text&quot;:&quot;sessionId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1727,&quot;character&quot;:9,&quot;text&quot;:&quot;this&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1727,&quot;character&quot;:14,&quot;text&quot;:&quot;storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1727,&quot;character&quot;:22,&quot;text&quot;:&quot;init&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1734,&quot;character&quot;:8,&quot;text&quot;:&quot;this&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1734,&quot;character&quot;:13,&quot;text&quot;:&quot;storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1734,&quot;character&quot;:21,&quot;text&quot;:&quot;clear&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1736,&quot;character&quot;:6,&quot;text&quot;:&quot;this&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1736,&quot;character&quot;:11,&quot;text&quot;:&quot;sync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1737,&quot;character&quot;:3,&quot;text&quot;:&quot;this&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1737,&quot;character&quot;:8,&quot;text&quot;:&quot;sync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1737,&quot;character&quot;:13,&quot;text&quot;:&quot;unsubscribeConnectivity&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1740,&quot;character&quot;:2,&quot;text&quot;:&quot;this&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1740,&quot;character&quot;:7,&quot;text&quot;:&quot;initialized&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1741,&quot;character&quot;:2,&quot;text&quot;:&quot;this&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1741,&quot;character&quot;:7,&quot;text&quot;:&quot;storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1742,&quot;character&quot;:2,&quot;text&quot;:&quot;this&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1742,&quot;character&quot;:7,&quot;text&quot;:&quot;sync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1743,&quot;character&quot;:2,&quot;text&quot;:&quot;this&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1743,&quot;character&quot;:7,&quot;text&quot;:&quot;syncPredicates&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1824,&quot;character&quot;:13,&quot;text&quot;:&quot;modelConstructor&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1858,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1856,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1863,&quot;character&quot;:2,&quot;text&quot;:&quot;conditionProducer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1866,&quot;character&quot;:9,&quot;text&quot;:&quot;condition&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1866,&quot;character&quot;:27,&quot;text&quot;:&quot;conditionProducer&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1869,&quot;character&quot;:7,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1872,&quot;character&quot;:9,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1868,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1903,&quot;character&quot;:12,&quot;text&quot;:&quot;aws_appsync_graphqlEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1905,&quot;character&quot;:10,&quot;text&quot;:&quot;appSyncUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1905,&quot;character&quot;:23,&quot;text&quot;:&quot;aws_appsync_graphqlEndpoint&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1905,&quot;character&quot;:51,&quot;text&quot;:&quot;split&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1906,&quot;character&quot;:11,&quot;text&quot;:&quot;appSyncId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1906,&quot;character&quot;:24,&quot;text&quot;:&quot;appSyncUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1906,&quot;character&quot;:35,&quot;text&quot;:&quot;split&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/datastore/datastore.ts&quot;,&quot;line&quot;:1908,&quot;character&quot;:27,&quot;text&quot;:&quot;appSyncId&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:29 GMT</p>
+    </body>
+  </html>
+  

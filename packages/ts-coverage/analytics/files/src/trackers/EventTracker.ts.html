@@ -1,0 +1,148 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>EventTracker.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/trackers/EventTracker.ts</td><td class="">68.34%</td><td class="">0%</td><td class="">199</td><td class="">136</td><td class="">63</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import { delegate } from &#x27;../vendor/dom-utils&#x27;;
+import { EventTrackOpts } from &#x27;../types&#x27;;
+import { ConsoleLogger as Logger, JS } from &#x27;@aws-amplify/core&#x27;;
+
+const logger = new Logger(&#x27;EventTracker&#x27;);
+
+const defaultOpts: EventTrackOpts = {
+	enable: false,
+	events: [&#x27;click&#x27;],
+	selectorPrefix: &#x27;data-amplify-analytics-&#x27;,
+	provider: &#x27;AWSPinpoint&#x27;,
+};
+
+export class EventTracker {
+	private _tracker;
+	private _config: EventTrackOpts;
+	private _delegates;
+
+	constructor(tracker, opts) {
+		if (!JS.browserOrNode().isBrowser || !window.addEventListener) {
+			logger.debug(&#x27;not in the supported web environment&#x27;);
+			return;
+		}
+
+		this._config = Object.assign({}, defaultOpts, opts);
+		this._tracker = tracker;
+		this._delegates = {};
+		this._trackFunc = this._trackFunc.bind(this);
+
+		logger.debug(&#x27;initialize pageview tracker with opts&#x27;, this._config);
+
+		this.configure(this._config);
+	}
+
+	configure(opts?: EventTrackOpts) {
+		Object.assign(this._config, opts);
+
+		if (!this._config.enable) {
+			Object.keys(this._delegates).forEach(key =&gt; {
+				if (typeof this._delegates[key].destroy === &#x27;function&#x27;)
+					this._delegates[key].destroy();
+			});
+			this._delegates = {};
+		} else if (
+			this._config.enable &amp;&amp;
+			Object.keys(this._delegates).length === 0
+		) {
+			const selector = &#x27;[&#x27; + this._config.selectorPrefix + &#x27;on]&#x27;;
+			this._config.events.forEach(evt =&gt; {
+				this._delegates[evt] = delegate(
+					document,
+					evt,
+					selector,
+					this._trackFunc,
+					{ composed: true, useCapture: true }
+				);
+			});
+		}
+
+		return this._config;
+	}
+
+	private async _trackFunc(event, element) {
+		// the events specifed in &#x27;amplify-analytics-on&#x27; selector
+		const customAttrs = {};
+		const events = element
+			.getAttribute(this._config.selectorPrefix + &#x27;on&#x27;)
+			.split(/\s*,\s*/);
+		const eventName = element.getAttribute(
+			this._config.selectorPrefix + &#x27;name&#x27;
+		);
+
+		const attrs = element.getAttribute(this._config.selectorPrefix + &#x27;attrs&#x27;);
+		if (attrs) {
+			attrs.split(/\s*,\s*/).forEach(attr =&gt; {
+				const tmp = attr.trim().split(/\s*:\s*/);
+				customAttrs[tmp[0]] = tmp[1];
+			});
+		}
+
+		const defaultAttrs =
+			typeof this._config.attributes === &#x27;function&#x27;
+				? await this._config.attributes()
+				: this._config.attributes;
+
+		const attributes = Object.assign(
+			{
+				type: event.type,
+				target: `${event.target.localName} with id ${event.target.id}`,
+			},
+			defaultAttrs,
+			customAttrs
+		);
+
+		logger.debug(&#x27;events needed to be recorded&#x27;, events);
+		logger.debug(&#x27;attributes needed to be attached&#x27;, customAttrs);
+		if (events.indexOf(event.type) &lt; 0) {
+			logger.debug(`event ${event.type} is not selected to be recorded`);
+			return;
+		}
+
+		this._tracker(
+			{
+				name: eventName || &#x27;event&#x27;,
+				attributes,
+			},
+			this._config.provider
+		).catch(e =&gt; {
+			logger.debug(`Failed to record the ${event.type} event&#x27;, ${e}`);
+		});
+	}
+}
+
+/**
+ * @deprecated use named import
+ */
+export default EventTracker;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:27,&quot;character&quot;:9,&quot;text&quot;:&quot;_tracker&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:29,&quot;character&quot;:9,&quot;text&quot;:&quot;_delegates&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:31,&quot;character&quot;:13,&quot;text&quot;:&quot;tracker&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:31,&quot;character&quot;:22,&quot;text&quot;:&quot;opts&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:37,&quot;character&quot;:48,&quot;text&quot;:&quot;opts&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:38,&quot;character&quot;:7,&quot;text&quot;:&quot;_tracker&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:38,&quot;character&quot;:18,&quot;text&quot;:&quot;tracker&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:39,&quot;character&quot;:7,&quot;text&quot;:&quot;_delegates&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:51,&quot;character&quot;:20,&quot;text&quot;:&quot;_delegates&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:52,&quot;character&quot;:20,&quot;text&quot;:&quot;_delegates&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:52,&quot;character&quot;:36,&quot;text&quot;:&quot;destroy&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:53,&quot;character&quot;:10,&quot;text&quot;:&quot;_delegates&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:53,&quot;character&quot;:26,&quot;text&quot;:&quot;destroy&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:55,&quot;character&quot;:8,&quot;text&quot;:&quot;_delegates&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:58,&quot;character&quot;:20,&quot;text&quot;:&quot;_delegates&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:9,&quot;text&quot;:&quot;_delegates&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:75,&quot;character&quot;:26,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:75,&quot;character&quot;:33,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:78,&quot;character&quot;:8,&quot;text&quot;:&quot;events&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:78,&quot;character&quot;:17,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:79,&quot;character&quot;:4,&quot;text&quot;:&quot;getAttribute&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:80,&quot;character&quot;:4,&quot;text&quot;:&quot;split&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:81,&quot;character&quot;:8,&quot;text&quot;:&quot;eventName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:81,&quot;character&quot;:20,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:81,&quot;character&quot;:28,&quot;text&quot;:&quot;getAttribute&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:85,&quot;character&quot;:8,&quot;text&quot;:&quot;attrs&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:85,&quot;character&quot;:16,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:85,&quot;character&quot;:24,&quot;text&quot;:&quot;getAttribute&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:86,&quot;character&quot;:6,&quot;text&quot;:&quot;attrs&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:87,&quot;character&quot;:3,&quot;text&quot;:&quot;attrs&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:87,&quot;character&quot;:9,&quot;text&quot;:&quot;split&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:87,&quot;character&quot;:26,&quot;text&quot;:&quot;forEach&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:87,&quot;character&quot;:34,&quot;text&quot;:&quot;attr&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:88,&quot;character&quot;:10,&quot;text&quot;:&quot;tmp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:88,&quot;character&quot;:16,&quot;text&quot;:&quot;attr&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:88,&quot;character&quot;:21,&quot;text&quot;:&quot;trim&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:88,&quot;character&quot;:28,&quot;text&quot;:&quot;split&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:89,&quot;character&quot;:16,&quot;text&quot;:&quot;tmp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:89,&quot;character&quot;:26,&quot;text&quot;:&quot;tmp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:100,&quot;character&quot;:4,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:100,&quot;character&quot;:10,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:100,&quot;character&quot;:16,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:101,&quot;character&quot;:15,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:101,&quot;character&quot;:21,&quot;text&quot;:&quot;target&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:101,&quot;character&quot;:28,&quot;text&quot;:&quot;localName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:101,&quot;character&quot;:49,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:101,&quot;character&quot;:55,&quot;text&quot;:&quot;target&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:101,&quot;character&quot;:62,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:107,&quot;character&quot;:47,&quot;text&quot;:&quot;events&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:109,&quot;character&quot;:6,&quot;text&quot;:&quot;events&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:109,&quot;character&quot;:13,&quot;text&quot;:&quot;indexOf&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:109,&quot;character&quot;:21,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:109,&quot;character&quot;:27,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:110,&quot;character&quot;:25,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:110,&quot;character&quot;:31,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:114,&quot;character&quot;:7,&quot;text&quot;:&quot;_tracker&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:4,&quot;text&quot;:&quot;name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:10,&quot;text&quot;:&quot;eventName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:120,&quot;character&quot;:4,&quot;text&quot;:&quot;catch&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:120,&quot;character&quot;:10,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:121,&quot;character&quot;:40,&quot;text&quot;:&quot;event&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:121,&quot;character&quot;:46,&quot;text&quot;:&quot;type&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/trackers/EventTracker.ts&quot;,&quot;line&quot;:121,&quot;character&quot;:62,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:24 GMT</p>
+    </body>
+  </html>
+  

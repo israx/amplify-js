@@ -1,0 +1,361 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>AWSLexV2Provider.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Providers/AWSLexV2Provider.ts</td><td class="">95.28%</td><td class="">0%</td><td class="">339</td><td class="">323</td><td class="">16</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+import { AbstractInteractionsProvider } from &#x27;./InteractionsProvider&#x27;;
+import {
+	InteractionsOptions,
+	AWSLexV2ProviderOptions,
+	InteractionsResponse,
+	InteractionsMessage,
+} from &#x27;../types&#x27;;
+import {
+	LexRuntimeV2Client,
+	RecognizeTextCommand,
+	RecognizeTextCommandInput,
+	RecognizeTextCommandOutput,
+	RecognizeUtteranceCommand,
+	RecognizeUtteranceCommandInput,
+	RecognizeUtteranceCommandOutput,
+} from &#x27;@aws-sdk/client-lex-runtime-v2&#x27;;
+import {
+	ConsoleLogger as Logger,
+	Credentials,
+	getAmplifyUserAgent,
+} from &#x27;@aws-amplify/core&#x27;;
+import { convert } from &#x27;./AWSLexProviderHelper/utils&#x27;;
+import { unGzipBase64AsJson } from &#x27;./AWSLexProviderHelper/commonUtils&#x27;;
+
+const logger = new Logger(&#x27;AWSLexV2Provider&#x27;);
+
+interface RecognizeUtteranceCommandOutputFormatted
+	extends Omit&lt;
+		RecognizeUtteranceCommandOutput,
+		| &#x27;messages&#x27;
+		| &#x27;interpretations&#x27;
+		| &#x27;sessionState&#x27;
+		| &#x27;requestAttributes&#x27;
+		| &#x27;audioStream&#x27;
+	&gt; {
+	messages?: RecognizeTextCommandOutput[&#x27;messages&#x27;];
+	sessionState?: RecognizeTextCommandOutput[&#x27;sessionState&#x27;];
+	interpretations?: RecognizeTextCommandOutput[&#x27;interpretations&#x27;];
+	requestAttributes?: RecognizeTextCommandOutput[&#x27;requestAttributes&#x27;];
+	audioStream?: Uint8Array;
+}
+
+type AWSLexV2ProviderSendResponse =
+	| RecognizeTextCommandOutput
+	| RecognizeUtteranceCommandOutputFormatted;
+
+type lexV2BaseReqParams = {
+	botId: string;
+	botAliasId: string;
+	localeId: string;
+	sessionId: string;
+};
+
+export class AWSLexV2Provider extends AbstractInteractionsProvider {
+	private _lexRuntimeServiceV2Client: LexRuntimeV2Client;
+	private _botsCompleteCallback: object;
+
+	/**
+	 * Initialize Interactions with AWS configurations
+	 * @param {InteractionsOptions} options - Configuration object for Interactions
+	 */
+	constructor(options: InteractionsOptions = {}) {
+		super(options);
+		this._botsCompleteCallback = {};
+	}
+
+	/**
+	 * get provider name of the plugin
+	 * @returns {string} name of the provider
+	 */
+	public getProviderName() {
+		return &#x27;AWSLexV2Provider&#x27;;
+	}
+
+	/**
+	 * Configure Interactions part with aws configuration
+	 * @param {AWSLexV2ProviderOptions} config - Configuration of the Interactions
+	 * @return {AWSLexV2ProviderOptions} - Current configuration
+	 */
+	public configure(
+		config: AWSLexV2ProviderOptions = {}
+	): AWSLexV2ProviderOptions {
+		const propertiesToTest = [
+			&#x27;name&#x27;,
+			&#x27;botId&#x27;,
+			&#x27;aliasId&#x27;,
+			&#x27;localeId&#x27;,
+			&#x27;providerName&#x27;,
+			&#x27;region&#x27;,
+		];
+
+		Object.keys(config).forEach(botKey =&gt; {
+			const botConfig = config[botKey];
+
+			// is bot config correct
+			if (!propertiesToTest.every(x =&gt; x in botConfig)) {
+				throw new Error(&#x27;invalid bot configuration&#x27;);
+			}
+		});
+		return super.configure(config);
+	}
+
+	/**
+	 * Send a message to a bot
+	 * @async
+	 * @param {string} botname - Bot name to send the message
+	 * @param {string | InteractionsMessage} message - message to send to the bot
+	 * @return {Promise&lt;InteractionsResponse&gt;} A promise resolves to the response from the bot
+	 */
+	public async sendMessage(
+		botname: string,
+		message: string | InteractionsMessage
+	): Promise&lt;InteractionsResponse&gt; {
+		// check if bot exists
+		if (!this._config[botname]) {
+			return Promise.reject(&#x27;Bot &#x27; + botname + &#x27; does not exist&#x27;);
+		}
+
+		// check if credentials are present
+		let credentials;
+		try {
+			credentials = await Credentials.get();
+		} catch (error) {
+			return Promise.reject(&#x27;No credentials&#x27;);
+		}
+
+		this._lexRuntimeServiceV2Client = new LexRuntimeV2Client({
+			region: this._config[botname].region,
+			credentials,
+			customUserAgent: getAmplifyUserAgent(),
+		});
+
+		let response: AWSLexV2ProviderSendResponse;
+
+		// common base params for all requests
+		const reqBaseParams: lexV2BaseReqParams = {
+			botAliasId: this._config[botname].aliasId,
+			botId: this._config[botname].botId,
+			localeId: this._config[botname].localeId,
+			sessionId: credentials.identityId,
+		};
+
+		if (typeof message === &#x27;string&#x27;) {
+			response = await this._handleRecognizeTextCommand(
+				botname,
+				message,
+				reqBaseParams
+			);
+		} else {
+			response = await this._handleRecognizeUtteranceCommand(
+				botname,
+				message,
+				reqBaseParams
+			);
+		}
+		return response;
+	}
+
+	/**
+	 * Attach a onComplete callback function to a bot.
+	 * The callback is called once the bot&#x27;s intent is fulfilled
+	 * @param {string} botname - Bot name to attach the onComplete callback
+	 * @param {(err: Error | null, confirmation: InteractionsResponse) =&gt; void} callback - called when Intent Fulfilled
+	 */
+	public onComplete(
+		botname: string,
+		callback: (err: Error | null, confirmation: InteractionsResponse) =&gt; void
+	) {
+		// does bot exist
+		if (!this._config[botname]) {
+			throw new Error(&#x27;Bot &#x27; + botname + &#x27; does not exist&#x27;);
+		}
+		this._botsCompleteCallback[botname] = callback;
+	}
+
+	/**
+	 * @private
+	 * call onComplete callback for a bot if configured
+	 */
+	private _reportBotStatus(
+		data: AWSLexV2ProviderSendResponse,
+		botname: string
+	) {
+		const sessionState = data?.sessionState;
+
+		// Check if state is fulfilled to resolve onFullfilment promise
+		logger.debug(&#x27;postContent state&#x27;, sessionState?.intent?.state);
+
+		const isConfigOnCompleteAttached =
+			typeof this._config?.[botname].onComplete === &#x27;function&#x27;;
+
+		const isApiOnCompleteAttached =
+			typeof this._botsCompleteCallback?.[botname] === &#x27;function&#x27;;
+
+		// no onComplete callbacks added
+		if (!isConfigOnCompleteAttached &amp;&amp; !isApiOnCompleteAttached) return;
+
+		if (
+			sessionState?.intent?.state === &#x27;ReadyForFulfillment&#x27; ||
+			sessionState?.intent?.state === &#x27;Fulfilled&#x27;
+		) {
+			if (isApiOnCompleteAttached) {
+				setTimeout(() =&gt; this._botsCompleteCallback?.[botname](null, data), 0);
+			}
+
+			if (isConfigOnCompleteAttached) {
+				setTimeout(() =&gt; this._config[botname].onComplete(null, data), 0);
+			}
+		}
+
+		if (sessionState?.intent?.state === &#x27;Failed&#x27;) {
+			const error = new Error(&#x27;Bot conversation failed&#x27;);
+			if (isApiOnCompleteAttached) {
+				setTimeout(() =&gt; this._botsCompleteCallback[botname](error), 0);
+			}
+
+			if (isConfigOnCompleteAttached) {
+				setTimeout(() =&gt; this._config[botname].onComplete(error), 0);
+			}
+		}
+	}
+
+	/**
+	 * Format UtteranceCommandOutput&#x27;s response
+	 * decompress attributes
+	 * update audioStream format
+	 */
+	private async _formatUtteranceCommandOutput(
+		data: RecognizeUtteranceCommandOutput
+	): Promise&lt;RecognizeUtteranceCommandOutputFormatted&gt; {
+		const response: RecognizeUtteranceCommandOutputFormatted = {
+			...data,
+			messages: await unGzipBase64AsJson(data.messages),
+			sessionState: await unGzipBase64AsJson(data.sessionState),
+			interpretations: await unGzipBase64AsJson(data.interpretations),
+			requestAttributes: await unGzipBase64AsJson(data.requestAttributes),
+			inputTranscript: await unGzipBase64AsJson(data.inputTranscript),
+			audioStream: data.audioStream
+				? await convert(data.audioStream)
+				: undefined,
+		};
+		return response;
+	}
+
+	/**
+	 * handle client&#x27;s `RecognizeTextCommand`
+	 * used for sending simple text message
+	 */
+	private async _handleRecognizeTextCommand(
+		botname: string,
+		data: string,
+		baseParams: lexV2BaseReqParams
+	) {
+		logger.debug(&#x27;postText to lex2&#x27;, data);
+
+		const params: RecognizeTextCommandInput = {
+			...baseParams,
+			text: data,
+		};
+
+		try {
+			const recognizeTextCommand = new RecognizeTextCommand(params);
+			const data = await this._lexRuntimeServiceV2Client.send(
+				recognizeTextCommand
+			);
+
+			this._reportBotStatus(data, botname);
+			return data;
+		} catch (err) {
+			return Promise.reject(err);
+		}
+	}
+
+	/**
+	 * handle client&#x27;s `RecognizeUtteranceCommand`
+	 * used for obj text or obj voice message
+	 */
+	private async _handleRecognizeUtteranceCommand(
+		botname: string,
+		data: InteractionsMessage,
+		baseParams: lexV2BaseReqParams
+	) {
+		const {
+			content,
+			options: { messageType },
+		} = data;
+
+		logger.debug(&#x27;postContent to lex2&#x27;, data);
+		let params: RecognizeUtteranceCommandInput;
+
+		// prepare params
+		if (messageType === &#x27;voice&#x27;) {
+			if (typeof content !== &#x27;object&#x27;) {
+				return Promise.reject(&#x27;invalid content type&#x27;);
+			}
+
+			const inputStream =
+				content instanceof Uint8Array ? content : await convert(content);
+
+			params = {
+				...baseParams,
+				requestContentType: &#x27;audio/x-l16; sample-rate=16000; channel-count=1&#x27;,
+				inputStream,
+			};
+		} else {
+			// text input
+			if (typeof content !== &#x27;string&#x27;)
+				return Promise.reject(&#x27;invalid content type&#x27;);
+
+			params = {
+				...baseParams,
+				requestContentType: &#x27;text/plain; charset=utf-8&#x27;,
+				inputStream: content,
+			};
+		}
+
+		// make API call to lex
+		try {
+			const recognizeUtteranceCommand = new RecognizeUtteranceCommand(params);
+			const data = await this._lexRuntimeServiceV2Client.send(
+				recognizeUtteranceCommand
+			);
+
+			const response = await this._formatUtteranceCommandOutput(data);
+			this._reportBotStatus(response, botname);
+			return response;
+		} catch (err) {
+			return Promise.reject(err);
+		}
+	}
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Providers/AWSLexV2Provider.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:6,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexV2Provider.ts&quot;,&quot;line&quot;:133,&quot;character&quot;:3,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexV2Provider.ts&quot;,&quot;line&quot;:134,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexV2Provider.ts&quot;,&quot;line&quot;:139,&quot;character&quot;:33,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexV2Provider.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:37,&quot;text&quot;:&quot;aliasId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexV2Provider.ts&quot;,&quot;line&quot;:149,&quot;character&quot;:32,&quot;text&quot;:&quot;botId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexV2Provider.ts&quot;,&quot;line&quot;:150,&quot;character&quot;:35,&quot;text&quot;:&quot;localeId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexV2Provider.ts&quot;,&quot;line&quot;:151,&quot;character&quot;:14,&quot;text&quot;:&quot;credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexV2Provider.ts&quot;,&quot;line&quot;:151,&quot;character&quot;:26,&quot;text&quot;:&quot;identityId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexV2Provider.ts&quot;,&quot;line&quot;:201,&quot;character&quot;:34,&quot;text&quot;:&quot;onComplete&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexV2Provider.ts&quot;,&quot;line&quot;:218,&quot;character&quot;:43,&quot;text&quot;:&quot;onComplete&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexV2Provider.ts&quot;,&quot;line&quot;:229,&quot;character&quot;:43,&quot;text&quot;:&quot;onComplete&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexV2Provider.ts&quot;,&quot;line&quot;:281,&quot;character&quot;:25,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexV2Provider.ts&quot;,&quot;line&quot;:280,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexV2Provider.ts&quot;,&quot;line&quot;:339,&quot;character&quot;:25,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Providers/AWSLexV2Provider.ts&quot;,&quot;line&quot;:338,&quot;character&quot;:11,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:22 GMT</p>
+    </body>
+  </html>
+  

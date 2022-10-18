@@ -1,0 +1,112 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Parser.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Parser.ts</td><td class="">50.45%</td><td class="">0%</td><td class="">111</td><td class="">56</td><td class="">55</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import { AmplifyConfig } from &#x27;./types&#x27;;
+import { ConsoleLogger as Logger } from &#x27;./Logger&#x27;;
+
+const logger = new Logger(&#x27;Parser&#x27;);
+
+export const parseMobileHubConfig = (config): AmplifyConfig =&gt; {
+	const amplifyConfig: AmplifyConfig = {};
+	// Analytics
+	if (config[&#x27;aws_mobile_analytics_app_id&#x27;]) {
+		const Analytics = {
+			AWSPinpoint: {
+				appId: config[&#x27;aws_mobile_analytics_app_id&#x27;],
+				region: config[&#x27;aws_mobile_analytics_app_region&#x27;],
+			},
+		};
+		amplifyConfig.Analytics = Analytics;
+	}
+
+	// Auth
+	if (config[&#x27;aws_cognito_identity_pool_id&#x27;] || config[&#x27;aws_user_pools_id&#x27;]) {
+		amplifyConfig.Auth = {
+			userPoolId: config[&#x27;aws_user_pools_id&#x27;],
+			userPoolWebClientId: config[&#x27;aws_user_pools_web_client_id&#x27;],
+			region: config[&#x27;aws_cognito_region&#x27;],
+			identityPoolId: config[&#x27;aws_cognito_identity_pool_id&#x27;],
+			identityPoolRegion: config[&#x27;aws_cognito_region&#x27;],
+			mandatorySignIn: config[&#x27;aws_mandatory_sign_in&#x27;] === &#x27;enable&#x27;,
+			signUpVerificationMethod:
+				config[&#x27;aws_cognito_sign_up_verification_method&#x27;] || &#x27;code&#x27;,
+		};
+	}
+
+	// Storage
+	let storageConfig;
+	if (config[&#x27;aws_user_files_s3_bucket&#x27;]) {
+		storageConfig = {
+			AWSS3: {
+				bucket: config[&#x27;aws_user_files_s3_bucket&#x27;],
+				region: config[&#x27;aws_user_files_s3_bucket_region&#x27;],
+				dangerouslyConnectToHttpEndpointForTesting:
+					config[
+						&#x27;aws_user_files_s3_dangerously_connect_to_http_endpoint_for_testing&#x27;
+					],
+			},
+		};
+	} else {
+		storageConfig = config ? config.Storage || config : {};
+	}
+
+	// Logging
+	if (config[&#x27;Logging&#x27;]) {
+		amplifyConfig.Logging = {
+			...config[&#x27;Logging&#x27;],
+			region: config[&#x27;aws_project_region&#x27;],
+		};
+	}
+
+	// Geo
+	if (config[&#x27;geo&#x27;]) {
+		amplifyConfig.Geo = Object.assign({}, config.geo);
+		if (config.geo[&#x27;amazon_location_service&#x27;]) {
+			amplifyConfig.Geo = {
+				AmazonLocationService: config.geo[&#x27;amazon_location_service&#x27;],
+			};
+		}
+	}
+
+	amplifyConfig.Analytics = Object.assign(
+		{},
+		amplifyConfig.Analytics,
+		config.Analytics
+	);
+	amplifyConfig.Auth = Object.assign({}, amplifyConfig.Auth, config.Auth);
+	amplifyConfig.Storage = Object.assign({}, storageConfig);
+	amplifyConfig.Logging = Object.assign(
+		{},
+		amplifyConfig.Logging,
+		config.Logging
+	);
+	logger.debug(&#x27;parse config&#x27;, config, &#x27;to amplifyconfig&#x27;, amplifyConfig);
+	return amplifyConfig;
+};
+
+/**
+ * @deprecated use per-function export
+ */
+export class Parser {
+	static parseMobilehubConfig = parseMobileHubConfig;
+}
+
+/**
+ * @deprecated use per-function export
+ */
+export default Parser;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:5,&quot;character&quot;:37,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:8,&quot;character&quot;:5,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:11,&quot;character&quot;:4,&quot;text&quot;:&quot;appId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:11,&quot;character&quot;:11,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:12,&quot;character&quot;:4,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:12,&quot;character&quot;:12,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:19,&quot;character&quot;:5,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:19,&quot;character&quot;:47,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:21,&quot;character&quot;:3,&quot;text&quot;:&quot;userPoolId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:21,&quot;character&quot;:15,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:22,&quot;character&quot;:3,&quot;text&quot;:&quot;userPoolWebClientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:22,&quot;character&quot;:24,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:23,&quot;character&quot;:3,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:23,&quot;character&quot;:11,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:24,&quot;character&quot;:3,&quot;text&quot;:&quot;identityPoolId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:24,&quot;character&quot;:19,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:25,&quot;character&quot;:3,&quot;text&quot;:&quot;identityPoolRegion&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:25,&quot;character&quot;:23,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:26,&quot;character&quot;:20,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:27,&quot;character&quot;:3,&quot;text&quot;:&quot;signUpVerificationMethod&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:28,&quot;character&quot;:4,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:33,&quot;character&quot;:5,&quot;text&quot;:&quot;storageConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:34,&quot;character&quot;:5,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:35,&quot;character&quot;:2,&quot;text&quot;:&quot;storageConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:37,&quot;character&quot;:4,&quot;text&quot;:&quot;bucket&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:37,&quot;character&quot;:12,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:38,&quot;character&quot;:4,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:38,&quot;character&quot;:12,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:39,&quot;character&quot;:4,&quot;text&quot;:&quot;dangerouslyConnectToHttpEndpointForTesting&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:40,&quot;character&quot;:5,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:46,&quot;character&quot;:2,&quot;text&quot;:&quot;storageConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:46,&quot;character&quot;:18,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:46,&quot;character&quot;:27,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:46,&quot;character&quot;:34,&quot;text&quot;:&quot;Storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:46,&quot;character&quot;:45,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:50,&quot;character&quot;:5,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:52,&quot;character&quot;:6,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:53,&quot;character&quot;:3,&quot;text&quot;:&quot;region&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:53,&quot;character&quot;:11,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:58,&quot;character&quot;:5,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:40,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:59,&quot;character&quot;:47,&quot;text&quot;:&quot;geo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:6,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:13,&quot;text&quot;:&quot;geo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:4,&quot;text&quot;:&quot;AmazonLocationService&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:27,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:62,&quot;character&quot;:34,&quot;text&quot;:&quot;geo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:70,&quot;character&quot;:2,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:70,&quot;character&quot;:9,&quot;text&quot;:&quot;Analytics&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:72,&quot;character&quot;:60,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:72,&quot;character&quot;:67,&quot;text&quot;:&quot;Auth&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:43,&quot;text&quot;:&quot;storageConfig&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:77,&quot;character&quot;:2,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:77,&quot;character&quot;:9,&quot;text&quot;:&quot;Logging&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Parser.ts&quot;,&quot;line&quot;:79,&quot;character&quot;:30,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:20 GMT</p>
+    </body>
+  </html>
+  

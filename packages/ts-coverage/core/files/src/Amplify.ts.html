@@ -1,0 +1,120 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Amplify.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/Amplify.ts</td><td class="">62.07%</td><td class="">0%</td><td class="">116</td><td class="">72</td><td class="">44</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import { ConsoleLogger as LoggerClass } from &#x27;./Logger&#x27;;
+
+const logger = new LoggerClass(&#x27;Amplify&#x27;);
+
+export class AmplifyClass {
+	// Everything that is `register`ed is tracked here
+	private _components = [];
+	private _config = {};
+
+	// All modules (with `getModuleName()`) are stored here for dependency injection
+	private _modules = {};
+
+	// for backward compatibility to avoid breaking change
+	// if someone is using like Amplify.Auth
+	Auth = null;
+	Analytics = null;
+	API = null;
+	Credentials = null;
+	Storage = null;
+	I18n = null;
+	Cache = null;
+	PubSub = null;
+	Interactions = null;
+	Pushnotification = null;
+	UI = null;
+	XR = null;
+	Predictions = null;
+	DataStore = null;
+	Geo = null;
+
+	Logger = LoggerClass;
+	ServiceWorker = null;
+
+	register(comp) {
+		logger.debug(&#x27;component registered in amplify&#x27;, comp);
+		this._components.push(comp);
+		if (typeof comp.getModuleName === &#x27;function&#x27;) {
+			this._modules[comp.getModuleName()] = comp;
+			this[comp.getModuleName()] = comp;
+		} else {
+			logger.debug(&#x27;no getModuleName method for component&#x27;, comp);
+		}
+
+		// Finally configure this new component(category) loaded
+		// With the new modularization changes in Amplify V3, all the Amplify
+		// component are not loaded/registered right away but when they are
+		// imported (and hence instantiated) in the client&#x27;s app. This ensures
+		// that all new components imported get correctly configured with the
+		// configuration that Amplify.configure() was called with.
+		comp.configure(this._config);
+	}
+
+	configure(config?) {
+		if (!config) return this._config;
+
+		this._config = Object.assign(this._config, config);
+		logger.debug(&#x27;amplify config&#x27;, this._config);
+
+		// Dependency Injection via property-setting.
+		// This avoids introducing a public method/interface/setter that&#x27;s difficult to remove later.
+		// Plus, it reduces `if` statements within the `constructor` and `configure` of each module
+		Object.entries(this._modules).forEach(([Name, comp]) =&gt; {
+			// e.g. Auth.*
+			Object.keys(comp).forEach(property =&gt; {
+				// e.g. Auth[&quot;Credentials&quot;] = this._modules[&quot;Credentials&quot;] when set
+				if (this._modules[property]) {
+					comp[property] = this._modules[property];
+				}
+			});
+		});
+
+		this._components.map(comp =&gt; {
+			comp.configure(this._config);
+		});
+
+		return this._config;
+	}
+
+	addPluggable(pluggable) {
+		if (
+			pluggable &amp;&amp;
+			pluggable[&#x27;getCategory&#x27;] &amp;&amp;
+			typeof pluggable[&#x27;getCategory&#x27;] === &#x27;function&#x27;
+		) {
+			this._components.map(comp =&gt; {
+				if (
+					comp[&#x27;addPluggable&#x27;] &amp;&amp;
+					typeof comp[&#x27;addPluggable&#x27;] === &#x27;function&#x27;
+				) {
+					comp.addPluggable(pluggable);
+				}
+			});
+		}
+	}
+}
+
+export const Amplify = new AmplifyClass();
+
+/**
+ * @deprecated use named import
+ */
+export default Amplify;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:14,&quot;character&quot;:1,&quot;text&quot;:&quot;Auth&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:15,&quot;character&quot;:1,&quot;text&quot;:&quot;Analytics&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:16,&quot;character&quot;:1,&quot;text&quot;:&quot;API&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:17,&quot;character&quot;:1,&quot;text&quot;:&quot;Credentials&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:18,&quot;character&quot;:1,&quot;text&quot;:&quot;Storage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:19,&quot;character&quot;:1,&quot;text&quot;:&quot;I18n&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:20,&quot;character&quot;:1,&quot;text&quot;:&quot;Cache&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:21,&quot;character&quot;:1,&quot;text&quot;:&quot;PubSub&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:22,&quot;character&quot;:1,&quot;text&quot;:&quot;Interactions&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:23,&quot;character&quot;:1,&quot;text&quot;:&quot;Pushnotification&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:24,&quot;character&quot;:1,&quot;text&quot;:&quot;UI&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:25,&quot;character&quot;:1,&quot;text&quot;:&quot;XR&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:26,&quot;character&quot;:1,&quot;text&quot;:&quot;Predictions&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:27,&quot;character&quot;:1,&quot;text&quot;:&quot;DataStore&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:28,&quot;character&quot;:1,&quot;text&quot;:&quot;Geo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:31,&quot;character&quot;:1,&quot;text&quot;:&quot;ServiceWorker&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:33,&quot;character&quot;:10,&quot;text&quot;:&quot;comp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:34,&quot;character&quot;:50,&quot;text&quot;:&quot;comp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:35,&quot;character&quot;:24,&quot;text&quot;:&quot;comp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:36,&quot;character&quot;:13,&quot;text&quot;:&quot;comp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:36,&quot;character&quot;:18,&quot;text&quot;:&quot;getModuleName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:37,&quot;character&quot;:17,&quot;text&quot;:&quot;comp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:37,&quot;character&quot;:22,&quot;text&quot;:&quot;getModuleName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:38,&quot;character&quot;:8,&quot;text&quot;:&quot;comp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:38,&quot;character&quot;:13,&quot;text&quot;:&quot;getModuleName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:40,&quot;character&quot;:57,&quot;text&quot;:&quot;comp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:49,&quot;character&quot;:2,&quot;text&quot;:&quot;comp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:49,&quot;character&quot;:7,&quot;text&quot;:&quot;configure&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:52,&quot;character&quot;:11,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:53,&quot;character&quot;:7,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:55,&quot;character&quot;:45,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:71,&quot;character&quot;:23,&quot;text&quot;:&quot;comp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:72,&quot;character&quot;:3,&quot;text&quot;:&quot;comp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:72,&quot;character&quot;:8,&quot;text&quot;:&quot;configure&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:78,&quot;character&quot;:14,&quot;text&quot;:&quot;pluggable&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:80,&quot;character&quot;:3,&quot;text&quot;:&quot;pluggable&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:81,&quot;character&quot;:3,&quot;text&quot;:&quot;pluggable&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:82,&quot;character&quot;:10,&quot;text&quot;:&quot;pluggable&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:84,&quot;character&quot;:24,&quot;text&quot;:&quot;comp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:86,&quot;character&quot;:5,&quot;text&quot;:&quot;comp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:87,&quot;character&quot;:12,&quot;text&quot;:&quot;comp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:89,&quot;character&quot;:5,&quot;text&quot;:&quot;comp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:89,&quot;character&quot;:10,&quot;text&quot;:&quot;addPluggable&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/Amplify.ts&quot;,&quot;line&quot;:89,&quot;character&quot;:23,&quot;text&quot;:&quot;pluggable&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:20 GMT</p>
+    </body>
+  </html>
+  

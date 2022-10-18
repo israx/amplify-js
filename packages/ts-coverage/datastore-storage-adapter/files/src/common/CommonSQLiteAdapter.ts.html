@@ -1,0 +1,496 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>CommonSQLiteAdapter.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/common/CommonSQLiteAdapter.ts</td><td class="">96.78%</td><td class="">0%</td><td class="">808</td><td class="">782</td><td class="">26</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import { ConsoleLogger as Logger } from &#x27;@aws-amplify/core&#x27;;
+import {
+	generateSchemaStatements,
+	queryByIdStatement,
+	modelUpdateStatement,
+	modelInsertStatement,
+	queryAllStatement,
+	queryOneStatement,
+	deleteByIdStatement,
+	deleteByPredicateStatement,
+} from &#x27;../common/SQLiteUtils&#x27;;
+
+import {
+	StorageAdapter,
+	ModelInstanceCreator,
+	ModelPredicateCreator,
+	ModelSortPredicateCreator,
+	InternalSchema,
+	isPredicateObj,
+	ModelPredicate,
+	NamespaceResolver,
+	OpType,
+	PaginationInput,
+	PersistentModel,
+	PersistentModelConstructor,
+	PredicateObject,
+	PredicatesGroup,
+	QueryOne,
+	utils,
+} from &#x27;@aws-amplify/datastore&#x27;;
+import { CommonSQLiteDatabase, ParameterizedStatement, ModelInstanceMetadataWithId } from &#x27;./types&#x27;;
+
+const { traverseModel, validatePredicate, isModelConstructor } = utils;
+
+const logger = new Logger(&#x27;DataStore&#x27;);
+
+export class CommonSQLiteAdapter implements StorageAdapter {
+	private schema: InternalSchema;
+	private namespaceResolver: NamespaceResolver;
+	private modelInstanceCreator: ModelInstanceCreator;
+	private getModelConstructorByModelName: (
+		namsespaceName: string,
+		modelName: string
+	) =&gt; PersistentModelConstructor&lt;any&gt;;
+	private db: CommonSQLiteDatabase;
+	private initPromise: Promise&lt;void&gt;;
+	private resolve: (value?: any) =&gt; void;
+	private reject: (value?: any) =&gt; void;
+
+	constructor(db: CommonSQLiteDatabase) {
+		this.db = db;
+	}
+
+	public async setUp(
+		theSchema: InternalSchema,
+		namespaceResolver: NamespaceResolver,
+		modelInstanceCreator: ModelInstanceCreator,
+		getModelConstructorByModelName: (
+			namsespaceName: string,
+			modelName: string
+		) =&gt; PersistentModelConstructor&lt;any&gt;
+	) {
+		if (!this.initPromise) {
+			this.initPromise = new Promise((res, rej) =&gt; {
+				this.resolve = res;
+				this.reject = rej;
+			});
+		} else {
+			await this.initPromise;
+			return;
+		}
+		this.schema = theSchema;
+		this.namespaceResolver = namespaceResolver;
+		this.modelInstanceCreator = modelInstanceCreator;
+		this.getModelConstructorByModelName = getModelConstructorByModelName;
+
+		try {
+			await this.db.init();
+			const statements = generateSchemaStatements(this.schema);
+			await this.db.createSchema(statements);
+
+			this.resolve();
+		} catch (error) {
+			this.reject(error);
+		}
+	}
+
+	async clear(): Promise&lt;void&gt; {
+		await this.db.clear();
+
+		this.initPromise = undefined;
+	}
+
+	async save&lt;T extends PersistentModel&gt;(
+		model: T,
+		condition?: ModelPredicate&lt;T&gt;
+	): Promise&lt;[T, OpType.INSERT | OpType.UPDATE][]&gt; {
+		const modelConstructor = Object.getPrototypeOf(model)
+			.constructor as PersistentModelConstructor&lt;T&gt;;
+		const { name: tableName } = modelConstructor;
+		const connectedModels = traverseModel(
+			modelConstructor.name,
+			model,
+			this.schema.namespaces[this.namespaceResolver(modelConstructor)],
+			this.modelInstanceCreator,
+			this.getModelConstructorByModelName
+		);
+		const connectionStoreNames = Object.values(connectedModels).map(
+			({ modelName, item, instance }) =&gt; {
+				return { modelName, item, instance };
+			}
+		);
+
+		const [queryStatement, params] = queryByIdStatement(model.id, tableName);
+
+		const fromDB = await this.db.get(queryStatement, params);
+
+		if (condition &amp;&amp; fromDB) {
+			const predicates = ModelPredicateCreator.getPredicates(condition);
+			const { predicates: predicateObjs, type } = predicates;
+
+			const isValid = validatePredicate(fromDB, type, predicateObjs);
+
+			if (!isValid) {
+				const msg = &#x27;Conditional update failed&#x27;;
+				logger.error(msg, { model: fromDB, condition: predicateObjs });
+
+				throw new Error(msg);
+			}
+		}
+
+		const result: [T, OpType.INSERT | OpType.UPDATE][] = [];
+		const saveStatements = new Set&lt;ParameterizedStatement&gt;();
+
+		for await (const resItem of connectionStoreNames) {
+			const { modelName, item, instance } = resItem;
+			const { id } = item;
+
+			const [queryStatement, params] = queryByIdStatement(id, modelName);
+			const fromDB = await this.db.get(queryStatement, params);
+
+			const opType: OpType =
+				fromDB === undefined ? OpType.INSERT : OpType.UPDATE;
+
+			const saveStatement = fromDB
+				? modelUpdateStatement(instance, modelName)
+				: modelInsertStatement(instance, modelName);
+
+			if (id === model.id || opType === OpType.INSERT) {
+				saveStatements.add(saveStatement);
+				result.push([instance, opType]);
+			}
+		}
+
+		await this.db.batchSave(saveStatements);
+
+		return result;
+	}
+
+	private async load&lt;T&gt;(
+		namespaceName: string,
+		srcModelName: string,
+		records: T[]
+	): Promise&lt;T[]&gt; {
+		const namespace = this.schema.namespaces[namespaceName];
+		const relations = namespace.relationships[srcModelName].relationTypes;
+		const connectionTableNames = relations.map(({ modelName }) =&gt; modelName);
+
+		const modelConstructor = this.getModelConstructorByModelName(
+			namespaceName,
+			srcModelName
+		);
+
+		if (connectionTableNames.length === 0) {
+			return records.map(record =&gt;
+				this.modelInstanceCreator(modelConstructor, record)
+			);
+		}
+
+		for await (const relation of relations) {
+			const {
+				fieldName,
+				modelName: tableName,
+				targetName,
+				relationType,
+			} = relation;
+
+			const modelConstructor = this.getModelConstructorByModelName(
+				namespaceName,
+				tableName
+			);
+
+			// TODO: use SQL JOIN instead
+			switch (relationType) {
+				case &#x27;HAS_ONE&#x27;:
+					for await (const recordItem of records) {
+						const getByfield = recordItem[targetName] ? targetName : fieldName;
+						if (!recordItem[getByfield]) break;
+
+						const [queryStatement, params] = queryByIdStatement(
+							recordItem[getByfield],
+							tableName
+						);
+
+						const connectionRecord = await this.db.get(queryStatement, params);
+
+						recordItem[fieldName] =
+							connectionRecord &amp;&amp;
+							this.modelInstanceCreator(modelConstructor, connectionRecord);
+					}
+
+					break;
+				case &#x27;BELONGS_TO&#x27;:
+					for await (const recordItem of records) {
+						if (recordItem[targetName]) {
+							const [queryStatement, params] = queryByIdStatement(
+								recordItem[targetName],
+								tableName
+							);
+							const connectionRecord = await this.db.get(
+								queryStatement,
+								params
+							);
+
+							recordItem[fieldName] =
+								connectionRecord &amp;&amp;
+								this.modelInstanceCreator(modelConstructor, connectionRecord);
+							delete recordItem[targetName];
+						}
+					}
+
+					break;
+				case &#x27;HAS_MANY&#x27;:
+					// TODO: Lazy loading
+					break;
+				default:
+					const _: never = relationType as never;
+					throw new Error(`invalid relation type ${relationType}`);
+					break;
+			}
+		}
+
+		return records.map(record =&gt;
+			this.modelInstanceCreator(modelConstructor, record)
+		);
+	}
+
+	async query&lt;T extends PersistentModel&gt;(
+		modelConstructor: PersistentModelConstructor&lt;T&gt;,
+		predicate?: ModelPredicate&lt;T&gt;,
+		pagination?: PaginationInput&lt;T&gt;
+	): Promise&lt;T[]&gt; {
+		const { name: tableName } = modelConstructor;
+		const namespaceName = this.namespaceResolver(modelConstructor);
+
+		const predicates =
+			predicate &amp;&amp; ModelPredicateCreator.getPredicates(predicate);
+		const sortPredicates =
+			pagination &amp;&amp;
+			pagination.sort &amp;&amp;
+			ModelSortPredicateCreator.getPredicates(pagination.sort);
+		const limit = pagination &amp;&amp; pagination.limit;
+		const page = limit &amp;&amp; pagination.page;
+
+		const queryById = predicates &amp;&amp; this.idFromPredicate(predicates);
+
+		const records: T[] = &lt;T[]&gt;await (async () =&gt; {
+			if (queryById) {
+				const record = await this.getById(tableName, queryById);
+				return record ? [record] : [];
+			}
+
+			const [queryStatement, params] = queryAllStatement(
+				tableName,
+				predicates,
+				sortPredicates,
+				limit,
+				page
+			);
+
+			return await this.db.getAll(queryStatement, params);
+		})();
+
+		return await this.load(namespaceName, modelConstructor.name, records);
+	}
+
+	private async getById&lt;T extends PersistentModel&gt;(
+		tableName: string,
+		id: string
+	): Promise&lt;T&gt; {
+		const [queryStatement, params] = queryByIdStatement(id, tableName);
+		const record = await this.db.get&lt;T&gt;(queryStatement, params);
+
+		return record;
+	}
+
+	private idFromPredicate&lt;T extends PersistentModel&gt;(
+		predicates: PredicatesGroup&lt;T&gt;
+	) {
+		const { predicates: predicateObjs } = predicates;
+		const idPredicate =
+			predicateObjs.length === 1 &amp;&amp;
+			(predicateObjs.find(
+				p =&gt; isPredicateObj(p) &amp;&amp; p.field === &#x27;id&#x27; &amp;&amp; p.operator === &#x27;eq&#x27;
+			) as PredicateObject&lt;T&gt;);
+
+		return idPredicate &amp;&amp; idPredicate.operand;
+	}
+
+	async queryOne&lt;T extends PersistentModel&gt;(
+		modelConstructor: PersistentModelConstructor&lt;T&gt;,
+		firstOrLast: QueryOne = QueryOne.FIRST
+	): Promise&lt;T | undefined&gt; {
+		const { name: tableName } = modelConstructor;
+		const [queryStatement, params] = queryOneStatement(firstOrLast, tableName);
+
+		const result = await this.db.get&lt;T&gt;(queryStatement, params);
+
+		const modelInstance =
+			result &amp;&amp; this.modelInstanceCreator(modelConstructor, result);
+
+		return modelInstance;
+	}
+
+	// Currently does not cascade
+	// TODO: use FKs in relations and have `ON DELETE CASCADE` set
+	// For Has Many and Has One relations to have SQL handle cascades automatically
+	async delete&lt;T extends PersistentModel&gt;(
+		modelOrModelConstructor: T | PersistentModelConstructor&lt;T&gt;,
+		condition?: ModelPredicate&lt;T&gt;
+	): Promise&lt;[T[], T[]]&gt; {
+		if (isModelConstructor(modelOrModelConstructor)) {
+			const modelConstructor = modelOrModelConstructor;
+			const namespaceName = this.namespaceResolver(modelConstructor);
+			const { name: tableName } = modelConstructor;
+
+			const predicates =
+				condition &amp;&amp; ModelPredicateCreator.getPredicates(condition);
+
+			const queryStatement = queryAllStatement(tableName, predicates);
+			const deleteStatement = deleteByPredicateStatement(tableName, predicates);
+
+			const models = await this.db.selectAndDelete(
+				queryStatement,
+				deleteStatement
+			);
+
+			const modelInstances = await this.load(
+				namespaceName,
+				modelConstructor.name,
+				models
+			);
+
+			return [modelInstances, modelInstances];
+		} else {
+			const model = modelOrModelConstructor as T;
+			const modelConstructor = Object.getPrototypeOf(model)
+				.constructor as PersistentModelConstructor&lt;T&gt;;
+			const { name: tableName } = modelConstructor;
+
+			if (condition) {
+				const [queryStatement, params] = queryByIdStatement(
+					model.id,
+					tableName
+				);
+
+				const fromDB = await this.db.get(queryStatement, params);
+
+				if (fromDB === undefined) {
+					const msg = &#x27;Model instance not found in storage&#x27;;
+					logger.warn(msg, { model });
+
+					return [[model], []];
+				}
+
+				const predicates = ModelPredicateCreator.getPredicates(condition);
+				const { predicates: predicateObjs, type } = predicates;
+
+				const isValid = validatePredicate(fromDB, type, predicateObjs);
+
+				if (!isValid) {
+					const msg = &#x27;Conditional update failed&#x27;;
+					logger.error(msg, { model: fromDB, condition: predicateObjs });
+
+					throw new Error(msg);
+				}
+
+				const [deleteStatement, deleteParams] = deleteByIdStatement(
+					model.id,
+					tableName
+				);
+				await this.db.save(deleteStatement, deleteParams);
+
+				return [[model], [model]];
+			} else {
+				const [deleteStatement, params] = deleteByIdStatement(
+					model.id,
+					tableName
+				);
+				await this.db.save(deleteStatement, params);
+
+				return [[model], [model]];
+			}
+		}
+	}
+
+	async batchSave&lt;T extends PersistentModel&gt;(
+		modelConstructor: PersistentModelConstructor&lt;any&gt;,
+		items: ModelInstanceMetadataWithId[]
+	): Promise&lt;[T, OpType][]&gt; {
+		const { name: tableName } = modelConstructor;
+		const result: [T, OpType][] = [];
+
+		const itemsToSave: T[] = [];
+		// To determine whether an item should result in an insert or update operation
+		// We first need to query the local DB on the item id
+		const queryStatements = new Set&lt;ParameterizedStatement&gt;();
+		// Deletes don&#x27;t need to be queried first, because if the item doesn&#x27;t exist,
+		// the delete operation will be a no-op
+		const deleteStatements = new Set&lt;ParameterizedStatement&gt;();
+		const saveStatements = new Set&lt;ParameterizedStatement&gt;();
+
+		for (const item of items) {
+			const connectedModels = traverseModel(
+				modelConstructor.name,
+				this.modelInstanceCreator(modelConstructor, item),
+				this.schema.namespaces[this.namespaceResolver(modelConstructor)],
+				this.modelInstanceCreator,
+				this.getModelConstructorByModelName
+			);
+
+			const { id, _deleted } = item;
+
+			const { instance } = connectedModels.find(
+				({ instance }) =&gt; instance.id === id
+			);
+
+			if (_deleted) {
+				// create the delete statements right away
+				const deleteStatement = deleteByIdStatement(instance.id, tableName);
+				deleteStatements.add(deleteStatement);
+				result.push([&lt;T&gt;(&lt;unknown&gt;item), OpType.DELETE]);
+			} else {
+				// query statements for the saves at first
+				const queryStatement = queryByIdStatement(id, tableName);
+				queryStatements.add(queryStatement);
+				// combination of insert and update items
+				itemsToSave.push(instance);
+			}
+		}
+
+		// returns the query results for each of the save items
+		const queryResponses = await this.db.batchQuery(queryStatements);
+
+		queryResponses.forEach((response, idx) =&gt; {
+			if (response === undefined) {
+				const insertStatement = modelInsertStatement(
+					itemsToSave[idx],
+					tableName
+				);
+				saveStatements.add(insertStatement);
+				result.push([&lt;T&gt;(&lt;unknown&gt;itemsToSave[idx]), OpType.INSERT]);
+			} else {
+				const updateStatement = modelUpdateStatement(
+					itemsToSave[idx],
+					tableName
+				);
+				saveStatements.add(updateStatement);
+				result.push([&lt;T&gt;(&lt;unknown&gt;itemsToSave[idx]), OpType.UPDATE]);
+			}
+		});
+
+		// perform all of the insert/update/delete operations in a single transaction
+		await this.db.batchSave(saveStatements, deleteStatements);
+
+		return result;
+	}
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:46,&quot;character&quot;:19,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:47,&quot;character&quot;:18,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:83,&quot;character&quot;:15,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:82,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:113,&quot;character&quot;:60,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:121,&quot;character&quot;:9,&quot;text&quot;:&quot;isValid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:123,&quot;character&quot;:8,&quot;text&quot;:&quot;isValid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:136,&quot;character&quot;:11,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:7,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:20,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:264,&quot;character&quot;:8,&quot;text&quot;:&quot;queryById&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:267,&quot;character&quot;:7,&quot;text&quot;:&quot;queryById&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:306,&quot;character&quot;:36,&quot;text&quot;:&quot;operand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:362,&quot;character&quot;:11,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:378,&quot;character&quot;:10,&quot;text&quot;:&quot;isValid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:380,&quot;character&quot;:9,&quot;text&quot;:&quot;isValid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:388,&quot;character&quot;:11,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:396,&quot;character&quot;:11,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:433,&quot;character&quot;:11,&quot;text&quot;:&quot;instance&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:434,&quot;character&quot;:7,&quot;text&quot;:&quot;instance&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:434,&quot;character&quot;:22,&quot;text&quot;:&quot;instance&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:434,&quot;character&quot;:31,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:439,&quot;character&quot;:48,&quot;text&quot;:&quot;instance&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:439,&quot;character&quot;:57,&quot;text&quot;:&quot;id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:454,&quot;character&quot;:26,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/common/CommonSQLiteAdapter.ts&quot;,&quot;line&quot;:455,&quot;character&quot;:7,&quot;text&quot;:&quot;response&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:31 GMT</p>
+    </body>
+  </html>
+  

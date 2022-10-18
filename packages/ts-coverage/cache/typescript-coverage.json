@@ -1,0 +1,1913 @@
+{
+  "fileCounts": {},
+  "anys": [
+    {
+      "file": "lib/types/Cache.d.ts",
+      "line": 5,
+      "character": 25,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/Cache.d.ts",
+      "line": 42,
+      "character": 4,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "lib/StorageCache.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "checkConfig",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 9,
+      "character": 16,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 15,
+      "character": 28,
+      "text": "amount",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 21,
+      "character": 28,
+      "text": "amount",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 30,
+      "character": 17,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 30,
+      "character": 28,
+      "text": "prefixedKey",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 38,
+      "character": 15,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 45,
+      "character": 16,
+      "text": "prefixedKey",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 45,
+      "character": 34,
+      "text": "size",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 53,
+      "character": 13,
+      "text": "prefixedKey",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 53,
+      "character": 31,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 61,
+      "character": 15,
+      "text": "itemSize",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 69,
+      "character": 17,
+      "text": "itemSize",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 85,
+      "character": 17,
+      "text": "keys",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 85,
+      "character": 28,
+      "text": "sizeToPop",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 103,
+      "character": 12,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 103,
+      "character": 22,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 103,
+      "character": 34,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 118,
+      "character": 12,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 118,
+      "character": 22,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 126,
+      "character": 15,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "lib/AsyncStorageCache.d.ts",
+      "line": 150,
+      "character": 19,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib/BrowserStorageCache.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "_decreaseCurSizeInBytes",
+      "kind": 1
+    },
+    {
+      "file": "lib/BrowserStorageCache.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "_increaseCurSizeInBytes",
+      "kind": 1
+    },
+    {
+      "file": "lib/BrowserStorageCache.d.ts",
+      "line": 34,
+      "character": 12,
+      "text": "_refreshItem",
+      "kind": 1
+    },
+    {
+      "file": "lib/BrowserStorageCache.d.ts",
+      "line": 43,
+      "character": 12,
+      "text": "_isExpired",
+      "kind": 1
+    },
+    {
+      "file": "lib/BrowserStorageCache.d.ts",
+      "line": 51,
+      "character": 12,
+      "text": "_removeItem",
+      "kind": 1
+    },
+    {
+      "file": "lib/BrowserStorageCache.d.ts",
+      "line": 60,
+      "character": 12,
+      "text": "_setItem",
+      "kind": 1
+    },
+    {
+      "file": "lib/BrowserStorageCache.d.ts",
+      "line": 69,
+      "character": 12,
+      "text": "_sizeToPop",
+      "kind": 1
+    },
+    {
+      "file": "lib/BrowserStorageCache.d.ts",
+      "line": 78,
+      "character": 12,
+      "text": "_isCacheFull",
+      "kind": 1
+    },
+    {
+      "file": "lib/BrowserStorageCache.d.ts",
+      "line": 87,
+      "character": 12,
+      "text": "_findValidKeys",
+      "kind": 1
+    },
+    {
+      "file": "lib/BrowserStorageCache.d.ts",
+      "line": 97,
+      "character": 12,
+      "text": "_popOutItems",
+      "kind": 1
+    },
+    {
+      "file": "lib/InMemoryCache.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "cacheList",
+      "kind": 1
+    },
+    {
+      "file": "lib/InMemoryCache.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "curSizeInBytes",
+      "kind": 1
+    },
+    {
+      "file": "lib/InMemoryCache.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "maxPriority",
+      "kind": 1
+    },
+    {
+      "file": "lib/InMemoryCache.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "cacheSizeLimit",
+      "kind": 1
+    },
+    {
+      "file": "lib/InMemoryCache.d.ts",
+      "line": 26,
+      "character": 12,
+      "text": "_decreaseCurSizeInBytes",
+      "kind": 1
+    },
+    {
+      "file": "lib/InMemoryCache.d.ts",
+      "line": 32,
+      "character": 12,
+      "text": "_increaseCurSizeInBytes",
+      "kind": 1
+    },
+    {
+      "file": "lib/InMemoryCache.d.ts",
+      "line": 40,
+      "character": 12,
+      "text": "_isExpired",
+      "kind": 1
+    },
+    {
+      "file": "lib/InMemoryCache.d.ts",
+      "line": 47,
+      "character": 12,
+      "text": "_removeItem",
+      "kind": 1
+    },
+    {
+      "file": "lib/InMemoryCache.d.ts",
+      "line": 56,
+      "character": 12,
+      "text": "_setItem",
+      "kind": 1
+    },
+    {
+      "file": "lib/InMemoryCache.d.ts",
+      "line": 64,
+      "character": 12,
+      "text": "_isCacheFull",
+      "kind": 1
+    },
+    {
+      "file": "lib/InMemoryCache.d.ts",
+      "line": 70,
+      "character": 12,
+      "text": "containsKey",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Cache.d.ts",
+      "line": 5,
+      "character": 25,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Cache.d.ts",
+      "line": 42,
+      "character": 4,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/StorageCache.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "checkConfig",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 9,
+      "character": 16,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 15,
+      "character": 28,
+      "text": "amount",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 21,
+      "character": 28,
+      "text": "amount",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 30,
+      "character": 17,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 30,
+      "character": 28,
+      "text": "prefixedKey",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 38,
+      "character": 15,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 45,
+      "character": 16,
+      "text": "prefixedKey",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 45,
+      "character": 34,
+      "text": "size",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 53,
+      "character": 13,
+      "text": "prefixedKey",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 53,
+      "character": 31,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 61,
+      "character": 15,
+      "text": "itemSize",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 69,
+      "character": 17,
+      "text": "itemSize",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 85,
+      "character": 17,
+      "text": "keys",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 85,
+      "character": 28,
+      "text": "sizeToPop",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 103,
+      "character": 12,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 103,
+      "character": 22,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 103,
+      "character": 34,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 118,
+      "character": 12,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 118,
+      "character": 22,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 126,
+      "character": 15,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/AsyncStorageCache.d.ts",
+      "line": 150,
+      "character": 19,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/BrowserStorageCache.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "_decreaseCurSizeInBytes",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/BrowserStorageCache.d.ts",
+      "line": 24,
+      "character": 12,
+      "text": "_increaseCurSizeInBytes",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/BrowserStorageCache.d.ts",
+      "line": 34,
+      "character": 12,
+      "text": "_refreshItem",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/BrowserStorageCache.d.ts",
+      "line": 43,
+      "character": 12,
+      "text": "_isExpired",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/BrowserStorageCache.d.ts",
+      "line": 51,
+      "character": 12,
+      "text": "_removeItem",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/BrowserStorageCache.d.ts",
+      "line": 60,
+      "character": 12,
+      "text": "_setItem",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/BrowserStorageCache.d.ts",
+      "line": 69,
+      "character": 12,
+      "text": "_sizeToPop",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/BrowserStorageCache.d.ts",
+      "line": 78,
+      "character": 12,
+      "text": "_isCacheFull",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/BrowserStorageCache.d.ts",
+      "line": 87,
+      "character": 12,
+      "text": "_findValidKeys",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/BrowserStorageCache.d.ts",
+      "line": 97,
+      "character": 12,
+      "text": "_popOutItems",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/InMemoryCache.d.ts",
+      "line": 11,
+      "character": 12,
+      "text": "cacheList",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/InMemoryCache.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "curSizeInBytes",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/InMemoryCache.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "maxPriority",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/InMemoryCache.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "cacheSizeLimit",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/InMemoryCache.d.ts",
+      "line": 26,
+      "character": 12,
+      "text": "_decreaseCurSizeInBytes",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/InMemoryCache.d.ts",
+      "line": 32,
+      "character": 12,
+      "text": "_increaseCurSizeInBytes",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/InMemoryCache.d.ts",
+      "line": 40,
+      "character": 12,
+      "text": "_isExpired",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/InMemoryCache.d.ts",
+      "line": 47,
+      "character": 12,
+      "text": "_removeItem",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/InMemoryCache.d.ts",
+      "line": 56,
+      "character": 12,
+      "text": "_setItem",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/InMemoryCache.d.ts",
+      "line": 64,
+      "character": 12,
+      "text": "_isCacheFull",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/InMemoryCache.d.ts",
+      "line": 70,
+      "character": 12,
+      "text": "containsKey",
+      "kind": 1
+    },
+    {
+      "file": "lib/Utils/CacheList.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "head",
+      "kind": 1
+    },
+    {
+      "file": "lib/Utils/CacheList.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "tail",
+      "kind": 1
+    },
+    {
+      "file": "lib/Utils/CacheList.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "hashtable",
+      "kind": 1
+    },
+    {
+      "file": "lib/Utils/CacheList.d.ts",
+      "line": 15,
+      "character": 12,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "lib/Utils/CacheList.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "insertNodeToHead",
+      "kind": 1
+    },
+    {
+      "file": "lib/Utils/CacheList.d.ts",
+      "line": 31,
+      "character": 12,
+      "text": "removeNode",
+      "kind": 1
+    },
+    {
+      "file": "lib/Utils/CacheUtils.d.ts",
+      "line": 17,
+      "character": 34,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Utils/CacheList.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "head",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Utils/CacheList.d.ts",
+      "line": 13,
+      "character": 12,
+      "text": "tail",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Utils/CacheList.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "hashtable",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Utils/CacheList.d.ts",
+      "line": 15,
+      "character": 12,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Utils/CacheList.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "insertNodeToHead",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Utils/CacheList.d.ts",
+      "line": 31,
+      "character": 12,
+      "text": "removeNode",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Utils/CacheUtils.d.ts",
+      "line": 17,
+      "character": 34,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Cache.ts",
+      "line": 18,
+      "character": 22,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Cache.ts",
+      "line": 71,
+      "character": 1,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Utils/CacheUtils.ts",
+      "line": 65,
+      "character": 26,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Utils/CacheUtils.ts",
+      "line": 70,
+      "character": 19,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Utils/CacheUtils.ts",
+      "line": 73,
+      "character": 20,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Utils/CacheUtils.ts",
+      "line": 75,
+      "character": 9,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 30,
+      "character": 13,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 31,
+      "character": 8,
+      "text": "cache_config",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 31,
+      "character": 23,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 32,
+      "character": 38,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 46,
+      "character": 31,
+      "text": "amount",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 50,
+      "character": 14,
+      "text": "amount",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 59,
+      "character": 31,
+      "text": "amount",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 63,
+      "character": 14,
+      "text": "amount",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 75,
+      "character": 20,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 75,
+      "character": 26,
+      "text": "prefixedKey",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 76,
+      "character": 2,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 76,
+      "character": 7,
+      "text": "visitedTime",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 77,
+      "character": 57,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 78,
+      "character": 9,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 88,
+      "character": 18,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 90,
+      "character": 8,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 91,
+      "character": 23,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 91,
+      "character": 28,
+      "text": "expires",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 103,
+      "character": 19,
+      "text": "prefixedKey",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 103,
+      "character": 32,
+      "text": "size",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 104,
+      "character": 8,
+      "text": "itemSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 104,
+      "character": 19,
+      "text": "size",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 105,
+      "character": 5,
+      "text": "size",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 106,
+      "character": 57,
+      "text": "byteSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 108,
+      "character": 37,
+      "text": "itemSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 115,
+      "character": 38,
+      "text": "itemSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 116,
+      "character": 42,
+      "text": "removeItemError",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 113,
+      "character": 11,
+      "text": "removeItemError",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 127,
+      "character": 16,
+      "text": "prefixedKey",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 127,
+      "character": 29,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 129,
+      "character": 37,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 129,
+      "character": 42,
+      "text": "byteSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 133,
+      "character": 58,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 136,
+      "character": 38,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 136,
+      "character": 43,
+      "text": "byteSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 137,
+      "character": 38,
+      "text": "setItemErr",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 134,
+      "character": 11,
+      "text": "setItemErr",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 148,
+      "character": 18,
+      "text": "itemSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 150,
+      "character": 36,
+      "text": "itemSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 165,
+      "character": 20,
+      "text": "itemSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 167,
+      "character": 3,
+      "text": "itemSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 184,
+      "character": 9,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 186,
+      "character": 4,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 186,
+      "character": 8,
+      "text": "indexOf",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 187,
+      "character": 4,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 189,
+      "character": 30,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 190,
+      "character": 28,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 192,
+      "character": 15,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 207,
+      "character": 20,
+      "text": "keys",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 207,
+      "character": 26,
+      "text": "sizeToPop",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 209,
+      "character": 6,
+      "text": "remainedSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 209,
+      "character": 21,
+      "text": "sizeToPop",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 210,
+      "character": 22,
+      "text": "keys",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 210,
+      "character": 27,
+      "text": "length",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 211,
+      "character": 42,
+      "text": "keys",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 213,
+      "character": 10,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 214,
+      "character": 15,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 220,
+      "character": 14,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 220,
+      "character": 17,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 221,
+      "character": 7,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 221,
+      "character": 9,
+      "text": "priority",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 221,
+      "character": 20,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 221,
+      "character": 22,
+      "text": "priority",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 223,
+      "character": 14,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 223,
+      "character": 16,
+      "text": "priority",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 223,
+      "character": 27,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 223,
+      "character": 29,
+      "text": "priority",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 226,
+      "character": 8,
+      "text": "a",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 226,
+      "character": 10,
+      "text": "visitedTime",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 226,
+      "character": 24,
+      "text": "b",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 226,
+      "character": 26,
+      "text": "visitedTime",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 234,
+      "character": 35,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 234,
+      "character": 49,
+      "text": "byteSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 235,
+      "character": 3,
+      "text": "remainedSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 235,
+      "character": 28,
+      "text": "byteSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 236,
+      "character": 7,
+      "text": "remainedSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 259,
+      "character": 15,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 259,
+      "character": 20,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 259,
+      "character": 27,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 261,
+      "character": 23,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 261,
+      "character": 40,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 261,
+      "character": 63,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 263,
+      "character": 46,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 273,
+      "character": 13,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 279,
+      "character": 3,
+      "text": "priority",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 280,
+      "character": 4,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 280,
+      "character": 15,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 280,
+      "character": 23,
+      "text": "priority",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 281,
+      "character": 7,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 281,
+      "character": 15,
+      "text": "priority",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 283,
+      "character": 3,
+      "text": "expires",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 284,
+      "character": 4,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 284,
+      "character": 15,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 284,
+      "character": 23,
+      "text": "expires",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 285,
+      "character": 7,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 285,
+      "character": 15,
+      "text": "expires",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 289,
+      "character": 23,
+      "text": "priority",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 289,
+      "character": 56,
+      "text": "priority",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 301,
+      "character": 22,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 310,
+      "character": 56,
+      "text": "byteSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 325,
+      "character": 34,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 324,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 343,
+      "character": 15,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 343,
+      "character": 20,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 344,
+      "character": 35,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 344,
+      "character": 55,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 345,
+      "character": 6,
+      "text": "ret",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 346,
+      "character": 46,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 357,
+      "character": 3,
+      "text": "ret",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 358,
+      "character": 7,
+      "text": "ret",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 361,
+      "character": 57,
+      "text": "byteSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 364,
+      "character": 9,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 365,
+      "character": 5,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 365,
+      "character": 36,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 366,
+      "character": 12,
+      "text": "item",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 366,
+      "character": 17,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 370,
+      "character": 7,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 370,
+      "character": 18,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 370,
+      "character": 26,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 371,
+      "character": 10,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 371,
+      "character": 16,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 371,
+      "character": 24,
+      "text": "callback",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 372,
+      "character": 8,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 373,
+      "character": 18,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 373,
+      "character": 23,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 373,
+      "character": 28,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 375,
+      "character": 11,
+      "text": "val",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 379,
+      "character": 34,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 378,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 391,
+      "character": 18,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 392,
+      "character": 38,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 393,
+      "character": 46,
+      "text": "key",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 405,
+      "character": 56,
+      "text": "byteSize",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 408,
+      "character": 37,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 407,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 435,
+      "character": 32,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 434,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 472,
+      "character": 37,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 471,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 482,
+      "character": 16,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 483,
+      "character": 6,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 483,
+      "character": 13,
+      "text": "keyPrefix",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 485,
+      "character": 3,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 485,
+      "character": 10,
+      "text": "keyPrefix",
+      "kind": 1
+    },
+    {
+      "file": "src/AsyncStorageCache.ts",
+      "line": 487,
+      "character": 31,
+      "text": "config",
+      "kind": 1
+    },
+    {
+      "file": "src/BrowserStorageCache.ts",
+      "line": 110,
+      "character": 58,
+      "text": "byteSize",
+      "kind": 1
+    },
+    {
+      "file": "src/BrowserStorageCache.ts",
+      "line": 133,
+      "character": 38,
+      "text": "setItemErr",
+      "kind": 1
+    },
+    {
+      "file": "src/BrowserStorageCache.ts",
+      "line": 130,
+      "character": 11,
+      "text": "setItemErr",
+      "kind": 1
+    },
+    {
+      "file": "src/BrowserStorageCache.ts",
+      "line": 320,
+      "character": 50,
+      "text": "byteSize",
+      "kind": 1
+    },
+    {
+      "file": "src/BrowserStorageCache.ts",
+      "line": 337,
+      "character": 34,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/BrowserStorageCache.ts",
+      "line": 336,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/BrowserStorageCache.ts",
+      "line": 374,
+      "character": 51,
+      "text": "byteSize",
+      "kind": 1
+    },
+    {
+      "file": "src/BrowserStorageCache.ts",
+      "line": 380,
+      "character": 17,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/BrowserStorageCache.ts",
+      "line": 393,
+      "character": 34,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/BrowserStorageCache.ts",
+      "line": 392,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/BrowserStorageCache.ts",
+      "line": 418,
+      "character": 50,
+      "text": "byteSize",
+      "kind": 1
+    },
+    {
+      "file": "src/BrowserStorageCache.ts",
+      "line": 421,
+      "character": 37,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/BrowserStorageCache.ts",
+      "line": 420,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/BrowserStorageCache.ts",
+      "line": 446,
+      "character": 32,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/BrowserStorageCache.ts",
+      "line": 445,
+      "character": 11,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/InMemoryCache.ts",
+      "line": 105,
+      "character": 48,
+      "text": "byteSize",
+      "kind": 1
+    },
+    {
+      "file": "src/InMemoryCache.ts",
+      "line": 285,
+      "character": 16,
+      "text": "data",
+      "kind": 1
+    }
+  ],
+  "percentage": 89.73972086005281,
+  "total": 2651,
+  "covered": 2379,
+  "uncovered": 272
+}

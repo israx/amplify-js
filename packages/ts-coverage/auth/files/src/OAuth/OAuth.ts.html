@@ -1,0 +1,361 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>OAuth.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/OAuth/OAuth.ts</td><td class="">80.74%</td><td class="">0%</td><td class="">488</td><td class="">394</td><td class="">94</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the &quot;license&quot; file accompanying this file. This file is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+import { parse } from &#x27;url&#x27;; // Used for OAuth parsing of Cognito Hosted UI
+import { launchUri } from &#x27;./urlOpener&#x27;;
+import * as oAuthStorage from &#x27;./oauthStorage&#x27;;
+
+import {
+	OAuthOpts,
+	isCognitoHostedOpts,
+	CognitoHostedUIIdentityProvider,
+} from &#x27;../types/Auth&#x27;;
+
+import { ConsoleLogger as Logger, Hub, urlSafeEncode } from &#x27;@aws-amplify/core&#x27;;
+
+import sha256 from &#x27;crypto-js/sha256&#x27;;
+import Base64 from &#x27;crypto-js/enc-base64&#x27;;
+
+const AMPLIFY_SYMBOL = (typeof Symbol !== &#x27;undefined&#x27; &amp;&amp;
+typeof Symbol.for === &#x27;function&#x27;
+	? Symbol.for(&#x27;amplify_default&#x27;)
+	: &#x27;@@amplify_default&#x27;) as Symbol;
+
+const dispatchAuthEvent = (event: string, data: any, message: string) =&gt; {
+	Hub.dispatch(&#x27;auth&#x27;, { event, data, message }, &#x27;Auth&#x27;, AMPLIFY_SYMBOL);
+};
+
+const logger = new Logger(&#x27;OAuth&#x27;);
+
+export default class OAuth {
+	private _urlOpener;
+	private _config;
+	private _cognitoClientId;
+	private _scopes;
+
+	constructor({
+		config,
+		cognitoClientId,
+		scopes = [],
+	}: {
+		scopes: string[];
+		config: OAuthOpts;
+		cognitoClientId: string;
+	}) {
+		this._urlOpener = config.urlOpener || launchUri;
+		this._config = config;
+		this._cognitoClientId = cognitoClientId;
+
+		if (!this.isValidScopes(scopes))
+			throw Error(&#x27;scopes must be a String Array&#x27;);
+		this._scopes = scopes;
+	}
+
+	private isValidScopes(scopes: string[]) {
+		return (
+			Array.isArray(scopes) &amp;&amp; scopes.every(scope =&gt; typeof scope === &#x27;string&#x27;)
+		);
+	}
+
+	public oauthSignIn(
+		responseType = &#x27;code&#x27;,
+		domain: string,
+		redirectSignIn: string,
+		clientId: string,
+		provider:
+			| CognitoHostedUIIdentityProvider
+			| string = CognitoHostedUIIdentityProvider.Cognito,
+		customState?: string
+	) {
+		const generatedState = this._generateState(32);
+
+		/* encodeURIComponent is not URL safe, use urlSafeEncode instead. Cognito 
+		single-encodes/decodes url on first sign in and double-encodes/decodes url
+		when user already signed in. Using encodeURIComponent, Base32, Base64 add 
+		characters % or = which on further encoding becomes unsafe. &#x27;=&#x27; create issue 
+		for parsing query params. 
+		Refer: https://github.com/aws-amplify/amplify-js/issues/5218 */
+		const state = customState
+			? `${generatedState}-${urlSafeEncode(customState)}`
+			: generatedState;
+
+		oAuthStorage.setState(state);
+
+		const pkce_key = this._generateRandom(128);
+		oAuthStorage.setPKCE(pkce_key);
+
+		const code_challenge = this._generateChallenge(pkce_key);
+		const code_challenge_method = &#x27;S256&#x27;;
+
+		const scopesString = this._scopes.join(&#x27; &#x27;);
+
+		const queryString = Object.entries({
+			redirect_uri: redirectSignIn,
+			response_type: responseType,
+			client_id: clientId,
+			identity_provider: provider,
+			scope: scopesString,
+			state,
+			...(responseType === &#x27;code&#x27; ? { code_challenge } : {}),
+			...(responseType === &#x27;code&#x27; ? { code_challenge_method } : {}),
+		})
+			.map(([k, v]) =&gt; `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+			.join(&#x27;&amp;&#x27;);
+
+		const URL = `https://${domain}/oauth2/authorize?${queryString}`;
+		logger.debug(`Redirecting to ${URL}`);
+		this._urlOpener(URL, redirectSignIn);
+	}
+
+	private async _handleCodeFlow(currentUrl: string) {
+		/* Convert URL into an object with parameters as keys
+    { redirect_uri: &#x27;http://localhost:3000/&#x27;, response_type: &#x27;code&#x27;, ...} */
+		const { code } = (parse(currentUrl).query || &#x27;&#x27;)
+			.split(&#x27;&amp;&#x27;)
+			.map(pairings =&gt; pairings.split(&#x27;=&#x27;))
+			.reduce((accum, [k, v]) =&gt; ({ ...accum, [k]: v }), { code: undefined });
+
+		const currentUrlPathname = parse(currentUrl).pathname || &#x27;/&#x27;;
+		const redirectSignInPathname =
+			parse(this._config.redirectSignIn).pathname || &#x27;/&#x27;;
+
+		if (!code || currentUrlPathname !== redirectSignInPathname) {
+			return;
+		}
+
+		const oAuthTokenEndpoint =
+			&#x27;https://&#x27; + this._config.domain + &#x27;/oauth2/token&#x27;;
+
+		dispatchAuthEvent(
+			&#x27;codeFlow&#x27;,
+			{},
+			`Retrieving tokens from ${oAuthTokenEndpoint}`
+		);
+
+		const client_id = isCognitoHostedOpts(this._config)
+			? this._cognitoClientId
+			: this._config.clientID;
+
+		const redirect_uri = isCognitoHostedOpts(this._config)
+			? this._config.redirectSignIn
+			: this._config.redirectUri;
+
+		const code_verifier = oAuthStorage.getPKCE();
+
+		const oAuthTokenBody = {
+			grant_type: &#x27;authorization_code&#x27;,
+			code,
+			client_id,
+			redirect_uri,
+			...(code_verifier ? { code_verifier } : {}),
+		};
+
+		logger.debug(
+			`Calling token endpoint: ${oAuthTokenEndpoint} with`,
+			oAuthTokenBody
+		);
+
+		const body = Object.entries(oAuthTokenBody)
+			.map(([k, v]) =&gt; `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+			.join(&#x27;&amp;&#x27;);
+
+		const {
+			access_token,
+			refresh_token,
+			id_token,
+			error,
+		} = await ((await fetch(oAuthTokenEndpoint, {
+			method: &#x27;POST&#x27;,
+			headers: {
+				&#x27;Content-Type&#x27;: &#x27;application/x-www-form-urlencoded&#x27;,
+			},
+			body,
+		})) as any).json();
+
+		if (error) {
+			throw new Error(error);
+		}
+
+		return {
+			accessToken: access_token,
+			refreshToken: refresh_token,
+			idToken: id_token,
+		};
+	}
+
+	private async _handleImplicitFlow(currentUrl: string) {
+		// hash is `null` if `#` doesn&#x27;t exist on URL
+		const { id_token, access_token } = (parse(currentUrl).hash || &#x27;#&#x27;)
+			.substr(1) // Remove # from returned code
+			.split(&#x27;&amp;&#x27;)
+			.map(pairings =&gt; pairings.split(&#x27;=&#x27;))
+			.reduce((accum, [k, v]) =&gt; ({ ...accum, [k]: v }), {
+				id_token: undefined,
+				access_token: undefined,
+			});
+
+		dispatchAuthEvent(&#x27;implicitFlow&#x27;, {}, `Got tokens from ${currentUrl}`);
+		logger.debug(`Retrieving implicit tokens from ${currentUrl} with`);
+
+		return {
+			accessToken: access_token,
+			idToken: id_token,
+			refreshToken: null,
+		};
+	}
+
+	public async handleAuthResponse(currentUrl?: string) {
+		try {
+			const urlParams = currentUrl
+				? ({
+						...(parse(currentUrl).hash || &#x27;#&#x27;)
+							.substr(1)
+							.split(&#x27;&amp;&#x27;)
+							.map(entry =&gt; entry.split(&#x27;=&#x27;))
+							.reduce((acc, [k, v]) =&gt; ((acc[k] = v), acc), {}),
+						...(parse(currentUrl).query || &#x27;&#x27;)
+							.split(&#x27;&amp;&#x27;)
+							.map(entry =&gt; entry.split(&#x27;=&#x27;))
+							.reduce((acc, [k, v]) =&gt; ((acc[k] = v), acc), {}),
+				  } as any)
+				: {};
+			const { error, error_description } = urlParams;
+
+			if (error) {
+				throw new Error(error_description);
+			}
+
+			const state: string = this._validateState(urlParams);
+
+			logger.debug(
+				`Starting ${this._config.responseType} flow with ${currentUrl}`
+			);
+			if (this._config.responseType === &#x27;code&#x27;) {
+				return { ...(await this._handleCodeFlow(currentUrl)), state };
+			} else {
+				return { ...(await this._handleImplicitFlow(currentUrl)), state };
+			}
+		} catch (e) {
+			logger.error(`Error handling auth response.`, e);
+			throw e;
+		}
+	}
+
+	private _validateState(urlParams: any): string {
+		if (!urlParams) {
+			return;
+		}
+
+		const savedState = oAuthStorage.getState();
+		const { state: returnedState } = urlParams;
+
+		// This is because savedState only exists if the flow was initiated by Amplify
+		if (savedState &amp;&amp; savedState !== returnedState) {
+			throw new Error(&#x27;Invalid state in OAuth flow&#x27;);
+		}
+		return returnedState;
+	}
+
+	public async signOut() {
+		let oAuthLogoutEndpoint = &#x27;https://&#x27; + this._config.domain + &#x27;/logout?&#x27;;
+
+		const client_id = isCognitoHostedOpts(this._config)
+			? this._cognitoClientId
+			: this._config.oauth.clientID;
+
+		const signout_uri = isCognitoHostedOpts(this._config)
+			? this._config.redirectSignOut
+			: this._config.returnTo;
+
+		oAuthLogoutEndpoint += Object.entries({
+			client_id,
+			logout_uri: encodeURIComponent(signout_uri),
+		})
+			.map(([k, v]) =&gt; `${k}=${v}`)
+			.join(&#x27;&amp;&#x27;);
+
+		dispatchAuthEvent(
+			&#x27;oAuthSignOut&#x27;,
+			{ oAuth: &#x27;signOut&#x27; },
+			`Signing out from ${oAuthLogoutEndpoint}`
+		);
+		logger.debug(`Signing out from ${oAuthLogoutEndpoint}`);
+
+		return this._urlOpener(oAuthLogoutEndpoint, signout_uri);
+	}
+
+	private _generateState(length: number) {
+		let result = &#x27;&#x27;;
+		let i = length;
+		const chars =
+			&#x27;0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ&#x27;;
+		for (; i &gt; 0; --i)
+			result += chars[Math.round(Math.random() * (chars.length - 1))];
+		return result;
+	}
+
+	private _generateChallenge(code: string) {
+		return this._base64URL(sha256(code));
+	}
+
+	private _base64URL(string) {
+		return string
+			.toString(Base64)
+			.replace(/=/g, &#x27;&#x27;)
+			.replace(/\+/g, &#x27;-&#x27;)
+			.replace(/\//g, &#x27;_&#x27;);
+	}
+
+	private _generateRandom(size: number) {
+		const CHARSET =
+			&#x27;ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~&#x27;;
+		const buffer = new Uint8Array(size);
+		if (typeof window !== &#x27;undefined&#x27; &amp;&amp; !!window.crypto) {
+			window.crypto.getRandomValues(buffer);
+		} else {
+			for (let i = 0; i &lt; size; i += 1) {
+				buffer[i] = (Math.random() * CHARSET.length) | 0;
+			}
+		}
+		return this._bufferToString(buffer);
+	}
+
+	private _bufferToString(buffer: Uint8Array) {
+		const CHARSET =
+			&#x27;ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789&#x27;;
+		const state = [];
+		for (let i = 0; i &lt; buffer.byteLength; i += 1) {
+			const index = buffer[i] % CHARSET.length;
+			state.push(CHARSET[index]);
+		}
+		return state.join(&#x27;&#x27;);
+	}
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:33,&quot;character&quot;:42,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:34,&quot;character&quot;:31,&quot;text&quot;:&quot;data&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:40,&quot;character&quot;:9,&quot;text&quot;:&quot;_urlOpener&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:41,&quot;character&quot;:9,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:42,&quot;character&quot;:9,&quot;text&quot;:&quot;_cognitoClientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:9,&quot;text&quot;:&quot;_scopes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:54,&quot;character&quot;:7,&quot;text&quot;:&quot;_urlOpener&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:55,&quot;character&quot;:7,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:56,&quot;character&quot;:7,&quot;text&quot;:&quot;_cognitoClientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:7,&quot;text&quot;:&quot;_scopes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:96,&quot;character&quot;:8,&quot;text&quot;:&quot;code_challenge&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:99,&quot;character&quot;:8,&quot;text&quot;:&quot;scopesString&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:99,&quot;character&quot;:28,&quot;text&quot;:&quot;_scopes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:99,&quot;character&quot;:36,&quot;text&quot;:&quot;join&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:106,&quot;character&quot;:3,&quot;text&quot;:&quot;scope&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:106,&quot;character&quot;:10,&quot;text&quot;:&quot;scopesString&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:108,&quot;character&quot;:35,&quot;text&quot;:&quot;code_challenge&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:111,&quot;character&quot;:13,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:116,&quot;character&quot;:7,&quot;text&quot;:&quot;_urlOpener&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:122,&quot;character&quot;:10,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:129,&quot;character&quot;:14,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:129,&quot;character&quot;:22,&quot;text&quot;:&quot;redirectSignIn&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:131,&quot;character&quot;:7,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:136,&quot;character&quot;:21,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:136,&quot;character&quot;:29,&quot;text&quot;:&quot;domain&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:144,&quot;character&quot;:8,&quot;text&quot;:&quot;client_id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:144,&quot;character&quot;:45,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:145,&quot;character&quot;:10,&quot;text&quot;:&quot;_cognitoClientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:146,&quot;character&quot;:10,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:146,&quot;character&quot;:18,&quot;text&quot;:&quot;clientID&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:8,&quot;text&quot;:&quot;redirect_uri&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:148,&quot;character&quot;:48,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:150,&quot;character&quot;:10,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:150,&quot;character&quot;:18,&quot;text&quot;:&quot;redirectUri&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:156,&quot;character&quot;:3,&quot;text&quot;:&quot;code&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:157,&quot;character&quot;:3,&quot;text&quot;:&quot;client_id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:158,&quot;character&quot;:3,&quot;text&quot;:&quot;redirect_uri&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:168,&quot;character&quot;:13,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:172,&quot;character&quot;:3,&quot;text&quot;:&quot;access_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:173,&quot;character&quot;:3,&quot;text&quot;:&quot;refresh_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:174,&quot;character&quot;:3,&quot;text&quot;:&quot;id_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:3,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:182,&quot;character&quot;:14,&quot;text&quot;:&quot;json&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:184,&quot;character&quot;:6,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:189,&quot;character&quot;:3,&quot;text&quot;:&quot;accessToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:189,&quot;character&quot;:16,&quot;text&quot;:&quot;access_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:190,&quot;character&quot;:3,&quot;text&quot;:&quot;refreshToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:190,&quot;character&quot;:17,&quot;text&quot;:&quot;refresh_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:191,&quot;character&quot;:3,&quot;text&quot;:&quot;idToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:191,&quot;character&quot;:12,&quot;text&quot;:&quot;id_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:197,&quot;character&quot;:10,&quot;text&quot;:&quot;id_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:197,&quot;character&quot;:20,&quot;text&quot;:&quot;access_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:210,&quot;character&quot;:3,&quot;text&quot;:&quot;accessToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:210,&quot;character&quot;:16,&quot;text&quot;:&quot;access_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:3,&quot;text&quot;:&quot;idToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:12,&quot;text&quot;:&quot;id_token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:218,&quot;character&quot;:9,&quot;text&quot;:&quot;urlParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:11,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:231,&quot;character&quot;:18,&quot;text&quot;:&quot;error_description&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:233,&quot;character&quot;:7,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:237,&quot;character&quot;:45,&quot;text&quot;:&quot;urlParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:240,&quot;character&quot;:21,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:240,&quot;character&quot;:29,&quot;text&quot;:&quot;responseType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:242,&quot;character&quot;:12,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:242,&quot;character&quot;:20,&quot;text&quot;:&quot;responseType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:248,&quot;character&quot;:49,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:249,&quot;character&quot;:9,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:247,&quot;character&quot;:11,&quot;text&quot;:&quot;e&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:253,&quot;character&quot;:24,&quot;text&quot;:&quot;urlParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:254,&quot;character&quot;:7,&quot;text&quot;:&quot;urlParams&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:259,&quot;character&quot;:17,&quot;text&quot;:&quot;returnedState&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:262,&quot;character&quot;:35,&quot;text&quot;:&quot;returnedState&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:269,&quot;character&quot;:46,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:269,&quot;character&quot;:54,&quot;text&quot;:&quot;domain&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:271,&quot;character&quot;:8,&quot;text&quot;:&quot;client_id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:271,&quot;character&quot;:45,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:272,&quot;character&quot;:10,&quot;text&quot;:&quot;_cognitoClientId&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:10,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:18,&quot;text&quot;:&quot;oauth&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:24,&quot;text&quot;:&quot;clientID&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:275,&quot;character&quot;:8,&quot;text&quot;:&quot;signout_uri&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:275,&quot;character&quot;:47,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:277,&quot;character&quot;:10,&quot;text&quot;:&quot;_config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:277,&quot;character&quot;:18,&quot;text&quot;:&quot;returnTo&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:280,&quot;character&quot;:3,&quot;text&quot;:&quot;client_id&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:13,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:283,&quot;character&quot;:28,&quot;text&quot;:&quot;v&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:293,&quot;character&quot;:14,&quot;text&quot;:&quot;_urlOpener&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:293,&quot;character&quot;:46,&quot;text&quot;:&quot;signout_uri&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:310,&quot;character&quot;:20,&quot;text&quot;:&quot;string&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:311,&quot;character&quot;:9,&quot;text&quot;:&quot;string&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:313,&quot;character&quot;:4,&quot;text&quot;:&quot;replace&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:314,&quot;character&quot;:4,&quot;text&quot;:&quot;replace&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/OAuth/OAuth.ts&quot;,&quot;line&quot;:315,&quot;character&quot;:4,&quot;text&quot;:&quot;replace&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:24 GMT</p>
+    </body>
+  </html>
+  

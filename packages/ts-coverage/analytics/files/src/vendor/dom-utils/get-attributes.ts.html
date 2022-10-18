@@ -1,0 +1,44 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>get-attributes.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="positive"><td class="">src/vendor/dom-utils/get-attributes.ts</td><td class="">33.33%</td><td class="">0%</td><td class="">24</td><td class="">8</td><td class="">16</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">/**
+ * Copyright (c) 2017, Philip Walton &lt;philip@philipwalton.com&gt;
+ */
+
+/**
+ * Gets all attributes of an element as a plain JavaScriot object.
+ * @param {Element} element The element whose attributes to get.
+ * @return {!Object} An object whose keys are the attribute keys and whose
+ *     values are the attribute values. If no attributes exist, an empty
+ *     object is returned.
+ */
+export function getAttributes(element) {
+	const attrs = {};
+
+	// Validate input.
+	if (!(element &amp;&amp; element.nodeType === 1)) return attrs;
+
+	// Return an empty object if there are no attributes.
+	const map = element.attributes;
+	if (map.length === 0) return {};
+
+	for (let i = 0, attr; (attr = map[i]); i++) {
+		attrs[attr.name] = attr.value;
+	}
+	return attrs;
+}
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/vendor/dom-utils/get-attributes.ts&quot;,&quot;line&quot;:11,&quot;character&quot;:30,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/get-attributes.ts&quot;,&quot;line&quot;:15,&quot;character&quot;:7,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/get-attributes.ts&quot;,&quot;line&quot;:15,&quot;character&quot;:18,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/get-attributes.ts&quot;,&quot;line&quot;:15,&quot;character&quot;:26,&quot;text&quot;:&quot;nodeType&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/get-attributes.ts&quot;,&quot;line&quot;:18,&quot;character&quot;:7,&quot;text&quot;:&quot;map&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/get-attributes.ts&quot;,&quot;line&quot;:18,&quot;character&quot;:13,&quot;text&quot;:&quot;element&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/get-attributes.ts&quot;,&quot;line&quot;:18,&quot;character&quot;:21,&quot;text&quot;:&quot;attributes&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/get-attributes.ts&quot;,&quot;line&quot;:19,&quot;character&quot;:5,&quot;text&quot;:&quot;map&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/get-attributes.ts&quot;,&quot;line&quot;:19,&quot;character&quot;:9,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/get-attributes.ts&quot;,&quot;line&quot;:21,&quot;character&quot;:17,&quot;text&quot;:&quot;attr&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/get-attributes.ts&quot;,&quot;line&quot;:21,&quot;character&quot;:24,&quot;text&quot;:&quot;attr&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/get-attributes.ts&quot;,&quot;line&quot;:21,&quot;character&quot;:31,&quot;text&quot;:&quot;map&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/get-attributes.ts&quot;,&quot;line&quot;:22,&quot;character&quot;:8,&quot;text&quot;:&quot;attr&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/get-attributes.ts&quot;,&quot;line&quot;:22,&quot;character&quot;:13,&quot;text&quot;:&quot;name&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/get-attributes.ts&quot;,&quot;line&quot;:22,&quot;character&quot;:21,&quot;text&quot;:&quot;attr&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/vendor/dom-utils/get-attributes.ts&quot;,&quot;line&quot;:22,&quot;character&quot;:26,&quot;text&quot;:&quot;value&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Mon, 17 Oct 2022 20:15:24 GMT</p>
+    </body>
+  </html>
+  

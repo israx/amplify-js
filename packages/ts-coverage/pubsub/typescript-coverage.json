@@ -1,0 +1,2431 @@
+{
+  "fileCounts": {},
+  "anys": [
+    {
+      "file": "lib/types/Provider.d.ts",
+      "line": 15,
+      "character": 39,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "lib/types/PubSub.d.ts",
+      "line": 3,
+      "character": 10,
+      "text": "errorValue",
+      "kind": 1
+    },
+    {
+      "file": "lib/PubSub.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "lib/PubSub.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "_pluggables",
+      "kind": 1
+    },
+    {
+      "file": "lib/PubSub.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "_awsAppSyncProvider",
+      "kind": 1
+    },
+    {
+      "file": "lib/PubSub.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "_awsAppSyncRealTimeProvider",
+      "kind": 1
+    },
+    {
+      "file": "lib/PubSub.d.ts",
+      "line": 16,
+      "character": 16,
+      "text": "awsAppSyncProvider",
+      "kind": 1
+    },
+    {
+      "file": "lib/PubSub.d.ts",
+      "line": 20,
+      "character": 16,
+      "text": "awsAppSyncRealTimeProvider",
+      "kind": 1
+    },
+    {
+      "file": "lib/PubSub.d.ts",
+      "line": 45,
+      "character": 12,
+      "text": "getProviderByName",
+      "kind": 1
+    },
+    {
+      "file": "lib/PubSub.d.ts",
+      "line": 46,
+      "character": 12,
+      "text": "getProviders",
+      "kind": 1
+    },
+    {
+      "file": "lib/PubSub.d.ts",
+      "line": 47,
+      "character": 39,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/PubSubProvider.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/PubSubProvider.d.ts",
+      "line": 10,
+      "character": 48,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/MqttOverWSProvider.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "promises",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/MqttOverWSProvider.d.ts",
+      "line": 20,
+      "character": 12,
+      "text": "_clientsQueue",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/MqttOverWSProvider.d.ts",
+      "line": 21,
+      "character": 21,
+      "text": "connectionStateMonitor",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/MqttOverWSProvider.d.ts",
+      "line": 23,
+      "character": 18,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/MqttOverWSProvider.d.ts",
+      "line": 24,
+      "character": 18,
+      "text": "endpoint",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/MqttOverWSProvider.d.ts",
+      "line": 27,
+      "character": 31,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/MqttOverWSProvider.d.ts",
+      "line": 36,
+      "character": 39,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/MqttOverWSProvider.d.ts",
+      "line": 39,
+      "character": 12,
+      "text": "_onMessage",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncProvider.d.ts",
+      "line": 8,
+      "character": 39,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncProvider.d.ts",
+      "line": 8,
+      "character": 49,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncProvider.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "_cleanUp",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncProvider.d.ts",
+      "line": 10,
+      "character": 12,
+      "text": "_cleanUpForTopic",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncProvider.d.ts",
+      "line": 11,
+      "character": 19,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncProvider.d.ts",
+      "line": 11,
+      "character": 29,
+      "text": "errorCode",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncProvider.d.ts",
+      "line": 13,
+      "character": 8,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncProvider.d.ts",
+      "line": 14,
+      "character": 8,
+      "text": "errorCode",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncProvider.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "_topicClient",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncProvider.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "_topicAlias",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncProvider.d.ts",
+      "line": 19,
+      "character": 41,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 28,
+      "character": 12,
+      "text": "awsRealTimeSocket",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 29,
+      "character": 12,
+      "text": "socketStatus",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 30,
+      "character": 12,
+      "text": "keepAliveTimeoutId",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 31,
+      "character": 12,
+      "text": "keepAliveTimeout",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 32,
+      "character": 12,
+      "text": "keepAliveAlertTimeoutId",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 33,
+      "character": 12,
+      "text": "subscriptionObserverMap",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 34,
+      "character": 12,
+      "text": "promiseArray",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 35,
+      "character": 21,
+      "text": "connectionStateMonitor",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 37,
+      "character": 20,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 37,
+      "character": 30,
+      "text": "protocol",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 40,
+      "character": 40,
+      "text": "_msg",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 40,
+      "character": 51,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 41,
+      "character": 12,
+      "text": "isCustomDomain",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 44,
+      "character": 12,
+      "text": "_startSubscriptionWithAWSAppSyncRealTime",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 45,
+      "character": 12,
+      "text": "_waitForSubscriptionToBeConnected",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 46,
+      "character": 12,
+      "text": "_sendUnsubscriptionMessage",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 47,
+      "character": 12,
+      "text": "_removeSubscriptionObserver",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 48,
+      "character": 12,
+      "text": "_closeSocketIfRequired",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 49,
+      "character": 12,
+      "text": "_handleIncomingSubscriptionMessage",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 50,
+      "character": 12,
+      "text": "_errorDisconnect",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 51,
+      "character": 12,
+      "text": "_timeoutStartSubscriptionAck",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 52,
+      "character": 12,
+      "text": "_initializeWebSocketConnection",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 53,
+      "character": 12,
+      "text": "_initializeRetryableHandshake",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 54,
+      "character": 12,
+      "text": "_initializeHandshake",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 55,
+      "character": 12,
+      "text": "_awsRealTimeHeaderBasedAuth",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 56,
+      "character": 12,
+      "text": "_awsRealTimeCUPHeader",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 57,
+      "character": 12,
+      "text": "_awsRealTimeOPENIDHeader",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 58,
+      "character": 12,
+      "text": "_awsRealTimeApiKeyHeader",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 59,
+      "character": 12,
+      "text": "_awsRealTimeIAMHeader",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 60,
+      "character": 12,
+      "text": "_customAuthHeader",
+      "kind": 1
+    },
+    {
+      "file": "lib/Providers/AWSIotProvider.d.ts",
+      "line": 7,
+      "character": 18,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/Provider.d.ts",
+      "line": 15,
+      "character": 39,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/types/PubSub.d.ts",
+      "line": 3,
+      "character": 10,
+      "text": "errorValue",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/PubSub.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/PubSub.d.ts",
+      "line": 4,
+      "character": 12,
+      "text": "_pluggables",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/PubSub.d.ts",
+      "line": 8,
+      "character": 12,
+      "text": "_awsAppSyncProvider",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/PubSub.d.ts",
+      "line": 12,
+      "character": 12,
+      "text": "_awsAppSyncRealTimeProvider",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/PubSub.d.ts",
+      "line": 16,
+      "character": 16,
+      "text": "awsAppSyncProvider",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/PubSub.d.ts",
+      "line": 20,
+      "character": 16,
+      "text": "awsAppSyncRealTimeProvider",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/PubSub.d.ts",
+      "line": 45,
+      "character": 12,
+      "text": "getProviderByName",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/PubSub.d.ts",
+      "line": 46,
+      "character": 12,
+      "text": "getProviders",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/PubSub.d.ts",
+      "line": 47,
+      "character": 39,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/PubSubProvider.d.ts",
+      "line": 3,
+      "character": 12,
+      "text": "_config",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/PubSubProvider.d.ts",
+      "line": 10,
+      "character": 48,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/MqttOverWSProvider.d.ts",
+      "line": 14,
+      "character": 12,
+      "text": "promises",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/MqttOverWSProvider.d.ts",
+      "line": 20,
+      "character": 12,
+      "text": "_clientsQueue",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/MqttOverWSProvider.d.ts",
+      "line": 21,
+      "character": 21,
+      "text": "connectionStateMonitor",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/MqttOverWSProvider.d.ts",
+      "line": 23,
+      "character": 18,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/MqttOverWSProvider.d.ts",
+      "line": 24,
+      "character": 18,
+      "text": "endpoint",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/MqttOverWSProvider.d.ts",
+      "line": 27,
+      "character": 31,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/MqttOverWSProvider.d.ts",
+      "line": 36,
+      "character": 39,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/MqttOverWSProvider.d.ts",
+      "line": 39,
+      "character": 12,
+      "text": "_onMessage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncProvider.d.ts",
+      "line": 8,
+      "character": 39,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncProvider.d.ts",
+      "line": 8,
+      "character": 49,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncProvider.d.ts",
+      "line": 9,
+      "character": 12,
+      "text": "_cleanUp",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncProvider.d.ts",
+      "line": 10,
+      "character": 12,
+      "text": "_cleanUpForTopic",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncProvider.d.ts",
+      "line": 11,
+      "character": 19,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncProvider.d.ts",
+      "line": 11,
+      "character": 29,
+      "text": "errorCode",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncProvider.d.ts",
+      "line": 13,
+      "character": 8,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncProvider.d.ts",
+      "line": 14,
+      "character": 8,
+      "text": "errorCode",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncProvider.d.ts",
+      "line": 16,
+      "character": 12,
+      "text": "_topicClient",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncProvider.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "_topicAlias",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncProvider.d.ts",
+      "line": 19,
+      "character": 41,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 28,
+      "character": 12,
+      "text": "awsRealTimeSocket",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 29,
+      "character": 12,
+      "text": "socketStatus",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 30,
+      "character": 12,
+      "text": "keepAliveTimeoutId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 31,
+      "character": 12,
+      "text": "keepAliveTimeout",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 32,
+      "character": 12,
+      "text": "keepAliveAlertTimeoutId",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 33,
+      "character": 12,
+      "text": "subscriptionObserverMap",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 34,
+      "character": 12,
+      "text": "promiseArray",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 35,
+      "character": 21,
+      "text": "connectionStateMonitor",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 37,
+      "character": 20,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 37,
+      "character": 30,
+      "text": "protocol",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 40,
+      "character": 40,
+      "text": "_msg",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 40,
+      "character": 51,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 41,
+      "character": 12,
+      "text": "isCustomDomain",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 44,
+      "character": 12,
+      "text": "_startSubscriptionWithAWSAppSyncRealTime",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 45,
+      "character": 12,
+      "text": "_waitForSubscriptionToBeConnected",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 46,
+      "character": 12,
+      "text": "_sendUnsubscriptionMessage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 47,
+      "character": 12,
+      "text": "_removeSubscriptionObserver",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 48,
+      "character": 12,
+      "text": "_closeSocketIfRequired",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 49,
+      "character": 12,
+      "text": "_handleIncomingSubscriptionMessage",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 50,
+      "character": 12,
+      "text": "_errorDisconnect",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 51,
+      "character": 12,
+      "text": "_timeoutStartSubscriptionAck",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 52,
+      "character": 12,
+      "text": "_initializeWebSocketConnection",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 53,
+      "character": 12,
+      "text": "_initializeRetryableHandshake",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 54,
+      "character": 12,
+      "text": "_initializeHandshake",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 55,
+      "character": 12,
+      "text": "_awsRealTimeHeaderBasedAuth",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 56,
+      "character": 12,
+      "text": "_awsRealTimeCUPHeader",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 57,
+      "character": 12,
+      "text": "_awsRealTimeOPENIDHeader",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 58,
+      "character": 12,
+      "text": "_awsRealTimeApiKeyHeader",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 59,
+      "character": 12,
+      "text": "_awsRealTimeIAMHeader",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSAppSyncRealTimeProvider/index.d.ts",
+      "line": 60,
+      "character": 12,
+      "text": "_customAuthHeader",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/Providers/AWSIotProvider.d.ts",
+      "line": 7,
+      "character": 18,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "lib/utils/ConnectionStateMonitor.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "_linkedConnectionState",
+      "kind": 1
+    },
+    {
+      "file": "lib/utils/ConnectionStateMonitor.d.ts",
+      "line": 18,
+      "character": 12,
+      "text": "_linkedConnectionStateObservable",
+      "kind": 1
+    },
+    {
+      "file": "lib/utils/ConnectionStateMonitor.d.ts",
+      "line": 19,
+      "character": 12,
+      "text": "_linkedConnectionStateObserver",
+      "kind": 1
+    },
+    {
+      "file": "lib/utils/ConnectionStateMonitor.d.ts",
+      "line": 20,
+      "character": 12,
+      "text": "_networkMonitoringSubscription",
+      "kind": 1
+    },
+    {
+      "file": "lib/utils/ConnectionStateMonitor.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "enableNetworkMonitoring",
+      "kind": 1
+    },
+    {
+      "file": "lib/utils/ConnectionStateMonitor.d.ts",
+      "line": 29,
+      "character": 12,
+      "text": "disableNetworkMonitoring",
+      "kind": 1
+    },
+    {
+      "file": "lib/utils/ConnectionStateMonitor.d.ts",
+      "line": 37,
+      "character": 12,
+      "text": "connectionStatesTranslator",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/utils/ConnectionStateMonitor.d.ts",
+      "line": 17,
+      "character": 12,
+      "text": "_linkedConnectionState",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/utils/ConnectionStateMonitor.d.ts",
+      "line": 18,
+      "character": 12,
+      "text": "_linkedConnectionStateObservable",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/utils/ConnectionStateMonitor.d.ts",
+      "line": 19,
+      "character": 12,
+      "text": "_linkedConnectionStateObserver",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/utils/ConnectionStateMonitor.d.ts",
+      "line": 20,
+      "character": 12,
+      "text": "_networkMonitoringSubscription",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/utils/ConnectionStateMonitor.d.ts",
+      "line": 25,
+      "character": 12,
+      "text": "enableNetworkMonitoring",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/utils/ConnectionStateMonitor.d.ts",
+      "line": 29,
+      "character": 12,
+      "text": "disableNetworkMonitoring",
+      "kind": 1
+    },
+    {
+      "file": "lib-esm/utils/ConnectionStateMonitor.d.ts",
+      "line": 37,
+      "character": 12,
+      "text": "connectionStatesTranslator",
+      "kind": 1
+    },
+    {
+      "file": "src/types/Provider.ts",
+      "line": 37,
+      "character": 36,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "src/types/PubSub.ts",
+      "line": 16,
+      "character": 7,
+      "text": "errorValue",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/PubSubProvider.ts",
+      "line": 47,
+      "character": 2,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 80,
+      "character": 44,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 81,
+      "character": 33,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 108,
+      "character": 15,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 109,
+      "character": 22,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 112,
+      "character": 15,
+      "text": "endpoint",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 113,
+      "character": 22,
+      "text": "aws_pubsub_endpoint",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 122,
+      "character": 4,
+      "text": "aws_appsync_dangerously_connect_to_http_endpoint_for_testing",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 125,
+      "character": 28,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 126,
+      "character": 16,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 126,
+      "character": 38,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 230,
+      "character": 8,
+      "text": "client",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 232,
+      "character": 6,
+      "text": "client",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 232,
+      "character": 16,
+      "text": "client",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 232,
+      "character": 23,
+      "text": "isConnected",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 233,
+      "character": 3,
+      "text": "client",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 233,
+      "character": 10,
+      "text": "disconnect",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 239,
+      "character": 42,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 241,
+      "character": 33,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 243,
+      "character": 8,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 243,
+      "character": 25,
+      "text": "endpoint",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 245,
+      "character": 8,
+      "text": "client",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 245,
+      "character": 41,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 248,
+      "character": 32,
+      "text": "client",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 248,
+      "character": 39,
+      "text": "send",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 257,
+      "character": 35,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 265,
+      "character": 9,
+      "text": "parsedMessage",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 267,
+      "character": 14,
+      "text": "parsedMessage",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 268,
+      "character": 4,
+      "text": "parsedMessage",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 272,
+      "character": 56,
+      "text": "parsedMessage",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 275,
+      "character": 41,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 275,
+      "character": 48,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 274,
+      "character": 11,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 302,
+      "character": 11,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 302,
+      "character": 27,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 313,
+      "character": 12,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 313,
+      "character": 29,
+      "text": "endpoint",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 321,
+      "character": 20,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/MqttOverWSProvider.ts",
+      "line": 320,
+      "character": 13,
+      "text": "e",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 32,
+      "character": 49,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 32,
+      "character": 59,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 44,
+      "character": 26,
+      "text": "topic",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 49,
+      "character": 23,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 49,
+      "character": 33,
+      "text": "errorCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 50,
+      "character": 6,
+      "text": "errorCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 52,
+      "character": 38,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 76,
+      "character": 8,
+      "text": "client",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 83,
+      "character": 38,
+      "text": "options",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 98,
+      "character": 12,
+      "text": "mqttConnections",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 98,
+      "character": 34,
+      "text": "newSubscriptions",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 115,
+      "character": 13,
+      "text": "connectionInfoForTopic",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 115,
+      "character": 38,
+      "text": "mqttConnections",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 115,
+      "character": 54,
+      "text": "find",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 116,
+      "character": 8,
+      "text": "c",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 116,
+      "character": 13,
+      "text": "c",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 116,
+      "character": 15,
+      "text": "topics",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 116,
+      "character": 22,
+      "text": "indexOf",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 119,
+      "character": 11,
+      "text": "connectionInfoForTopic",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 120,
+      "character": 24,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 120,
+      "character": 34,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 122,
+      "character": 17,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 123,
+      "character": 13,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 124,
+      "character": 10,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 129,
+      "character": 12,
+      "text": "clientId",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 140,
+      "character": 10,
+      "text": "client",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 142,
+      "character": 7,
+      "text": "client",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 147,
+      "character": 54,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 147,
+      "character": 61,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 146,
+      "character": 15,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 155,
+      "character": 11,
+      "text": "client",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 155,
+      "character": 18,
+      "text": "isConnected",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 156,
+      "character": 8,
+      "text": "client",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 156,
+      "character": 15,
+      "text": "subscribe",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 162,
+      "character": 13,
+      "text": "client",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 189,
+      "character": 37,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 190,
+      "character": 9,
+      "text": "topic",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 190,
+      "character": 39,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 193,
+      "character": 3,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 193,
+      "character": 9,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 193,
+      "character": 31,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 193,
+      "character": 37,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncProvider.ts",
+      "line": 200,
+      "character": 10,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 55,
+      "character": 41,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 56,
+      "character": 30,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 120,
+      "character": 17,
+      "text": "url",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 120,
+      "character": 22,
+      "text": "protocol",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 132,
+      "character": 50,
+      "text": "_msg",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 132,
+      "character": 61,
+      "text": "_options",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 165,
+      "character": 18,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 170,
+      "character": 61,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 199,
+      "character": 48,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 198,
+      "character": 14,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 210,
+      "character": 4,
+      "text": "aws_appsync_dangerously_connect_to_http_endpoint_for_testing",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 250,
+      "character": 8,
+      "text": "headerObj",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 270,
+      "character": 5,
+      "text": "authorization",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 271,
+      "character": 9,
+      "text": "headerObj",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 290,
+      "character": 18,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 291,
+      "character": 9,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 291,
+      "character": 19,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 296,
+      "character": 63,
+      "text": "message",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 289,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 376,
+      "character": 18,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 374,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 424,
+      "character": 62,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 426,
+      "character": 10,
+      "text": "id",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 426,
+      "character": 19,
+      "text": "payload",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 426,
+      "character": 28,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 426,
+      "character": 56,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 436,
+      "character": 17,
+      "text": "id",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 438,
+      "character": 6,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 438,
+      "character": 41,
+      "text": "payload",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 438,
+      "character": 52,
+      "text": "payload",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 438,
+      "character": 60,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 440,
+      "character": 18,
+      "text": "payload",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 442,
+      "character": 47,
+      "text": "id",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 447,
+      "character": 6,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 479,
+      "character": 6,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 494,
+      "character": 6,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 511,
+      "character": 60,
+      "text": "payload",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 643,
+      "character": 48,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 642,
+      "character": 13,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 706,
+      "character": 66,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 708,
+      "character": 13,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 708,
+      "character": 39,
+      "text": "data",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 710,
+      "character": 8,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 712,
+      "character": 9,
+      "text": "connectionTimeoutMs",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 715,
+      "character": 11,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 734,
+      "character": 11,
+      "text": "type",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 737,
+      "character": 21,
+      "text": "errorType",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 737,
+      "character": 37,
+      "text": "errorCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 741,
+      "character": 14,
+      "text": "errorType",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 741,
+      "character": 25,
+      "text": "errorCode",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 778,
+      "character": 10,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 767,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 785,
+      "character": 2,
+      "text": "payload",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 786,
+      "character": 2,
+      "text": "canonicalUri",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 793,
+      "character": 31,
+      "text": "AWSAppSyncRealTimeAuthInput",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 813,
+      "character": 4,
+      "text": "payload",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 814,
+      "character": 4,
+      "text": "canonicalUri",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 826,
+      "character": 39,
+      "text": "host",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 830,
+      "character": 3,
+      "text": "host",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 835,
+      "character": 2,
+      "text": "host",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 837,
+      "character": 6,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 839,
+      "character": 8,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 840,
+      "character": 6,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 841,
+      "character": 3,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 841,
+      "character": 11,
+      "text": "federatedInfo",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 841,
+      "character": 25,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 843,
+      "character": 9,
+      "text": "currentUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 844,
+      "character": 7,
+      "text": "currentUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 845,
+      "character": 4,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 845,
+      "character": 12,
+      "text": "currentUser",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 845,
+      "character": 24,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 848,
+      "character": 7,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 852,
+      "character": 3,
+      "text": "Authorization",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 852,
+      "character": 18,
+      "text": "token",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 853,
+      "character": 3,
+      "text": "host",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 859,
+      "character": 2,
+      "text": "host",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 865,
+      "character": 3,
+      "text": "host",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 882,
+      "character": 8,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 883,
+      "character": 7,
+      "text": "credentialsOK",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 886,
+      "character": 8,
+      "text": "creds",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 886,
+      "character": 40,
+      "text": "then",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 886,
+      "character": 46,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 904,
+      "character": 8,
+      "text": "signed_params",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 904,
+      "character": 45,
+      "text": "creds",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 905,
+      "character": 9,
+      "text": "signed_params",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 905,
+      "character": 23,
+      "text": "headers",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 909,
+      "character": 2,
+      "text": "host",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 918,
+      "character": 3,
+      "text": "host",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 927,
+      "character": 4,
+      "text": "then",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 927,
+      "character": 10,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 928,
+      "character": 9,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 929,
+      "character": 35,
+      "text": "credentials",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 934,
+      "character": 4,
+      "text": "catch",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 934,
+      "character": 11,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSAppSyncRealTimeProvider/index.ts",
+      "line": 935,
+      "character": 44,
+      "text": "err",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSIotProvider.ts",
+      "line": 27,
+      "character": 15,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSIotProvider.ts",
+      "line": 28,
+      "character": 22,
+      "text": "aws_pubsub_region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSIotProvider.ts",
+      "line": 37,
+      "character": 9,
+      "text": "endpoint",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSIotProvider.ts",
+      "line": 37,
+      "character": 33,
+      "text": "aws_pubsub_endpoint",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSIotProvider.ts",
+      "line": 41,
+      "character": 4,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSIotProvider.ts",
+      "line": 41,
+      "character": 17,
+      "text": "region",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSIotProvider.ts",
+      "line": 44,
+      "character": 17,
+      "text": "access_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSIotProvider.ts",
+      "line": 45,
+      "character": 21,
+      "text": "secret_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSIotProvider.ts",
+      "line": 46,
+      "character": 18,
+      "text": "session_token",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSIotProvider.ts",
+      "line": 50,
+      "character": 4,
+      "text": "endpoint",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSIotProvider.ts",
+      "line": 51,
+      "character": 6,
+      "text": "access_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSIotProvider.ts",
+      "line": 51,
+      "character": 18,
+      "text": "secret_key",
+      "kind": 1
+    },
+    {
+      "file": "src/Providers/AWSIotProvider.ts",
+      "line": 51,
+      "character": 30,
+      "text": "session_token",
+      "kind": 1
+    },
+    {
+      "file": "src/PubSub.ts",
+      "line": 88,
+      "character": 8,
+      "text": "opt",
+      "kind": 1
+    },
+    {
+      "file": "src/PubSub.ts",
+      "line": 88,
+      "character": 32,
+      "text": "PubSub",
+      "kind": 1
+    },
+    {
+      "file": "src/PubSub.ts",
+      "line": 89,
+      "character": 37,
+      "text": "opt",
+      "kind": 1
+    },
+    {
+      "file": "src/PubSub.ts",
+      "line": 91,
+      "character": 51,
+      "text": "opt",
+      "kind": 1
+    },
+    {
+      "file": "src/PubSub.ts",
+      "line": 136,
+      "character": 20,
+      "text": "providerName",
+      "kind": 1
+    },
+    {
+      "file": "src/PubSub.ts",
+      "line": 137,
+      "character": 7,
+      "text": "providerName",
+      "kind": 1
+    },
+    {
+      "file": "src/PubSub.ts",
+      "line": 143,
+      "character": 52,
+      "text": "providerName",
+      "kind": 1
+    },
+    {
+      "file": "src/PubSub.ts",
+      "line": 151,
+      "character": 2,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "src/PubSub.ts",
+      "line": 156,
+      "character": 29,
+      "text": "msg",
+      "kind": 1
+    },
+    {
+      "file": "src/PubSub.ts",
+      "line": 165,
+      "character": 47,
+      "text": "ssr",
+      "kind": 1
+    },
+    {
+      "file": "src/PubSub.ts",
+      "line": 184,
+      "character": 11,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/PubSub.ts",
+      "line": 184,
+      "character": 46,
+      "text": "value",
+      "kind": 1
+    },
+    {
+      "file": "src/PubSub.ts",
+      "line": 185,
+      "character": 12,
+      "text": "error",
+      "kind": 1
+    },
+    {
+      "file": "src/PubSub.ts",
+      "line": 185,
+      "character": 48,
+      "text": "error",
+      "kind": 1
+    }
+  ],
+  "percentage": 89.6314054540006,
+  "total": 3337,
+  "covered": 2991,
+  "uncovered": 346
+}
