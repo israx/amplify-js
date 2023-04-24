@@ -19,6 +19,8 @@ export { AuthUserAttributeKey } from './models/AuthUserAttributeKey';
 export { AuthUserAttribute } from './models/AuthUserAttribute';
 export { GetAttributeKey } from './models/GetAttributeKey';
 export { AuthNextResetPasswordStep } from './models/AuthNextResetPasswordStep';
+export { AuthNextSignInStep } from './models/AuthNextSignInStep'
+export { AuthSignInStep } from './models/AuthSignInStep'
 
 // Options
 export { AuthServiceOptions } from './options/AuthServiceOptions';
@@ -27,7 +29,9 @@ export { AuthSignUpOptions } from './options/AuthSignUpOptions';
 // Requests
 export { ResetPasswordRequest } from './requests/ResetPasswordRequest';
 export { SignUpRequest } from './requests/SignUpRequest';
+export { SignInRequest } from './requests/SignInRequest';
 
 // Results
 export { AuthSignUpResult } from './results/AuthSignUpResult';
+export { AuthSignInResult } from './results/AuthSignInResult';
 export { ResetPasswordResult } from './results/ResetPasswordResult';
