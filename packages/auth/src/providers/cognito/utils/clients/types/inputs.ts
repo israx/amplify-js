@@ -4,6 +4,7 @@
 import type {
 	ForgotPasswordCommandInput,
 	SignUpCommandInput,
+	InitiateAuthCommandInput,
 } from '@aws-sdk/client-cognito-identity-provider';
 
 export type SignUpClientInput = Pick<
@@ -18,4 +19,9 @@ export type SignUpClientInput = Pick<
 export type ResetPasswordClientInput = Pick<
 	ForgotPasswordCommandInput,
 	'Username' | 'ClientMetadata'
+>;
+
+export type InitiateAuthClientInput = Pick<
+	InitiateAuthCommandInput,
+	'ClientId' | 'AuthFlow' | 'AuthParameters' | 'ClientMetadata'
 >;
