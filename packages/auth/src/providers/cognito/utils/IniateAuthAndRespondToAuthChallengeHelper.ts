@@ -1,4 +1,4 @@
-import Amplify from '@aws-amplify/core';
+import { Amplify } from '@aws-amplify/core';
 import { RespondToAuthChallengeCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
 import { ClientMetadata } from 'amazon-cognito-identity-js';
 import {
@@ -14,7 +14,7 @@ import { respondToAuthChallengeClient } from './clients/RespondToAuthClient';
 import { RespondToAuthChallengeClientInput } from './clients/types/inputs';
 import { ChallengeParameters } from './clients/types/models';
 
-export async function handleUserSRPAuthChallenge(
+export async function handleUserSRPAuthFlow(
 	username: string
 ): Promise<RespondToAuthChallengeCommandOutput> {
 	const config = Amplify.config;

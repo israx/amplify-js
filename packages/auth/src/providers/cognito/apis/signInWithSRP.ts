@@ -19,8 +19,8 @@ import {
 } from '../utils/clients/types/models';
 import {
 	handlePasswordVerifierChallenge,
-	handleUserSRPAuthChallenge,
-} from '../utils/handleChallengeHelper';
+	handleUserSRPAuthFlow,
+} from '../utils/IniateAuthAndRespondToAuthChallengeHelper';
 
 export async function signInWithSRP(
 	signInRequest: SignInRequest<CognitoSignInOptions>
@@ -38,7 +38,7 @@ export async function signInWithSRP(
 
 	try {
 		const { ChallengeParameters: challengeParameters } =
-			await handleUserSRPAuthChallenge(username);
+			await handleUserSRPAuthFlow(username);
 
 		const response = await handlePasswordVerifierChallenge(
 			username,
