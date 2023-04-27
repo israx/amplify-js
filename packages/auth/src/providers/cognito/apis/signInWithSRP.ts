@@ -9,10 +9,9 @@ import {
 	AuthSignInResult,
 	AuthSignInStep,
 } from '../../../types';
-import { getNextSignInStep } from '../utils/AuthUtils';
+import { getSignInResult, getSignInResultFromError } from '../utils/AuthUtils';
 import { assertServiceError } from '../../../errors/utils/assertServiceError';
 import { CognitoSignInOptions } from '../types/options/CognitoSignInOptions';
-import { InitiateAuthException } from '../types/errors/service';
 import {
 	ChallengeName,
 	ChallengeParameters,
@@ -62,23 +61,14 @@ export async function signInWithSRP(
 				nextStep: { signInStep: AuthSignInStep.DONE },
 			};
 		}
-		return getNextSignInStep({
+		return getSignInResult({
 			challengeName: ChallengeName as ChallengeName,
 			challengeParameters: ChallengeParameters as ChallengeParameters,
 		});
 	} catch (error) {
 		assertServiceError(error);
-		if (error.name === InitiateAuthException.PasswordResetRequiredException) {
-			return {
-				isSignedIn: false,
-				nextStep: { signInStep: AuthSignInStep.RESET_PASSWORD },
-			};
-		} else if (error.name === InitiateAuthException.UserNotConfirmedException) {
-			return {
-				isSignedIn: false,
-				nextStep: { signInStep: AuthSignInStep.CONFIRM_SIGN_UP },
-			};
-		}
+		const result = getSignInResultFromError(error.name);
+		if (result) return result;
 		throw error;
 	}
 

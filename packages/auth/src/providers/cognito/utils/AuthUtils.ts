@@ -11,6 +11,7 @@ import {
 import WordArray from './WordArray';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { ChallengeName, ChallengeParameters } from './clients/types/models';
+import { InitiateAuthException } from '../types/errors/service';
 
 export function randomBytes(nBytes) {
 	return new WordArray().random(nBytes).toString();
@@ -245,7 +246,7 @@ export function getPasswordAuthenticationKey({
 	});
 }
 
-export function getNextSignInStep(params: {
+export function getSignInResult(params: {
 	challengeName: ChallengeName;
 	challengeParameters: ChallengeParameters;
 	secretCode?: string;
@@ -327,6 +328,22 @@ export function getNextSignInStep(params: {
 		message: `challengeName was not recognized. 
 			 This probably happened due to the underlying service returning a non supported challengeName.`,
 	});
+}
+
+export function getSignInResultFromError(
+	errorName: string
+): AuthSignInResult | undefined {
+	if (errorName === InitiateAuthException.PasswordResetRequiredException) {
+		return {
+			isSignedIn: false,
+			nextStep: { signInStep: AuthSignInStep.RESET_PASSWORD },
+		};
+	} else if (errorName === InitiateAuthException.UserNotConfirmedException) {
+		return {
+			isSignedIn: false,
+			nextStep: { signInStep: AuthSignInStep.CONFIRM_SIGN_UP },
+		};
+	}
 }
 
 export function parseAttributes(attributes: string | undefined): string[] {

@@ -1,5 +1,8 @@
 import { Amplify } from '@aws-amplify/core';
-import { RespondToAuthChallengeCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
+import {
+	InitiateAuthCommandOutput,
+	RespondToAuthChallengeCommandOutput,
+} from '@aws-sdk/client-cognito-identity-provider';
 import { ClientMetadata } from 'amazon-cognito-identity-js';
 import {
 	getLargeAValue,
@@ -27,6 +30,21 @@ export async function handleUserSRPAuthFlow(
 		AuthParameters: {
 			USERNAME: username,
 			SRP_A: ((await getLargeAValue(authenticationHelper)) as any).toString(16),
+		},
+	};
+
+	return await initiateAuthClient(jsonReq);
+}
+
+export async function handleUserPasswordAuthFlow(
+	username: string,
+	password: string
+): Promise<InitiateAuthCommandOutput> {
+	const jsonReq = {
+		AuthFlow: 'USER_PASSWORD_AUTH',
+		AuthParameters: {
+			USERNAME: username,
+			PASSWORD: password,
 		},
 	};
 
