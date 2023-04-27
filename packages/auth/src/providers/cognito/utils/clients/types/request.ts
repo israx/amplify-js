@@ -6,10 +6,15 @@ import type {
 	SignUpCommandInput,
 	ConfirmSignUpCommandInput,
 	InitiateAuthCommandInput,
+	RespondToAuthChallengeCommandInput,
 } from '@aws-sdk/client-cognito-identity-provider';
 
 export type SendCognitoHttpClientRequest =
 	| { operation: 'SignUp'; input: SignUpCommandInput }
 	| { operation: 'ConfirmSignUp'; input: ConfirmSignUpCommandInput }
 	| { operation: 'ForgotPassword'; input: ForgotPasswordCommandInput }
-	| { operation: 'InitiateAuth'; input: InitiateAuthCommandInput };
+	| { operation: 'InitiateAuth'; input: InitiateAuthCommandInput }
+	| {
+			operation: 'RespondToAuthChallenge';
+			input: RespondToAuthChallengeCommandInput;
+	  };

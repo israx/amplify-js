@@ -1,8 +1,16 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { AuthError } from '../../../errors/AuthError';
+import {
+	AuthSignInResult,
+	AuthSignInStep,
+	AdditionalInfo,
+	DeliveryMedium,
+} from '../../../types';
 import WordArray from './WordArray';
 import { Sha256 } from '@aws-crypto/sha256-js';
+import { ChallengeName, ChallengeParameters } from './clients/types/models';
 
 export function randomBytes(nBytes) {
 	return new WordArray().random(nBytes).toString();
@@ -168,4 +176,162 @@ export function getNowString() {
 	const dateNow = `${weekDay} ${month} ${day} ${hours}:${minutes}:${seconds} UTC ${year}`;
 
 	return dateNow;
+}
+
+export function getSignatureString({
+	userPoolName,
+	username,
+	challengeParameters,
+	dateNow,
+	hkdf,
+}): string {
+	const encoder = new TextEncoder();
+
+	const bufUPIDaToB = encoder.encode(userPoolName);
+	const bufUNaToB = encoder.encode(username);
+	const bufSBaToB = _urlB64ToUint8Array(challengeParameters.SECRET_BLOCK);
+	const bufDNaToB = encoder.encode(dateNow);
+
+	const bufConcat = new Uint8Array(
+		bufUPIDaToB.byteLength +
+			bufUNaToB.byteLength +
+			bufSBaToB.byteLength +
+			bufDNaToB.byteLength
+	);
+	bufConcat.set(bufUPIDaToB, 0);
+	bufConcat.set(bufUNaToB, bufUPIDaToB.byteLength);
+	bufConcat.set(bufSBaToB, bufUPIDaToB.byteLength + bufUNaToB.byteLength);
+	bufConcat.set(
+		bufDNaToB,
+		bufUPIDaToB.byteLength + bufUNaToB.byteLength + bufSBaToB.byteLength
+	);
+
+	const awsCryptoHash = new Sha256(hkdf);
+	awsCryptoHash.update(bufConcat);
+	const resultFromAWSCrypto = awsCryptoHash.digestSync();
+	const signatureString = _encodeBase64Bytes(resultFromAWSCrypto);
+	return signatureString;
+}
+
+export function getLargeAValue(authenticationHelper) {
+	return new Promise(res => {
+		authenticationHelper.getLargeAValue((err, aValue) => {
+			res(aValue);
+		});
+	});
+}
+
+export function getPasswordAuthenticationKey({
+	authenticationHelper,
+	username,
+	password,
+	serverBValue,
+	salt,
+}) {
+	return new Promise((res, rej) => {
+		authenticationHelper.getPasswordAuthenticationKey(
+			username,
+			password,
+			serverBValue,
+			salt,
+			(err, hkdf) => {
+				if (err) {
+					return rej(err);
+				}
+
+				res(hkdf);
+			}
+		);
+	});
+}
+
+export function getNextSignInStep(params: {
+	challengeName: ChallengeName;
+	challengeParameters: ChallengeParameters;
+	secretCode?: string;
+}): AuthSignInResult {
+	const { challengeName, challengeParameters, secretCode } = params;
+	switch (challengeName) {
+		case 'CUSTOM_CHALLENGE':
+			return {
+				isSignedIn: false,
+				nextStep: {
+					signInStep: AuthSignInStep.CONFIRM_SIGN_IN_WITH_CUSTOM_CHALLENGE,
+					additionalInfo: challengeParameters as AdditionalInfo,
+				},
+			};
+		case 'MFA_SETUP':
+			return {
+				isSignedIn: false,
+				nextStep: {
+					signInStep:
+						AuthSignInStep.CONFIRM_SIGN_IN_WITH_SOFTWARE_TOKEN_MFA_SETUP,
+					additionalInfo: challengeParameters as AdditionalInfo,
+					secretCode,
+				},
+			};
+		case 'NEW_PASSWORD_REQUIRED':
+			return {
+				isSignedIn: false,
+				nextStep: {
+					signInStep: AuthSignInStep.CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED,
+					additionalInfo: challengeParameters as AdditionalInfo,
+					missingAttributes: parseAttributes(
+						challengeParameters.requiredAttributes
+					),
+				},
+			};
+		case 'SELECT_MFA_TYPE':
+			return {
+				isSignedIn: false,
+				nextStep: {
+					signInStep: AuthSignInStep.CONFIRM_SIGN_IN_WITH_MFA_SELECTION,
+					additionalInfo: challengeParameters as AdditionalInfo,
+				},
+			};
+		case 'SMS_MFA':
+			return {
+				isSignedIn: false,
+				nextStep: {
+					signInStep: AuthSignInStep.CONFIRM_SIGN_IN_WITH_SMS_MFA_CODE,
+					codeDeliveryDetails: {
+						deliveryMedium:
+							challengeParameters.CODE_DELIVERY_DELIVERY_MEDIUM as DeliveryMedium,
+						destination: challengeParameters.CODE_DELIVERY_DESTINATION,
+					},
+				},
+			};
+		case 'SOFTWARE_TOKEN_MFA':
+			return {
+				isSignedIn: false,
+				nextStep: {
+					signInStep:
+						AuthSignInStep.CONFIRM_SIGN_IN_WITH_SOFTWARE_TOKEN_MFA_CODE,
+				},
+			};
+		case 'ADMIN_NO_SRP_AUTH':
+			break;
+		case 'DEVICE_PASSWORD_VERIFIER':
+			break;
+		case 'DEVICE_SRP_AUTH':
+			break;
+		case 'PASSWORD_VERIFIER':
+			break;
+		default:
+			// Exhaustive type checking to address all challengeName
+			const step: never = challengeName;
+	}
+
+	throw new AuthError({
+		name: 'UnrecognizedChallengeName',
+		message: `challengeName was not recognized. 
+			 This probably happened due to the underlying service returning a non supported challengeName.`,
+	});
+}
+
+export function parseAttributes(attributes: string | undefined): string[] {
+	console.log(attributes);
+
+	if (!attributes) return [];
+	return [attributes];
 }

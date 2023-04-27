@@ -6,7 +6,7 @@ import { UserPoolHttpClient } from './HttpClients';
 import { UserPoolClient } from './UserPoolClient';
 import { InitiateAuthClientInput } from './types/inputs';
 
-export async function signInClient(
+export async function initiateAuthClient(
 	params: InitiateAuthClientInput
 ): Promise<InitiateAuthCommandOutput> {
 	const client = new UserPoolHttpClient(UserPoolClient.region);

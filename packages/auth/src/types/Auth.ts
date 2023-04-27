@@ -151,7 +151,7 @@ export type OAuthOpts = AwsCognitoOAuthOpts | Auth0OAuthOpts;
 
 export interface ConfirmSignUpOptions {
 	forceAliasCreation?: boolean;
-	clientMetadata?: ClientMetaData;
+	clientMetadata?: ClientMetadata;
 }
 
 export interface SignOutOpts {
@@ -200,7 +200,7 @@ export interface AuthErrorMessage {
 // We can extend this in the future if needed
 export type SignInOpts = UsernamePasswordOpts;
 
-export type ClientMetaData =
+export type ClientMetadata =
 	| {
 			[key: string]: string;
 	  }
@@ -217,7 +217,7 @@ export interface IAuthDevice {
 
 export interface AutoSignInOptions {
 	enabled: boolean;
-	clientMetaData?: ClientMetaData;
+	clientMetaData?: ClientMetadata;
 	validationData?: { [key: string]: any };
 }
 
