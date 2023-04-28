@@ -21,7 +21,7 @@ import {
 	handlePasswordVerifierChallenge,
 } from '../utils/IniateAuthAndRespondToAuthChallengeHelper';
 
-export async function signInWithCustomSRP(
+export async function signInWithCustomSRPAuth(
 	signInRequest: SignInRequest<CognitoSignInOptions>
 ): Promise<AuthSignInResult> {
 	const { username, password } = signInRequest;

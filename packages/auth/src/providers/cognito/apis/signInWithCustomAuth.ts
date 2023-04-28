@@ -18,7 +18,7 @@ import {
 } from '../utils/clients/types/models';
 import { handleCustomAuthFlowWithoutSRP } from '../utils/IniateAuthAndRespondToAuthChallengeHelper';
 
-export async function signInWithCustomSRP(
+export async function signInWithCustomAuth(
 	signInRequest: SignInRequest<CognitoSignInOptions>
 ): Promise<AuthSignInResult> {
 	const { username, password } = signInRequest;
