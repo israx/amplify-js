@@ -61,6 +61,23 @@ export async function handleCustomSRPAuthFlow(
 	return await initiateAuthClient(jsonReq);
 }
 
+export async function handleCustomAuthFlowWithoutSRP(
+	username: string,
+	clientMetadata: ClientMetadata | undefined
+) {
+	const config = Amplify.config;
+	const clientMeta = clientMetadata ?? config.clientMetadata;
+	const jsonReq = {
+		AuthFlow: 'CUSTOM_AUTH',
+		AuthParameters: {
+			USERNAME: username,
+			ClientMetadata: clientMeta,
+		},
+	};
+
+	return await initiateAuthClient(jsonReq);
+}
+
 export async function handleUserPasswordAuthFlow(
 	username: string,
 	password: string,

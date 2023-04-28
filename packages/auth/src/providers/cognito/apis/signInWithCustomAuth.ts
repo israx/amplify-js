@@ -1,21 +1,26 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { Amplify } from '@aws-amplify/core';
 import { AuthValidationErrorCode } from '../../../errors/types/validation';
-import { assertServiceError } from '../../../errors/utils/assertServiceError';
 import { assertValidationError } from '../../../errors/utils/assertValidationError';
-import { AuthSignInStep, SignInRequest } from '../../../types';
-import { CognitoSignInOptions } from '../types/options/CognitoSignInOptions';
+import {
+	SignInRequest,
+	AuthSignInResult,
+	AuthSignInStep,
+} from '../../../types';
 import { getSignInResult, getSignInResultFromError } from '../utils/AuthUtils';
-import { handleUserPasswordAuthFlow } from '../utils/IniateAuthAndRespondToAuthChallengeHelper';
+import { assertServiceError } from '../../../errors/utils/assertServiceError';
+import { CognitoSignInOptions } from '../types/options/CognitoSignInOptions';
 import {
 	ChallengeName,
 	ChallengeParameters,
 } from '../utils/clients/types/models';
+import { handleCustomAuthFlowWithoutSRP } from '../utils/IniateAuthAndRespondToAuthChallengeHelper';
 
-export async function signInWithUserPassword(
+export async function signInWithCustomSRP(
 	signInRequest: SignInRequest<CognitoSignInOptions>
-) {
+): Promise<AuthSignInResult> {
 	const { username, password } = signInRequest;
 	const metadata = signInRequest.options?.serviceOptions?.clientMetaData;
 	assertValidationError(
@@ -23,16 +28,13 @@ export async function signInWithUserPassword(
 		AuthValidationErrorCode.EmptySignInUsername
 	);
 	assertValidationError(
-		!!password,
-		AuthValidationErrorCode.EmptySignInPassword
+		!password,
+		AuthValidationErrorCode.CustomAuthSignInPassword
 	);
 
 	try {
-		const response = await handleUserPasswordAuthFlow(
-			username,
-			password,
-			metadata
-		);
+		const response = await handleCustomAuthFlowWithoutSRP(username, metadata);
+
 		const {
 			ChallengeName,
 			ChallengeParameters,
@@ -58,26 +60,4 @@ export async function signInWithUserPassword(
 		if (result) return result;
 		throw error;
 	}
-
-	// cacheTokens({
-	// 	idToken: AuthenticationResult.IdToken,
-	// 	accessToken: AuthenticationResult.AccessToken,
-	// 	clockDrift: 0,
-	// 	refreshToken: AuthenticationResult.RefreshToken,
-	// 	username: 'username',
-	// 	userPoolClientID: clientId,
-	// });
-
-	// Amplify.setUser({
-	// 	idToken: AuthenticationResult.IdToken,
-	// 	accessToken: AuthenticationResult.AccessToken,
-	// 	isSignedIn: true,
-	// 	refreshToken: AuthenticationResult.RefreshToken,
-	// });
-
-	// return {
-	// 	accessToken: AuthenticationResult.AccessToken,
-	// 	idToken: AuthenticationResult.IdToken,
-	// 	refreshToken: AuthenticationResult.RefreshToken,
-	// };
 }
