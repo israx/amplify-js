@@ -17,11 +17,11 @@ import {
 	ChallengeParameters,
 } from '../utils/clients/types/models';
 import {
+	handleCustomSRPAuthFlow,
 	handlePasswordVerifierChallenge,
-	handleUserSRPAuthFlow,
 } from '../utils/IniateAuthAndRespondToAuthChallengeHelper';
 
-export async function signInWithSRP(
+export async function signInWithCustomSRP(
 	signInRequest: SignInRequest<CognitoSignInOptions>
 ): Promise<AuthSignInResult> {
 	const { username, password } = signInRequest;
@@ -37,7 +37,7 @@ export async function signInWithSRP(
 
 	try {
 		const { ChallengeParameters: challengeParameters } =
-			await handleUserSRPAuthFlow(username, metadata);
+			await handleCustomSRPAuthFlow(username, metadata);
 
 		const response = await handlePasswordVerifierChallenge(
 			password,
@@ -70,37 +70,4 @@ export async function signInWithSRP(
 		if (result) return result;
 		throw error;
 	}
-
-	// if (ChallengeName) {
-	// 	Amplify.setContext('Auth', {
-	// 		confirmSignIn: { Session, username, challengeName: ChallengeName },
-	// 	});
-
-	// 	return {
-	// 		...ChallengeParameters,
-	// 		challenge: ChallengeName,
-	// 	};
-	// }
-
-	// cacheTokens({
-	// 	idToken: AuthenticationResult.IdToken,
-	// 	accessToken: AuthenticationResult.AccessToken,
-	// 	clockDrift: 0,
-	// 	refreshToken: AuthenticationResult.RefreshToken,
-	// 	username: 'username',
-	// 	userPoolClientID: clientId,
-	// });
-
-	// Amplify.setUser({
-	// 	idToken: AuthenticationResult.IdToken,
-	// 	accessToken: AuthenticationResult.AccessToken,
-	// 	isSignedIn: true,
-	// 	refreshToken: AuthenticationResult.RefreshToken,
-	// });
-
-	// return {
-	// 	accessToken: AuthenticationResult.AccessToken,
-	// 	idToken: AuthenticationResult.IdToken,
-	// 	refreshToken: AuthenticationResult.RefreshToken,
-	// };
 }
