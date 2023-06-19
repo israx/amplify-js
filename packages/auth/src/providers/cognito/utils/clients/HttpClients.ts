@@ -14,6 +14,7 @@ import type {
 	InitiateAuthCommandOutput,
 	RespondToAuthChallengeCommandInput,
 	RespondToAuthChallengeCommandOutput,
+	VerifySoftwareTokenCommandInput,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { AuthError } from '../../../../errors/AuthError';
 import { assertServiceError } from '../../../../errors/utils/assertServiceError';
@@ -27,7 +28,8 @@ export type ClientInputs =
 	| ConfirmForgotPasswordCommandInput
 	| InitiateAuthCommandInput
 	| RespondToAuthChallengeCommandInput
-	| ResendConfirmationCodeCommandInput;
+	| ResendConfirmationCodeCommandInput
+	| VerifySoftwareTokenCommandInput
 
 export type ClientOutputs =
 	| SignUpCommandOutput
@@ -44,7 +46,8 @@ export type ClientOperations =
 	| 'ConfirmForgotPassword'
 	| 'InitiateAuth'
 	| 'RespondToAuthChallenge'
-	| 'ResendConfirmationCode';
+	| 'ResendConfirmationCode'
+	| 'VerifySoftwareToken';
 
 export class UserPoolHttpClient {
 	private _endpoint: string;

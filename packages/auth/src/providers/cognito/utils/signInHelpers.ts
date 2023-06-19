@@ -32,6 +32,136 @@ import {
 } from '../../../types';
 import { AuthError } from '../../../errors/AuthError';
 import { InitiateAuthException } from '../types/errors';
+import {
+	AllowedMFATypes,
+	AuthUserAttribute,
+	TOTPSetupDetails,
+} from '../../../types/models';
+import { verifySoftwareTokenClient } from './clients/VerifySoftwareTokenClient';
+import { setActiveSignInSession } from '../utils/activeSignInSession';
+const USER_ATTRIBUTES = 'userAttributes.';
+
+export async function handleCustomChallenge(
+	challengeResponse: string,
+	clientMetadata: ClientMetadata | undefined,
+	session: string | undefined,
+	username: string
+): Promise<RespondToAuthChallengeCommandOutput> {
+	const challengeResponses = { USERNAME: username, ANSWER: challengeResponse };
+	const jsonReq: RespondToAuthChallengeClientInput = {
+		ChallengeName: 'CUSTOM_CHALLENGE',
+		ChallengeResponses: challengeResponses,
+		Session: session,
+		ClientMetadata: clientMetadata,
+	};
+	return await respondToAuthChallengeClient(jsonReq);
+}
+
+export async function handleMFASetupChallenge(
+	challengeResponse: string,
+	clientMetadata: ClientMetadata | undefined,
+	session: string | undefined,
+	username: string
+): Promise<RespondToAuthChallengeCommandOutput> {
+	const challengeResponses = {
+		USERNAME: username,
+	};
+
+	const verifyTOTPCode = await verifySoftwareTokenClient({
+		UserCode: challengeResponse,
+		Session: session,
+	});
+
+	setActiveSignInSession(verifyTOTPCode.Session);
+
+	const jsonReq: RespondToAuthChallengeClientInput = {
+		ChallengeName: 'MFA_SETUP',
+		ChallengeResponses: challengeResponses,
+		Session: verifyTOTPCode.Session,
+		ClientMetadata: clientMetadata,
+	};
+	return await respondToAuthChallengeClient(jsonReq);
+}
+
+export async function handleSelectMFATypeChallenge(
+	challengeResponse: string,
+	clientMetadata: ClientMetadata | undefined,
+	session: string | undefined,
+	username: string
+): Promise<RespondToAuthChallengeCommandOutput> {
+	const challengeResponses = {
+		USERNAME: username,
+		ANSWER: challengeResponse,
+	};
+	const jsonReq: RespondToAuthChallengeClientInput = {
+		ChallengeName: 'SELECT_MFA_TYPE',
+		ChallengeResponses: challengeResponses,
+		Session: session,
+		ClientMetadata: clientMetadata,
+	};
+
+	return await respondToAuthChallengeClient(jsonReq);
+}
+
+export async function handleSMSMFAChallenge(
+	challengeResponse: string,
+	clientMetadata: ClientMetadata | undefined,
+	session: string | undefined,
+	username: string
+): Promise<RespondToAuthChallengeCommandOutput> {
+	const challengeResponses = {
+		USERNAME: username,
+		SMS_MFA_CODE: challengeResponse,
+	};
+	const jsonReq: RespondToAuthChallengeClientInput = {
+		ChallengeName: 'SMS_MFA',
+		ChallengeResponses: challengeResponses,
+		Session: session,
+		ClientMetadata: clientMetadata,
+	};
+
+	return await respondToAuthChallengeClient(jsonReq);
+}
+export async function handleSoftwareTokenMFAChallenge(
+	challengeResponse: string,
+	clientMetadata: ClientMetadata | undefined,
+	session: string | undefined,
+	username: string
+): Promise<RespondToAuthChallengeCommandOutput> {
+	const challengeResponses = {
+		USERNAME: username,
+		SOFTWARE_TOKEN_MFA_CODE: challengeResponse,
+	};
+	const jsonReq: RespondToAuthChallengeClientInput = {
+		ChallengeName: 'SOFTWARE_TOKEN_MFA',
+		ChallengeResponses: challengeResponses,
+		Session: session,
+		ClientMetadata: clientMetadata,
+	};
+	return await respondToAuthChallengeClient(jsonReq);
+}
+export async function handleCompleteNewPasswordChallenge(
+	challengeResponse: string,
+	username: string,
+	clientMetadata: ClientMetadata | undefined,
+	session: string | undefined,
+	requiredAttributes?: AuthUserAttribute
+): Promise<RespondToAuthChallengeCommandOutput> {
+	const challengeResponses = {
+		...createAttributes(requiredAttributes),
+		NEW_PASSWORD: challengeResponse,
+		USERNAME: username,
+	};
+
+	const jsonReq: RespondToAuthChallengeClientInput = {
+		ChallengeName: 'NEW_PASSWORD_REQUIRED',
+		ChallengeResponses: challengeResponses,
+		ClientMetadata: clientMetadata,
+		Session: session,
+	};
+
+	return await respondToAuthChallengeClient(jsonReq);
+}
 
 export async function handleUserPasswordAuthFlow(
 	username: string,
@@ -160,9 +290,8 @@ export async function handlePasswordVerifierChallenge(
 export function getSignInResult(params: {
 	challengeName: ChallengeName;
 	challengeParameters: ChallengeParameters;
-	secretCode?: string;
 }): AuthSignInResult {
-	const { challengeName, challengeParameters, secretCode } = params;
+	const { challengeName, challengeParameters } = params;
 
 	switch (challengeName) {
 		case 'CUSTOM_CHALLENGE':
@@ -174,13 +303,12 @@ export function getSignInResult(params: {
 				},
 			};
 		case 'MFA_SETUP':
+			const setupDetails = {} as TOTPSetupDetails;
 			return {
 				isSignedIn: false,
 				nextStep: {
-					signInStep:
-						AuthSignInStep.CONFIRM_SIGN_IN_WITH_SOFTWARE_TOKEN_MFA_SETUP,
-					secretCode,
-					additionalInfo: challengeParameters as AdditionalInfo,
+					signInStep: AuthSignInStep.CONTINUE_SIGN_IN_WITH_TOTP_SETUP,
+					totpSetupDetails: setupDetails,
 				},
 			};
 		case 'NEW_PASSWORD_REQUIRED':
@@ -195,18 +323,19 @@ export function getSignInResult(params: {
 				},
 			};
 		case 'SELECT_MFA_TYPE':
+			const mfaTypes = [] as AllowedMFATypes;
 			return {
 				isSignedIn: false,
 				nextStep: {
-					signInStep: AuthSignInStep.CONFIRM_SIGN_IN_WITH_MFA_SELECTION,
-					additionalInfo: challengeParameters as AdditionalInfo,
+					signInStep: AuthSignInStep.CONTINUE_SIGN_IN_WITH_MFA_SELECTION,
+					allowedMFATypes: mfaTypes,
 				},
 			};
 		case 'SMS_MFA':
 			return {
 				isSignedIn: false,
 				nextStep: {
-					signInStep: AuthSignInStep.CONFIRM_SIGN_IN_WITH_SMS_MFA_CODE,
+					signInStep: AuthSignInStep.CONFIRM_SIGN_IN_WITH_SMS_CODE,
 					codeDeliveryDetails: {
 						deliveryMedium:
 							challengeParameters.CODE_DELIVERY_DELIVERY_MEDIUM as DeliveryMedium,
@@ -219,9 +348,7 @@ export function getSignInResult(params: {
 			return {
 				isSignedIn: false,
 				nextStep: {
-					signInStep:
-						AuthSignInStep.CONFIRM_SIGN_IN_WITH_SOFTWARE_TOKEN_MFA_CODE,
-					additionalInfo: challengeParameters as AdditionalInfo,
+					signInStep: AuthSignInStep.CONFIRM_SIGN_IN_WITH_TOTP_CODE,
 				},
 			};
 		case 'ADMIN_NO_SRP_AUTH':
@@ -260,8 +387,21 @@ export function getSignInResultFromError(
 export function parseAttributes(attributes: string | undefined): string[] {
 	if (!attributes) return [];
 	const parsedAttributes = (JSON.parse(attributes) as Array<string>).map(att =>
-		att.includes('userAttributes.') ? att.replace('userAttributes.', '') : att
+		att.includes(USER_ATTRIBUTES) ? att.replace(USER_ATTRIBUTES, '') : att
 	);
 
 	return parsedAttributes;
+}
+
+export function createAttributes(
+	attributes?: AuthUserAttribute
+): Record<string, string> {
+	if (!attributes) return {};
+
+	const newAttributes = {};
+
+	Object.entries(attributes).forEach(([key, value]) => {
+		newAttributes[`${USER_ATTRIBUTES}${key}`] = value;
+	});
+	return newAttributes;
 }

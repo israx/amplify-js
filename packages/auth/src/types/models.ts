@@ -35,7 +35,7 @@ export type AuthNextResetPasswordStep<
 };
 
 export type TOTPSetupDetails = {
-	secretCode: string;
+	sharedSecret: string;
 	getSetupUri: (appName: string, accountName?: string) => URL;
 };
 
