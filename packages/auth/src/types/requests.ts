@@ -3,6 +3,7 @@
 
 import { AuthUserAttributeKey } from './models';
 import { AuthServiceOptions, AuthSignUpOptions } from './options';
+import { AuthSignInStep } from './enums';
 
 export type ConfirmResetPasswordRequest<
 	ServiceOptions extends AuthServiceOptions
@@ -57,4 +58,18 @@ export type SignUpRequest<
 	username: string;
 	password: string;
 	options?: AuthSignUpOptions<UserAttributeKey, ServiceOptions>;
+};
+
+/**
+ * The parameters for constructing a Confirm Sign In request.
+ *
+ * @param challengeResponse - required parameter for responding to {@link AuthSignInStep } returned during
+ * the sign in process.
+ * @param options - optional parameters for the Confirm Sign In process such as the plugin options
+ */
+export type ConfirmSignInRequest<
+	ServiceOptions extends AuthServiceOptions = AuthServiceOptions
+> = {
+	challengeResponse: string;
+	options?: { serviceOptions?: ServiceOptions };
 };
