@@ -24,6 +24,8 @@ import {
 	handleChallengeName,
 } from '../utils/signInHelpers';
 import { assertServiceError } from '../../../errors/utils/assertServiceError';
+import { assertValidationError } from '../../../errors/utils/assertValidationError';
+import { AuthValidationErrorCode } from '../../../errors/types/validation';
 
 /**
  * Allows to continue or complete the sign in process
@@ -44,6 +46,8 @@ export async function confirmSignIn(
 	const { challengeResponse, options } = confirmSignInRequest;
 	const { username, activeChallengeName, activeSignInSession } =
 		signInStore.getState();
+
+	assertValidationError(!!challengeResponse, AuthValidationErrorCode.EmptyChallengeResponse)
 	
 	if (!username || !activeChallengeName || !activeSignInSession)
 	// TODO: improve this error message

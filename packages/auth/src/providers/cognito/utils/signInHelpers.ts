@@ -39,6 +39,7 @@ import {
 } from '../../../types/models';
 import { verifySoftwareTokenClient } from './clients/VerifySoftwareTokenClient';
 import { signInStore } from './signInStore';
+import { associateSoftwareTokenClient } from './clients/AssociateSoftwareTokenClient';
 
 const USER_ATTRIBUTES = 'userAttributes.';
 
@@ -62,8 +63,8 @@ export async function handleMFASetupChallenge(
 	challengeResponse: string,
 	clientMetadata: ClientMetadata | undefined,
 	session: string | undefined,
-	username: string, 
-	deviceName?:string
+	username: string,
+	deviceName?: string
 ): Promise<RespondToAuthChallengeCommandOutput> {
 	const challengeResponses = {
 		USERNAME: username,
@@ -72,7 +73,7 @@ export async function handleMFASetupChallenge(
 	const verifyTOTPCode = await verifySoftwareTokenClient({
 		UserCode: challengeResponse,
 		Session: session,
-		FriendlyDeviceName: deviceName
+		FriendlyDeviceName: deviceName,
 	});
 
 	signInStore.dispatch({
@@ -293,12 +294,13 @@ export async function handlePasswordVerifierChallenge(
 	return await respondToAuthChallengeClient(jsonReqResponseChallenge);
 }
 
-export function getSignInResult(params: {
+export async function getSignInResult(params: {
 	challengeName: ChallengeName;
 	challengeParameters: ChallengeParameters;
-}): AuthSignInResult {
+}): Promise<AuthSignInResult> {
 	const { challengeName, challengeParameters } = params;
 
+	console.log(challengeParameters);
 	switch (challengeName) {
 		case 'CUSTOM_CHALLENGE':
 			return {
@@ -309,12 +311,25 @@ export function getSignInResult(params: {
 				},
 			};
 		case 'MFA_SETUP':
-			const setupDetails = {} as TOTPSetupDetails;
+			const { activeSignInSession, username } = signInStore.getState();
+			const { Session, SecretCode: secretCode } =
+				await associateSoftwareTokenClient({
+					Session: activeSignInSession,
+				});
+			signInStore.dispatch({
+				type: 'SET_ACTIVE_SIGN_IN_SESSION',
+				value: Session,
+			});
+			if (!secretCode || !username)
+				throw new AuthError({
+					name: 'SignInException',
+					message: 'An error ocurred during the sign in process',
+				});
 			return {
 				isSignedIn: false,
 				nextStep: {
 					signInStep: AuthSignInStep.CONTINUE_SIGN_IN_WITH_TOTP_SETUP,
-					totpSetupDetails: setupDetails,
+					totpSetupDetails: getTOTPSetupDetails(secretCode, username),
 				},
 			};
 		case 'NEW_PASSWORD_REQUIRED':
@@ -372,6 +387,22 @@ export function getSignInResult(params: {
 		message: `challengeName is not supported. 
 			 This probably happened due to the underlying service returning a challengeName that is not supported by Amplify.`,
 	});
+}
+
+export function getTOTPSetupDetails(
+	secretCode: string,
+	username: string
+): TOTPSetupDetails {
+	return {
+		sharedSecret: secretCode,
+		getSetupUri: (appName, accountName) => {
+			const totpUri = `otpauth://totp/${
+				accountName ?? username
+			}?secret=${secretCode}&issuer=${appName}`;
+			const url = new URL(totpUri);
+			return url;
+		},
+	};
 }
 
 export function getSignInResultFromError(
@@ -469,7 +500,7 @@ export async function handleChallengeName(
 				username
 			);
 	}
-
+	// TODO: update to a better error
 	throw new AuthError({
 		name: 'SignInException',
 		message: 'an error occurred during the signIn process',
