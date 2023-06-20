@@ -68,7 +68,7 @@ export async function signInWithUserPassword(
 		});
 		signInStore.dispatch({
 			type: 'SET_CHALLENGE_NAME',
-			value: ChallengeName,
+			value: ChallengeName as ChallengeName,
 		});
 		if (AuthenticationResult) {
 			// TODO(israx): cache tokens

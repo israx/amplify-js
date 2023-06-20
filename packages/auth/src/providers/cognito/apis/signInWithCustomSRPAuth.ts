@@ -71,7 +71,7 @@ export async function signInWithCustomSRPAuth(
 		});
 		signInStore.dispatch({
 			type: 'SET_CHALLENGE_NAME',
-			value: ChallengeName,
+			value: ChallengeName as ChallengeName,
 		});
 
 		if (AuthenticationResult) {
