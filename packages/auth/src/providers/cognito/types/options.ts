@@ -45,7 +45,7 @@ export type CognitoSignUpOptions = {
 /**
  * Options specific to a Cognito Confirm Sign In request.
  */
-export type CognitoConfirmSignInOptionServices<
+export type CognitoConfirmSignInOptions<
 	UserAttribute extends AuthUserAttribute = AuthUserAttribute
 > = {
 	userAttributes?: UserAttribute;
