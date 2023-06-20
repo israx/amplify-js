@@ -38,7 +38,7 @@ import {
 	TOTPSetupDetails,
 } from '../../../types/models';
 import { verifySoftwareTokenClient } from './clients/VerifySoftwareTokenClient';
-import { setActiveSignInSession } from '../utils/activeSignInSession';
+import { signInStore } from './signInStore';
 const USER_ATTRIBUTES = 'userAttributes.';
 
 export async function handleCustomChallenge(
@@ -72,7 +72,10 @@ export async function handleMFASetupChallenge(
 		Session: session,
 	});
 
-	setActiveSignInSession(verifyTOTPCode.Session);
+	signInStore.dispatch({
+		type: 'SET_ACTIVE_SIGN_IN_SESSION',
+		value: verifyTOTPCode.Session,
+	});
 
 	const jsonReq: RespondToAuthChallengeClientInput = {
 		ChallengeName: 'MFA_SETUP',

@@ -18,7 +18,7 @@ import {
 	getSignInResultFromError,
 	handleUserSRPAuthFlow,
 } from '../utils/signInHelpers';
-import { setActiveSignInSession } from '../utils/activeSignInSession';
+import { signInStore } from '../utils/signInStore';
 import { CognitoSignInOptions } from '../types';
 import {
 	SignInRequest,
@@ -63,8 +63,18 @@ export async function signInWithSRP(
 			Session,
 		} = await handleUserSRPAuthFlow(username, password, clientMetaData);
 
-		// Session used on RespondToAuthChallenge requests.
-		setActiveSignInSession(Session);
+		signInStore.dispatch({
+			type: 'SET_ACTIVE_SIGN_IN_SESSION',
+			value: Session,
+		});
+		signInStore.dispatch({
+			type: 'SET_USERNAME',
+			value: username,
+		});
+		signInStore.dispatch({
+			type: 'SET_CHALLENGE_NAME',
+			value: ChallengeName,
+		});
 		if (AuthenticationResult) {
 			// TODO(israx): cache tokens
 			return {
@@ -79,7 +89,7 @@ export async function signInWithSRP(
 			challengeParameters: ChallengeParameters as ChallengeParameters,
 		});
 	} catch (error) {
-		setActiveSignInSession(undefined);
+		signInStore.dispatch({ type: 'SET_INITIAL_STATE' });
 		assertServiceError(error);
 		const result = getSignInResultFromError(error.name);
 		if (result) return result;
