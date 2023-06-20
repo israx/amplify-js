@@ -1,13 +1,13 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { ChallengeName } from "./clients/types/models";
+import { ChallengeName } from './clients/types/models';
 
 // TODO: replace this implementation with state machines
 
 type SignInState = {
 	username: string | undefined;
-	challengeName: string | undefined;
+	activeChallengeName: string | undefined;
 	activeSignInSession: string | undefined;
 };
 
@@ -37,18 +37,18 @@ export const signInReducer: Reducer<SignInState, SignInAction> = (
 		case 'SET_ACTIVE_CHALLENGE_NAME':
 			return {
 				...state,
-				activeSignInSession: action.value,
+				activeChallengeName: action.value
 			};
 		case 'SET_USERNAME':
 			return {
 				...state,
-				activeSignInSession: action.value,
+				username: action.value,
 			};
 		case 'SET_INITIAL_STATE':
 			return {
 				activeSignInSession: undefined,
 				username: undefined,
-				challengeName: undefined,
+				activeChallengeName: undefined,
 			};
 		default:
 			return state;
@@ -58,7 +58,7 @@ export const signInReducer: Reducer<SignInState, SignInAction> = (
 const createStore: Store<SignInState, SignInAction> = reducer => {
 	const initialSignInState = {
 		username: undefined,
-		challengeName: undefined,
+		activeChallengeName: undefined,
 		activeSignInSession: undefined,
 	};
 	let currentState = reducer(initialSignInState, { type: 'SET_INITIAL_STATE' });

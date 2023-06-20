@@ -42,10 +42,11 @@ export async function confirmSignIn(
 	confirmSignInRequest: ConfirmSignInRequest<CognitoConfirmSignInOptions>
 ): Promise<AuthSignInResult> {
 	const { challengeResponse, options } = confirmSignInRequest;
-	const { username, challengeName, activeSignInSession } =
+	const { username, activeChallengeName, activeSignInSession } =
 		signInStore.getState();
-
-	if (!username || !challengeName || !activeSignInSession)
+	
+	if (!username || !activeChallengeName || !activeSignInSession)
+	// TODO: improve this error message
 		throw new AuthError({
 			name: 'SignInException',
 			message: 'an error ocurred during the sign in process',
@@ -59,7 +60,7 @@ export async function confirmSignIn(
 			ChallengeParameters,
 		} = await handleChallengeName(
 			username,
-			challengeName as ChallengeName,
+			activeChallengeName as ChallengeName,
 			activeSignInSession,
 			challengeResponse,
 			options?.serviceOptions

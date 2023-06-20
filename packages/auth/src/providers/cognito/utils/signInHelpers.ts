@@ -192,7 +192,7 @@ export async function handleUserSRPAuthFlow(
 	clientMetadata: ClientMetadata | undefined
 ): Promise<RespondToAuthChallengeCommandOutput> {
 	const config = Amplify.config;
-	const userPoolId = config['aws_user_pools_id'];
+	const userPoolId = 'us-east-1_ijztlM9D9';
 	const userPoolName = userPoolId.split('_')[1];
 	const authenticationHelper = new AuthenticationHelper(userPoolName);
 
@@ -224,7 +224,7 @@ export async function handleCustomSRPAuthFlow(
 	clientMetadata: ClientMetadata | undefined
 ) {
 	const userPoolId = Amplify.config['aws_user_pools_id'];
-	const userPoolName = userPoolId.split('_')[1];
+	const userPoolName = 'us-east-1_ijztlM9D9';
 	const authenticationHelper = new AuthenticationHelper(userPoolName);
 	const jsonReq: InitiateAuthClientInput = {
 		AuthFlow: 'CUSTOM_AUTH',
@@ -423,7 +423,6 @@ export async function handleChallengeName(
 	const userAttributes = options?.userAttributes;
 	const deviceName = options?.friendlyDeviceName;
 
-	const result = {};
 	switch (challengeName) {
 		case 'SMS_MFA':
 			return await handleSMSMFAChallenge(
