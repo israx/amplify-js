@@ -67,7 +67,7 @@ export async function signInWithUserPassword(
 			value: username,
 		});
 		signInStore.dispatch({
-			type: 'SET_CHALLENGE_NAME',
+			type: 'SET_ACTIVE_CHALLENGE_NAME',
 			value: ChallengeName as ChallengeName,
 		});
 		if (AuthenticationResult) {

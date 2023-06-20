@@ -14,7 +14,7 @@ type SignInState = {
 type SignInAction =
 	| { type: 'SET_INITIAL_STATE' }
 	| { type: 'SET_USERNAME'; value: string | undefined }
-	| { type: 'SET_CHALLENGE_NAME'; value: ChallengeName | undefined }
+	| { type: 'SET_ACTIVE_CHALLENGE_NAME'; value: ChallengeName | undefined }
 	| { type: 'SET_ACTIVE_SIGN_IN_SESSION'; value: string | undefined };
 
 type Store<State, Action> = (reducer: Reducer<State, Action>) => {
@@ -34,7 +34,7 @@ export const signInReducer: Reducer<SignInState, SignInAction> = (
 				...state,
 				activeSignInSession: action.value,
 			};
-		case 'SET_CHALLENGE_NAME':
+		case 'SET_ACTIVE_CHALLENGE_NAME':
 			return {
 				...state,
 				activeSignInSession: action.value,

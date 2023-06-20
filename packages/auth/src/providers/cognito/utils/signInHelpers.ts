@@ -23,7 +23,7 @@ import {
 	respondToAuthChallengeClient,
 } from './clients/RespondToAuthChallengeClient';
 import { ChallengeName, ChallengeParameters } from './clients/types/models';
-import { ClientMetadata } from '../types';
+import { ClientMetadata, CognitoConfirmSignInOptions } from '../types';
 import {
 	AdditionalInfo,
 	AuthSignInResult,
@@ -62,7 +62,8 @@ export async function handleMFASetupChallenge(
 	challengeResponse: string,
 	clientMetadata: ClientMetadata | undefined,
 	session: string | undefined,
-	username: string
+	username: string, 
+	deviceName?:string
 ): Promise<RespondToAuthChallengeCommandOutput> {
 	const challengeResponses = {
 		USERNAME: username,
@@ -71,6 +72,7 @@ export async function handleMFASetupChallenge(
 	const verifyTOTPCode = await verifySoftwareTokenClient({
 		UserCode: challengeResponse,
 		Session: session,
+		FriendlyDeviceName: deviceName
 	});
 
 	signInStore.dispatch({
@@ -146,9 +148,9 @@ export async function handleSoftwareTokenMFAChallenge(
 }
 export async function handleCompleteNewPasswordChallenge(
 	challengeResponse: string,
-	username: string,
 	clientMetadata: ClientMetadata | undefined,
 	session: string | undefined,
+	username: string,
 	requiredAttributes?: AuthUserAttribute
 ): Promise<RespondToAuthChallengeCommandOutput> {
 	const challengeResponses = {
@@ -408,4 +410,69 @@ export function createAttributes(
 		newAttributes[`${USER_ATTRIBUTES}${key}`] = value;
 	});
 	return newAttributes;
+}
+
+export async function handleChallengeName(
+	username: string,
+	challengeName: ChallengeName,
+	session: string,
+	challengeResponse: string,
+	options?: CognitoConfirmSignInOptions
+): Promise<RespondToAuthChallengeCommandOutput> {
+	const clientMetadata = options?.clientMetadata;
+	const userAttributes = options?.userAttributes;
+	const deviceName = options?.friendlyDeviceName;
+
+	const result = {};
+	switch (challengeName) {
+		case 'SMS_MFA':
+			return await handleSMSMFAChallenge(
+				challengeResponse,
+				clientMetadata,
+				session,
+				username
+			);
+		case 'SELECT_MFA_TYPE':
+			return await handleSelectMFATypeChallenge(
+				challengeResponse,
+				clientMetadata,
+				session,
+				username
+			);
+		case 'MFA_SETUP':
+			return await handleMFASetupChallenge(
+				challengeResponse,
+				clientMetadata,
+				session,
+				username,
+				deviceName
+			);
+		case 'NEW_PASSWORD_REQUIRED':
+			return await handleCompleteNewPasswordChallenge(
+				challengeResponse,
+				clientMetadata,
+				session,
+				username,
+				userAttributes
+			);
+		case 'CUSTOM_CHALLENGE':
+			return await handleCustomChallenge(
+				challengeResponse,
+				clientMetadata,
+				session,
+				username
+			);
+		case 'SOFTWARE_TOKEN_MFA':
+			return await handleSoftwareTokenMFAChallenge(
+				challengeResponse,
+				clientMetadata,
+				session,
+				username
+			);
+	}
+
+	throw new AuthError({
+		name: 'SignInException',
+		message: 'an error occurred during the signIn process',
+	});
 }
