@@ -77,6 +77,7 @@ export async function signInWithSRP(
 		});
 		if (AuthenticationResult) {
 			// TODO(israx): cache tokens
+			signInStore.dispatch({ type: 'SET_INITIAL_STATE' });
 			return {
 				isSignedIn: true,
 				nextStep: { signInStep: AuthSignInStep.DONE },

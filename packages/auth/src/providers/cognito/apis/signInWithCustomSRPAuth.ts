@@ -75,6 +75,7 @@ export async function signInWithCustomSRPAuth(
 		});
 
 		if (AuthenticationResult) {
+			signInStore.dispatch({ type: 'SET_INITIAL_STATE' });
 			// TODO(israx): cache tokens
 			return {
 				isSignedIn: true,

@@ -39,6 +39,7 @@ import {
 } from '../../../types/models';
 import { verifySoftwareTokenClient } from './clients/VerifySoftwareTokenClient';
 import { signInStore } from './signInStore';
+
 const USER_ATTRIBUTES = 'userAttributes.';
 
 export async function handleCustomChallenge(
