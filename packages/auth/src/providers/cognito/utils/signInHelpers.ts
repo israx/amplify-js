@@ -40,6 +40,7 @@ import {
 import { verifySoftwareTokenClient } from './clients/VerifySoftwareTokenClient';
 import { signInStore } from './signInStore';
 import { associateSoftwareTokenClient } from './clients/AssociateSoftwareTokenClient';
+import { AuthErrorCodes } from '../../../common/AuthErrorStrings';
 
 const USER_ATTRIBUTES = 'userAttributes.';
 
@@ -70,7 +71,7 @@ export async function handleMFASetupChallenge(
 		USERNAME: username,
 	};
 
-	const verifyTOTPCode = await verifySoftwareTokenClient({
+	const { Session } = await verifySoftwareTokenClient({
 		UserCode: challengeResponse,
 		Session: session,
 		FriendlyDeviceName: deviceName,
@@ -78,13 +79,13 @@ export async function handleMFASetupChallenge(
 
 	signInStore.dispatch({
 		type: 'SET_ACTIVE_SIGN_IN_SESSION',
-		value: verifyTOTPCode.Session,
+		value: Session,
 	});
 
 	const jsonReq: RespondToAuthChallengeClientInput = {
 		ChallengeName: 'MFA_SETUP',
 		ChallengeResponses: challengeResponses,
-		Session: verifyTOTPCode.Session,
+		Session: Session,
 		ClientMetadata: clientMetadata,
 	};
 	return await respondToAuthChallengeClient(jsonReq);
@@ -300,7 +301,6 @@ export async function getSignInResult(params: {
 }): Promise<AuthSignInResult> {
 	const { challengeName, challengeParameters } = params;
 
-	console.log(challengeParameters);
 	switch (challengeName) {
 		case 'CUSTOM_CHALLENGE':
 			return {
@@ -383,9 +383,9 @@ export async function getSignInResult(params: {
 	}
 
 	throw new AuthError({
-		name: 'UnsupportedChallengeName',
-		message: `challengeName is not supported. 
-			 This probably happened due to the underlying service returning a challengeName that is not supported by Amplify.`,
+		name: AuthErrorCodes.SignInException,
+		message: `An error occurred during the sign in process. 
+		${challengeName} challengeName returned by the underlying service was not addressed.`,
 	});
 }
 
@@ -500,9 +500,10 @@ export async function handleChallengeName(
 				username
 			);
 	}
-	// TODO: update to a better error
+
 	throw new AuthError({
-		name: 'SignInException',
-		message: 'an error occurred during the signIn process',
+		name: AuthErrorCodes.SignInException,
+		message: `An error occurred during the sign in process. 
+		${challengeName} challengeName returned by the underlying service was not addressed.`,
 	});
 }

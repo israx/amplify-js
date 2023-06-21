@@ -61,3 +61,7 @@ export enum AuthErrorStrings {
 	DEVICE_CONFIG = 'Device tracking has not been configured in this User Pool',
 	AUTOSIGNIN_ERROR = 'Please use your credentials to sign in',
 }
+
+export enum AuthErrorCodes {
+	SignInException = 'SignInException'
+}

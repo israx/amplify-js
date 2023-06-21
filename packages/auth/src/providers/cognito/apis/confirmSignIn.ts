@@ -26,6 +26,7 @@ import {
 import { assertServiceError } from '../../../errors/utils/assertServiceError';
 import { assertValidationError } from '../../../errors/utils/assertValidationError';
 import { AuthValidationErrorCode } from '../../../errors/types/validation';
+import { AuthErrorCodes } from '../../../common/AuthErrorStrings';
 
 /**
  * Allows to continue or complete the sign in process
@@ -47,13 +48,21 @@ export async function confirmSignIn(
 	const { username, activeChallengeName, activeSignInSession } =
 		signInStore.getState();
 
-	assertValidationError(!!challengeResponse, AuthValidationErrorCode.EmptyChallengeResponse)
-	
+	assertValidationError(
+		!!challengeResponse,
+		AuthValidationErrorCode.EmptyChallengeResponse
+	);
+
 	if (!username || !activeChallengeName || !activeSignInSession)
-	// TODO: improve this error message
 		throw new AuthError({
-			name: 'SignInException',
-			message: 'an error ocurred during the sign in process',
+			name: AuthErrorCodes.SignInException,
+			message: `An error ocurred during the sign in process. 
+			This most likely ocurred due to:
+				1. signIn was not called before confirmSignIn.
+				2. calling signIn throw an exception.
+				3. page was refreshed during the sign in flow.`,
+			recoverySuggestion: `Make sure a successful call to signIn is made before calling confirmSignIn 
+			 and that the page is not refreshed until the sign in process is done.`,
 		});
 
 	try {
