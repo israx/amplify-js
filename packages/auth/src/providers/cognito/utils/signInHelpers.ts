@@ -332,16 +332,12 @@ export async function getSignInResult(params: {
 				type: 'SET_ACTIVE_SIGN_IN_SESSION',
 				value: Session,
 			});
-			if (!secretCode || !username)
-				throw new AuthError({
-					name: 'SignInException',
-					message: 'An error ocurred during the sign in process',
-				});
+
 			return {
 				isSignedIn: false,
 				nextStep: {
 					signInStep: AuthSignInStep.CONTINUE_SIGN_IN_WITH_TOTP_SETUP,
-					totpSetupDetails: getTOTPSetupDetails(secretCode, username),
+					totpSetupDetails: getTOTPSetupDetails(secretCode!, username),
 				},
 			};
 		case 'NEW_PASSWORD_REQUIRED':
@@ -402,7 +398,7 @@ export async function getSignInResult(params: {
 
 export function getTOTPSetupDetails(
 	secretCode: string,
-	username: string
+	username?: string
 ): TOTPSetupDetails {
 	return {
 		sharedSecret: secretCode,
