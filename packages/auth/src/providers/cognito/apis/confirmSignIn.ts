@@ -56,11 +56,16 @@ export async function confirmSignIn(
 	if (!username || !activeChallengeName || !activeSignInSession)
 		throw new AuthError({
 			name: AuthErrorCodes.SignInException,
-			message: `An error ocurred during the sign in process. 
+			message: `
+			An error ocurred during the sign in process. 
 			This most likely ocurred due to:
-				1. signIn was not called before confirmSignIn.
-				2. calling signIn throw an exception.
-				3. page was refreshed during the sign in flow.`,
+
+			1. signIn was not called before confirmSignIn.
+			
+			2. calling signIn throw an exception.
+
+			3. page was refreshed during the sign in flow.
+			`,
 			recoverySuggestion: `Make sure a successful call to signIn is made before calling confirmSignIn 
 			 and that the page is not refreshed until the sign in process is done.`,
 		});
@@ -103,7 +108,6 @@ export async function confirmSignIn(
 			challengeParameters: ChallengeParameters as ChallengeParameters,
 		});
 	} catch (error) {
-		signInStore.dispatch({ type: 'SET_INITIAL_STATE' });
 		assertServiceError(error);
 		const result = getSignInResultFromError(error.name);
 		if (result) return result;

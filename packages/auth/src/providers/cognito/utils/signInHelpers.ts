@@ -22,7 +22,11 @@ import {
 	RespondToAuthChallengeClientInput,
 	respondToAuthChallengeClient,
 } from './clients/RespondToAuthChallengeClient';
-import { ChallengeName, ChallengeParameters } from './clients/types/models';
+import {
+	ChallengeName,
+	ChallengeParameters,
+	CognitoMFAType,
+} from './clients/types/models';
 import { ClientMetadata, CognitoConfirmSignInOptions } from '../types';
 import {
 	AdditionalInfo,
@@ -41,6 +45,8 @@ import { verifySoftwareTokenClient } from './clients/VerifySoftwareTokenClient';
 import { signInStore } from './signInStore';
 import { associateSoftwareTokenClient } from './clients/AssociateSoftwareTokenClient';
 import { AuthErrorCodes } from '../../../common/AuthErrorStrings';
+import { AuthValidationErrorCode } from '../../../errors/types/validation';
+import { assertValidationError } from '../../../errors/utils/assertValidationError';
 
 const USER_ATTRIBUTES = 'userAttributes.';
 
@@ -97,10 +103,16 @@ export async function handleSelectMFATypeChallenge(
 	session: string | undefined,
 	username: string
 ): Promise<RespondToAuthChallengeCommandOutput> {
+	assertValidationError(
+		challengeResponse === 'TOTP' || challengeResponse === 'SMS',
+		AuthValidationErrorCode.IncorrectMFAMethod
+	);
+
 	const challengeResponses = {
 		USERNAME: username,
-		ANSWER: challengeResponse,
+		ANSWER: mapMfaType(challengeResponse),
 	};
+
 	const jsonReq: RespondToAuthChallengeClientInput = {
 		ChallengeName: 'SELECT_MFA_TYPE',
 		ChallengeResponses: challengeResponses,
@@ -344,12 +356,11 @@ export async function getSignInResult(params: {
 				},
 			};
 		case 'SELECT_MFA_TYPE':
-			const mfaTypes = [] as AllowedMFATypes;
 			return {
 				isSignedIn: false,
 				nextStep: {
 					signInStep: AuthSignInStep.CONTINUE_SIGN_IN_WITH_MFA_SELECTION,
-					allowedMFATypes: mfaTypes,
+					allowedMFATypes: parseMFATypes(challengeParameters.MFAS_CAN_CHOOSE),
 				},
 			};
 		case 'SMS_MFA':
@@ -506,4 +517,21 @@ export async function handleChallengeName(
 		message: `An error occurred during the sign in process. 
 		${challengeName} challengeName returned by the underlying service was not addressed.`,
 	});
+}
+
+export function mapMfaType(mfa: string): CognitoMFAType {
+	let mfaType = 'SMS_MFA';
+	if (mfa === 'TOTP') mfaType = 'SOFTWARE_TOKEN_MFA';
+
+	return mfaType as CognitoMFAType;
+}
+
+export function parseMFATypes(mfa?: string): AllowedMFATypes {
+	if (!mfa) return [];
+	const parsedMfaTypes: AllowedMFATypes = [];
+	(JSON.parse(mfa) as CognitoMFAType[]).map(type => {
+		if (type === 'SMS_MFA') parsedMfaTypes.push('SMS');
+		if (type === 'SOFTWARE_TOKEN_MFA') parsedMfaTypes.push('TOTP');
+	});
+	return parsedMfaTypes;
 }

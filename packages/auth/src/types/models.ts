@@ -27,7 +27,7 @@ export type AuthCodeDeliveryDetails<
 };
 
 export type AuthNextResetPasswordStep<
-	UserAttributeKey extends AuthUserAttributeKey
+	UserAttributeKey extends AuthUserAttributeKey = AuthUserAttributeKey
 > = {
 	resetPasswordStep: AuthResetPasswordStep;
 	additionalInfo?: AdditionalInfo;
