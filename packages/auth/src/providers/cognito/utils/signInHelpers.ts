@@ -403,7 +403,7 @@ export function getTOTPSetupDetails(
 	return {
 		sharedSecret: secretCode,
 		getSetupUri: (appName, accountName) => {
-			const totpUri = `otpauth://totp/${
+			const totpUri = `otpauth://totp/${appName}:${
 				accountName ?? username
 			}?secret=${secretCode}&issuer=${appName}`;
 			const url = new URL(totpUri);
