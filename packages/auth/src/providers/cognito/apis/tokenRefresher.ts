@@ -1,6 +1,6 @@
 import { CognitoAuthTokens, TokenRefresher } from '../tokenProvider/types';
-import { refreshToken } from '../utils/refreshTokens';
 import { AuthConfig, decodeJWT } from '@aws-amplify/core';
+import { initiateAuth } from '../utils/clients/CognitoIdentityProvider';
 
 export const CognitoUserPoolTokenRefresher: TokenRefresher = async ({
 	tokens,
@@ -10,8 +10,8 @@ export const CognitoUserPoolTokenRefresher: TokenRefresher = async ({
 	authConfig: AuthConfig;
 }) => {
 	const region = authConfig.userPoolId.split('_')[0];
-	const refreshTokenString = tokens.metadata['refreshToken'];
-	const result = await refreshToken(
+	const refreshTokenString = tokens.refreshToken;
+	const result = await initiateAuth(
 		{ region },
 		{
 			ClientId: authConfig.userPoolWebClientId,
@@ -28,12 +28,16 @@ export const CognitoUserPoolTokenRefresher: TokenRefresher = async ({
 		? decodeJWT(result.AuthenticationResult.IdToken)
 		: undefined;
 	const clockDrift = accessToken.payload.iat * 1000 - new Date().getTime();
-	const metadata = tokens.metadata;
+	const refreshToken = result.AuthenticationResult.RefreshToken;
+	const NewDeviceMetadata = JSON.stringify(
+		result.AuthenticationResult.NewDeviceMetadata
+	);
 
 	return {
 		accessToken,
 		idToken,
 		clockDrift,
-		metadata,
+		refreshToken,
+		NewDeviceMetadata,
 	};
 };

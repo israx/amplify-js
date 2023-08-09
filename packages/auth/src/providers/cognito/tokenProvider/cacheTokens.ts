@@ -32,15 +32,16 @@ export async function cacheCognitoTokens(
 				? accessTokenIssuedAtInMillis - currentTime
 				: 0;
 		let idToken;
-		const metadata: Record<string, string> = {};
+		let refreshToken: string;
+		let NewDeviceMetadata: string;
 
 		if (AuthenticationResult.RefreshToken) {
-			metadata.refreshToken = AuthenticationResult.RefreshToken;
+			refreshToken = AuthenticationResult.RefreshToken;
 		}
 		if (AuthenticationResult.NewDeviceMetadata) {
-			metadata.NewDeviceMetadata = JSON.stringify(
+			NewDeviceMetadata = JSON.stringify(
 				AuthenticationResult.NewDeviceMetadata
-			); // TODO: Needs to parse to get metadata
+			);
 		}
 		if (AuthenticationResult.IdToken) {
 			idToken = decodeJWT(AuthenticationResult.IdToken);
@@ -50,7 +51,8 @@ export async function cacheCognitoTokens(
 			tokens: {
 				accessToken,
 				idToken,
-				metadata,
+				refreshToken,
+				NewDeviceMetadata,
 				clockDrift,
 			},
 		});
