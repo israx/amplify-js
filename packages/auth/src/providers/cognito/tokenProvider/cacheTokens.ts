@@ -1,24 +1,7 @@
 import { AmplifyError, decodeJWT } from '@aws-amplify/core';
 import { tokenOrchestrator } from '.';
+import { AuthenticationResultType } from '../utils/clients/CognitoIdentityProvider/types';
 
-type NewDeviceMetadataType = {
-	DeviceKey?: string;
-
-	DeviceGroupKey?: string;
-};
-type AuthenticationResultType = {
-	AccessToken?: string;
-
-	ExpiresIn?: number;
-
-	TokenType?: string;
-
-	RefreshToken?: string;
-
-	IdToken?: string;
-
-	NewDeviceMetadata?: NewDeviceMetadataType;
-};
 
 export async function cacheCognitoTokens(
 	AuthenticationResult: AuthenticationResultType

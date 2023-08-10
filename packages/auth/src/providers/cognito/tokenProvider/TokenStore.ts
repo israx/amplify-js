@@ -7,7 +7,7 @@ import {
 } from '@aws-amplify/core';
 import {
 	AuthKeys,
-	AuthStorageKeys,
+	AuthTokenStorageKeys,
 	AuthTokenStore,
 	CognitoAuthTokens,
 } from './types';
@@ -21,7 +21,7 @@ export class DefaultTokenStore implements AuthTokenStore {
 		return;
 	}
 
-	async loadTokens(): Promise<CognitoAuthTokens> {
+	async loadTokens(): Promise<CognitoAuthTokens | null> {
 		const authConfig = AmplifyV6.getConfig().Auth;
 		assertTokenProviderConfig(authConfig);
 
@@ -40,7 +40,7 @@ export class DefaultTokenStore implements AuthTokenStore {
 				authKeys.accessToken
 			);
 
-			if (accessTokenString === null || accessTokenString === undefined) {
+			if (!accessTokenString) {
 				throw new Error('No session');
 			}
 
@@ -67,9 +67,7 @@ export class DefaultTokenStore implements AuthTokenStore {
 				clockDrift,
 			};
 		} catch (err) {
-			console.warn(err);
-			// TODO(v6): validate partial results with mobile implementation
-			throw new Error('No valid tokens');
+			return null;
 		}
 	}
 	async storeTokens(tokens: CognitoAuthTokens): Promise<void> {
@@ -132,7 +130,7 @@ export class DefaultTokenStore implements AuthTokenStore {
 }
 
 const createKeysForAuthStorage = (provider: string, identifier: string) => {
-	return getAuthStorageKeys(AuthStorageKeys)(
+	return getAuthStorageKeys(AuthTokenStorageKeys)(
 		`com.amplify.${provider}`,
 		identifier
 	);

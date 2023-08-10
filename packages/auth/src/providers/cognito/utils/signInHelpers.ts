@@ -241,8 +241,9 @@ export async function handleUserSRPAuthFlow(
 	clientMetadata: ClientMetadata | undefined,
 	config: AuthConfig
 ): Promise<RespondToAuthChallengeCommandOutput> {
-	const { userPoolId, userPoolWebClientId } = config;
-	const userPoolName = userPoolId?.split('_')[1] || '';
+
+	const userPoolId = config.userPoolId;
+	const userPoolName = userPoolId.split('_')[1] || '';
 	const authenticationHelper = new AuthenticationHelper(userPoolName);
 
 	const jsonReq: InitiateAuthCommandInput = {
@@ -252,7 +253,7 @@ export async function handleUserSRPAuthFlow(
 			SRP_A: ((await getLargeAValue(authenticationHelper)) as any).toString(16),
 		},
 		ClientMetadata: clientMetadata,
-		ClientId: userPoolWebClientId,
+		ClientId: config.userPoolWebClientId,
 	};
 
 	const resp = await initiateAuth({ region: getRegion(userPoolId) }, jsonReq);
