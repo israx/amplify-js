@@ -128,11 +128,6 @@ export {
 	Identity,
 } from './singleton/Auth/types';
 export {
-	TokenProvider,
-	AuthTokens,
-	FetchAuthSessionOptions,
-} from './singleton/Auth/types';
-export {
 	AuthConfig,
 	UserPoolConfig,
 	UserPoolConfigAndIdentityPoolConfig,

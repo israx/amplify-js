@@ -4,4 +4,18 @@
 /*
 This file maps exports from `aws-amplify/auth`. It provides access to the default Auth provider and category utils.
 */
-export * from '@aws-amplify/auth';
+export {
+	signIn,
+	signUp,
+	confirmSignUp,
+	confirmSignIn,
+	fetchAuthSession,
+	setUpTOTP,
+	verifyTOTPSetup,
+	fetchMFAPreference,
+	resendSignUpCode,
+	resetPassword,
+	confirmResetPassword,
+	AuthSignInStep,
+	AuthSignUpStep
+} from '@aws-amplify/auth';

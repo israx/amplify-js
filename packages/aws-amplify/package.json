@@ -27,6 +27,11 @@
       "import": "./lib-esm/auth/cognito/index.js",
       "require": "./lib/auth/cognito/index.js"
     },
+    "./auth/types": {
+      "types": "./lib-esm/auth/types/index.d.ts",
+      "import": "./lib-esm/auth/types/index.js",
+      "require": "./lib/auth/types/index.js"
+    },
     "./package.json": "./package.json"
   },
   "typesVersions": {
@@ -42,6 +47,9 @@
       ],
       "auth/cognito": [
         "./lib-esm/auth/cognito/index.d.ts"
+      ],
+      "auth/types": [
+        "./lib-esm/auth/types/index.d.ts"
       ]
     }
   },

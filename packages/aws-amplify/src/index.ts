@@ -4,7 +4,7 @@
 /*
 This file maps top-level exports from `aws-amplify`.
 */
-export { Amplify } from '@aws-amplify/core';
+export { Amplify as AmplifyV5 } from '@aws-amplify/core';
 export { withSSRContext } from './ssr/withSSRContext';
 
 // TODO(v6): Refactor these into category-specific exports as they come online
@@ -28,7 +28,7 @@ export {
 	AWSCloudWatchProvider,
 } from '@aws-amplify/core';
 
-export { DefaultAmplifyV6 as AmplifyV6 } from './initSingleton';
+export { DefaultAmplifyV6 as Amplify } from './initSingleton';
 
 // TODO(v6): Re-enable these exports when available
 /*

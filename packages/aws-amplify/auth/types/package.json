@@ -1,0 +1,7 @@
+{
+	"name": "aws-amplify/auth/types",
+	"main": "../../lib/auth/types/index.js",
+	"browser": "../../lib-esm/auth/types/index.js",
+	"module": "../../lib-esm/auth/types/index.js",
+	"typings": "../../lib-esm/auth/types/index.d.ts"
+}
