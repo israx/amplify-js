@@ -138,5 +138,6 @@ function isAuthenticatedWithRefreshToken(tokens?: CognitoAuthTokens | null) {
 function isAuthenticatedWithImplicitOauthFlow(
 	tokens?: CognitoAuthTokens | null
 ) {
+	// comment
 	return isAuthenticated(tokens) && !tokens?.refreshToken;
 }
